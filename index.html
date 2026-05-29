@@ -18,11 +18,17 @@
         </header>
         <div class="botones-modo">
             <button class="btn-modo btn-azul" onclick="mostrarEditor('diario')">
-                📆 Agenda Diaria
+                📆 Nueva Agenda Diaria
             </button>
             <button class="btn-modo btn-morado" onclick="mostrarEditor('semanal')">
-                📚 Agenda Semanal
+                📚 Nueva Agenda Semanal
             </button>
+        </div>
+
+        <!-- AGENDAS GUARDADAS -->
+        <div id="seccion-guardadas" style="margin-top: 30px; display: none;">
+            <h3 class="titulo-guardadas">📂 Agendas Guardadas</h3>
+            <div id="lista-guardadas"></div>
         </div>
     </div>
 
@@ -33,8 +39,9 @@
             <h2 id="titulo-modo"></h2>
         </header>
         <p id="instrucciones" class="instrucciones"></p>
+        <input type="text" id="nombre-agenda" placeholder="Nombre de esta agenda (ej: Semana del lunes)" class="input-nombre"/>
         <textarea id="input-actividades" placeholder="Escribe tus actividades aquí..."></textarea>
-        <button class="btn-generar" onclick="procesarAgenda()">🚀 Generar Dashboard</button>
+        <button class="btn-generar" onclick="procesarAgenda()">🚀 Generar y Guardar</button>
     </div>
 
     <!-- PANTALLA 3: DASHBOARD -->
@@ -43,6 +50,10 @@
             <button class="btn-back" onclick="volverAtras()">← Volver</button>
             <h2 id="titulo-dashboard"></h2>
         </header>
+        <div class="acciones-dashboard">
+            <button class="btn-accion btn-editar" onclick="editarAgendaActual()">✏️ Editar</button>
+            <button class="btn-accion btn-borrar" onclick="borrarAgendaActual()">🗑️ Borrar</button>
+        </div>
         <div id="contenido-dashboard"></div>
     </div>
 

@@ -1,21 +1,35 @@
 let modoActual = '';
+let agendaEditandoId = null;
+let agendaViendoId = null;
 
-function mostrarEditor(modo) {
+// ── NAVEGACIÓN ──────────────────────────────────────────
+function mostrarEditor(modo, id = null) {
     modoActual = modo;
-    document.getElementById('pantalla-seleccion').classList.remove('activa');
+    agendaEditandoId = id;
+
+    document.querySelectorAll('.pantalla').forEach(p => p.classList.remove('activa'));
     document.getElementById('pantalla-editor').classList.add('activa');
+
+    if (id) {
+        const agendas = cargarAgendas();
+        const agenda = agendas.find(a => a.id === id);
+        document.getElementById('nombre-agenda').value = agenda.nombre;
+        document.getElementById('input-actividades').value = agenda.texto;
+    } else {
+        document.getElementById('nombre-agenda').value = '';
+        document.getElementById('input-actividades').value = modo === 'semanal'
+            ? 'Lunes: GYM - 12:00\nLunes: Comer - 14:00\nMartes: Arwen - 11:00\nMiercoles: Carlos Juan - 10:00'
+            : '';
+    }
 
     if (modo === 'diario') {
         document.getElementById('titulo-modo').textContent = '📅 Agenda Diaria';
         document.getElementById('instrucciones').textContent =
             'Formato: Actividad - Hora (Ej: GYM - 12:00 o Desayuno - 9). Las tareas de limpieza ponlas sin hora al final.';
-        document.getElementById('input-actividades').value = '';
     } else {
         document.getElementById('titulo-modo').textContent = '🔮 Agenda Semanal';
         document.getElementById('instrucciones').textContent =
             'Formato: Día: Actividad - Hora (Ej: Lunes: GYM - 12:00). Días válidos: Lunes, Martes, Miercoles, Jueves, Viernes, Sabado, Domingo.';
-        document.getElementById('input-actividades').value =
-            'Lunes: GYM - 12:00\nLunes: Comer - 14:00\nMartes: Arwen - 11:00\nMiercoles: Carlos Juan - 10:00';
     }
 }
 
@@ -24,8 +38,116 @@ function volverAtras() {
     document.getElementById('pantalla-seleccion').classList.add('activa');
     document.getElementById('input-actividades').value = '';
     document.getElementById('contenido-dashboard').innerHTML = '';
+    agendaViendoId = null;
+    mostrarAgendas();
 }
 
+// ── STORAGE ─────────────────────────────────────────────
+function cargarAgendas() {
+    return JSON.parse(localStorage.getItem('michi-agendas') || '[]');
+}
+
+function guardarAgendas(agendas) {
+    localStorage.setItem('michi-agendas', JSON.stringify(agendas));
+}
+
+function mostrarAgendas() {
+    const agendas = cargarAgendas();
+    const seccion = document.getElementById('seccion-guardadas');
+    const lista = document.getElementById('lista-guardadas');
+
+    if (agendas.length === 0) {
+        seccion.style.display = 'none';
+        return;
+    }
+
+    seccion.style.display = 'block';
+    lista.innerHTML = agendas.map(a => `
+        <div class="agenda-guardada" onclick="abrirAgenda('${a.id}')">
+            <div class="agenda-info">
+                <span class="agenda-nombre">${a.nombre}</span>
+                <span class="agenda-meta">${a.fecha}</span>
+            </div>
+            <span class="agenda-tipo ${a.modo === 'diario' ? 'tipo-diario' : 'tipo-semanal'}">
+                ${a.modo === 'diario' ? '📆 Diaria' : '📚 Semanal'}
+            </span>
+        </div>
+    `).join('');
+}
+
+function abrirAgenda(id) {
+    const agendas = cargarAgendas();
+    const agenda = agendas.find(a => a.id === id);
+    if (!agenda) return;
+
+    agendaViendoId = id;
+    modoActual = agenda.modo;
+
+    document.querySelectorAll('.pantalla').forEach(p => p.classList.remove('activa'));
+    document.getElementById('pantalla-dashboard').classList.add('activa');
+    document.getElementById('titulo-dashboard').textContent = agenda.nombre;
+
+    if (agenda.modo === 'diario') {
+        procesarDiario(agenda.texto);
+    } else {
+        procesarSemanal(agenda.texto);
+    }
+}
+
+function editarAgendaActual() {
+    if (agendaViendoId) mostrarEditor(modoActual, agendaViendoId);
+}
+
+function borrarAgendaActual() {
+    if (!agendaViendoId) return;
+    if (!confirm('¿Borrar esta agenda?')) return;
+    let agendas = cargarAgendas();
+    agendas = agendas.filter(a => a.id !== agendaViendoId);
+    guardarAgendas(agendas);
+    volverAtras();
+}
+
+// ── PROCESAR ─────────────────────────────────────────────
+function procesarAgenda() {
+    const texto = document.getElementById('input-actividades').value.trim();
+    const nombre = document.getElementById('nombre-agenda').value.trim() ||
+        (modoActual === 'diario' ? 'Agenda del día' : 'Agenda semanal');
+
+    if (!texto) { alert('Por favor ingresa tus actividades.'); return; }
+
+    const agendas = cargarAgendas();
+    const ahora = new Date();
+    const fecha = ahora.toLocaleDateString('es-MX', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+    if (agendaEditandoId) {
+        const idx = agendas.findIndex(a => a.id === agendaEditandoId);
+        if (idx !== -1) {
+            agendas[idx].nombre = nombre;
+            agendas[idx].texto = texto;
+            agendas[idx].fecha = fecha;
+        }
+        agendaViendoId = agendaEditandoId;
+        agendaEditandoId = null;
+    } else {
+        const nueva = { id: Date.now().toString(), nombre, texto, modo: modoActual, fecha };
+        agendas.unshift(nueva);
+        agendaViendoId = nueva.id;
+    }
+
+    guardarAgendas(agendas);
+
+    document.querySelectorAll('.pantalla').forEach(p => p.classList.remove('activa'));
+    document.getElementById('pantalla-dashboard').classList.add('activa');
+    document.getElementById('titulo-dashboard').textContent = nombre;
+
+    if (modoActual === 'diario') {
+        procesarDiario(texto);
+    } else {
+        procesarSemanal(texto);
+    }
+}
+
+// ── ICONOS ───────────────────────────────────────────────
 function obtenerIcono(nombre) {
     const n = nombre.toLowerCase();
     if (n.includes('gym') || n.includes('gimnasio') || n.includes('entrenar')) return '💪';
@@ -51,20 +173,7 @@ function parsearHora(horaStr) {
     return [parseInt(partes[0]), parseInt(partes[1] || 0)];
 }
 
-function procesarAgenda() {
-    const texto = document.getElementById('input-actividades').value.trim();
-    if (!texto) { alert('Por favor ingresa tus actividades.'); return; }
-
-    if (modoActual === 'diario') {
-        procesarDiario(texto);
-    } else {
-        procesarSemanal(texto);
-    }
-
-    document.getElementById('pantalla-editor').classList.remove('activa');
-    document.getElementById('pantalla-dashboard').classList.add('activa');
-}
-
+// ── DIARIO ───────────────────────────────────────────────
 function procesarDiario(texto) {
     const lineas = texto.split('\n');
     const palabrasLimpieza = ['barrer', 'trapear', 'lavar', 'ropa', 'limpieza'];
@@ -94,7 +203,6 @@ function procesarDiario(texto) {
         return ah !== bh ? ah - bh : am - bm;
     });
 
-    document.getElementById('titulo-dashboard').textContent = '📅 Mi Agenda del Día';
     document.getElementById('contenido-dashboard').innerHTML = renderDiario(fijas, limpieza);
 }
 
@@ -139,6 +247,7 @@ function renderDiario(fijas, limpieza) {
     `;
 }
 
+// ── SEMANAL ──────────────────────────────────────────────
 function procesarSemanal(texto) {
     const dias = ['Lunes','Martes','Miercoles','Jueves','Viernes','Sabado','Domingo'];
     const semana = {};
@@ -174,7 +283,6 @@ function procesarSemanal(texto) {
         });
     });
 
-    document.getElementById('titulo-dashboard').textContent = '🔮 Mi Semana';
     document.getElementById('contenido-dashboard').innerHTML = renderSemanal(semana, dias);
 }
 
@@ -196,3 +304,6 @@ function renderSemanal(semana, dias) {
 
     return `<div class="semana-grid">${cols}</div>`;
 }
+
+// ── INIT ─────────────────────────────────────────────────
+mostrarAgendas();

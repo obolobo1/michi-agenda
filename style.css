@@ -10,7 +10,7 @@ body {
 .pantalla { display: none; padding: 20px; min-height: 100vh; flex-direction: column; }
 .pantalla.activa { display: flex; }
 
-header { text-align: center; margin-bottom: 30px; }
+header { text-align: center; margin-bottom: 20px; }
 header h1 {
     font-size: 2rem;
     background: linear-gradient(to right, #38bdf8, #ec4899);
@@ -39,6 +39,14 @@ header h2 { font-size: 1.4rem; color: #f3f4f6; }
 
 .instrucciones { color: #9ca3af; font-size: 0.85rem; margin-bottom: 12px; line-height: 1.5; }
 
+.input-nombre {
+    width: 100%; background: #1f2937;
+    border: 1px solid rgba(255,255,255,0.15); border-radius: 12px;
+    color: #f9fafb; font-size: 0.95rem; padding: 12px 14px;
+    margin-bottom: 10px;
+}
+.input-nombre::placeholder { color: #6b7280; }
+
 textarea {
     width: 100%; height: 200px; background: #1f2937;
     border: 1px solid rgba(255,255,255,0.1); border-radius: 12px;
@@ -52,7 +60,43 @@ textarea {
     color: white; font-size: 1.1rem; font-weight: bold; cursor: pointer;
 }
 
-/* DASHBOARD DIARIO - layout lado a lado */
+/* AGENDAS GUARDADAS */
+.titulo-guardadas {
+    color: #9ca3af; font-size: 0.85rem; text-transform: uppercase;
+    letter-spacing: 1px; margin-bottom: 12px;
+}
+
+.agenda-guardada {
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 14px; padding: 14px; margin-bottom: 10px;
+    display: flex; justify-content: space-between; align-items: center;
+    cursor: pointer; transition: background 0.2s;
+}
+.agenda-guardada:hover { background: rgba(255,255,255,0.08); }
+
+.agenda-info { display: flex; flex-direction: column; gap: 3px; }
+.agenda-nombre { font-weight: 600; font-size: 0.95rem; }
+.agenda-meta { font-size: 0.75rem; color: #9ca3af; }
+
+.agenda-tipo {
+    font-size: 0.7rem; padding: 3px 8px; border-radius: 20px;
+    font-weight: bold; flex-shrink: 0;
+}
+.tipo-diario { background: rgba(37,99,235,0.3); color: #60a5fa; border: 1px solid #2563eb; }
+.tipo-semanal { background: rgba(124,58,237,0.3); color: #a78bfa; border: 1px solid #7c3aed; }
+
+/* ACCIONES DASHBOARD */
+.acciones-dashboard {
+    display: flex; gap: 10px; margin-bottom: 15px; justify-content: flex-end;
+}
+.btn-accion {
+    padding: 8px 16px; border: none; border-radius: 10px;
+    font-size: 0.85rem; font-weight: bold; cursor: pointer;
+}
+.btn-editar { background: rgba(37,99,235,0.3); color: #60a5fa; border: 1px solid #2563eb; }
+.btn-borrar { background: rgba(220,38,38,0.3); color: #f87171; border: 1px solid #dc2626; }
+
+/* DASHBOARD DIARIO */
 .dashboard-diario {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -60,27 +104,23 @@ textarea {
     width: 100%;
 }
 
-/* TIMELINE VERTICAL */
 .panel {
     background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
     border-radius: 20px; padding: 15px; margin-top: 0;
 }
 .panel h3 { font-size: 0.95rem; color: #f3f4f6; margin-bottom: 12px; }
 
+/* TIMELINE VERTICAL */
 .timeline-vertical { display: flex; flex-direction: column; }
 
 .timeline-item {
-    display: flex;
-    flex-direction: row;
-    gap: 10px;
-    align-items: flex-start;
+    display: flex; flex-direction: row;
+    gap: 10px; align-items: flex-start;
 }
 
 .timeline-left {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    flex-shrink: 0;
+    display: flex; flex-direction: column;
+    align-items: center; flex-shrink: 0;
 }
 
 .tl-circle {
@@ -95,15 +135,11 @@ textarea {
     margin: 3px 0;
 }
 
-.tl-content {
-    padding-top: 4px;
-    padding-bottom: 10px;
-}
-
+.tl-content { padding-top: 4px; padding-bottom: 10px; }
 .tl-hora { font-size: 0.7rem; color: #38bdf8; font-weight: bold; }
 .tl-nombre { font-size: 0.8rem; font-weight: 500; margin-top: 2px; }
 
-/* COLORES CÍRCULOS */
+/* COLORES */
 .azul { background: linear-gradient(135deg,#2563eb,#1d4ed8); border: 2px solid #60a5fa; }
 .morado { background: linear-gradient(135deg,#7c3aed,#6d28d9); border: 2px solid #a78bfa; }
 .rosa { background: linear-gradient(135deg,#db2777,#be185d); border: 2px solid #f472b6; }
