@@ -1,0 +1,22 @@
+{
+    "name": "Michi Agenda",
+    "short_name": "MichiAgenda",
+    "description": "Generador de agenda diaria y semanal con dashboard visual",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#0f172a",
+    "theme_color": "#111827",
+    "orientation": "portrait",
+    "icons": [
+        {
+            "src": "Icono agenda.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "Icono agenda.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        }
+    ]
+}

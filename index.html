@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#111827">
+    <title>Michi Agenda</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.json">
+</head>
+<body>
+
+    <!-- PANTALLA 1: SELECCIÓN -->
+    <div id="pantalla-seleccion" class="pantalla activa">
+        <header>
+            <h1>🐱 Michi Agenda</h1>
+            <p>Centro de Control</p>
+        </header>
+        <div class="botones-modo">
+            <button class="btn-modo btn-azul" onclick="mostrarEditor('diario')">
+                📆 Agenda Diaria
+            </button>
+            <button class="btn-modo btn-morado" onclick="mostrarEditor('semanal')">
+                📚 Agenda Semanal
+            </button>
+        </div>
+    </div>
+
+    <!-- PANTALLA 2: EDITOR -->
+    <div id="pantalla-editor" class="pantalla">
+        <header>
+            <button class="btn-back" onclick="volverAtras()">← Volver</button>
+            <h2 id="titulo-modo"></h2>
+        </header>
+        <p id="instrucciones" class="instrucciones"></p>
+        <textarea id="input-actividades" placeholder="Escribe tus actividades aquí..."></textarea>
+        <button class="btn-generar" onclick="procesarAgenda()">🚀 Generar Dashboard</button>
+    </div>
+
+    <!-- PANTALLA 3: DASHBOARD -->
+    <div id="pantalla-dashboard" class="pantalla">
+        <header>
+            <button class="btn-back" onclick="volverAtras()">← Volver</button>
+            <h2 id="titulo-dashboard"></h2>
+        </header>
+        <div id="contenido-dashboard"></div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
