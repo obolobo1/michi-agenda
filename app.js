@@ -32,6 +32,9 @@ function obtenerIcono(nombre) {
     if (n.includes('comer') || n.includes('comida') || n.includes('almuerzo') || n.includes('desayuno')) return '🍽️';
     if (n.includes('corte') || n.includes('cabello') || n.includes('rasurar') || n.includes('bañar')) return '✂️';
     if (n.includes('salir') || n.includes('casa')) return '🚗';
+    if (n.includes('trabajo') || n.includes('trabajar') || n.includes('oficina')) return '💼';
+    if (n.includes('doctor') || n.includes('médico') || n.includes('cita')) return '🏥';
+    if (n.includes('escuela') || n.includes('clase') || n.includes('estudiar')) return '📚';
     return '📌';
 }
 
@@ -96,14 +99,19 @@ function procesarDiario(texto) {
 }
 
 function renderDiario(fijas, limpieza) {
-    let nodos = fijas.map((act, idx) => {
+    let timelineItems = fijas.map((act, idx) => {
         const icono = obtenerIcono(act.actividad);
         const clase = obtenerClase(icono, idx);
-        return `<div class="nodo">
-            <div class="time-tag">${act.hora}</div>
-            <div class="circle ${clase}">
-                <span class="icon">${icono}</span>
-                <span class="label">${act.actividad}</span>
+        const esUltimo = idx === fijas.length - 1;
+        return `
+        <div class="timeline-item">
+            <div class="timeline-left">
+                <div class="tl-circle ${clase}">${icono}</div>
+                ${!esUltimo ? '<div class="tl-line"></div>' : ''}
+            </div>
+            <div class="tl-content">
+                <div class="tl-hora">${act.hora}</div>
+                <div class="tl-nombre">${act.actividad}</div>
             </div>
         </div>`;
     }).join('');
@@ -116,16 +124,18 @@ function renderDiario(fijas, limpieza) {
     let limpiezaHTML = limpieza.map(t => `<li>✨ ${t}</li>`).join('');
 
     return `
-        <div class="panel">
-            <h3>Línea de Tiempo</h3>
-            <div class="timeline-scroll"><div class="timeline-track">${nodos}</div></div>
+        <div class="dashboard-diario">
+            <div class="panel panel-timeline">
+                <h3>Línea de Tiempo</h3>
+                <div class="timeline-vertical">${timelineItems}</div>
+            </div>
+            <div class="panel panel-tabla">
+                <h3>Actividades</h3>
+                <table><thead><tr><th>Hora</th><th>Actividad</th></tr></thead>
+                <tbody>${filas}</tbody></table>
+            </div>
         </div>
-        <div class="panel">
-            <h3>Tabla de Actividades</h3>
-            <table><thead><tr><th>Hora</th><th>Actividad</th></tr></thead>
-            <tbody>${filas}</tbody></table>
-        </div>
-        ${limpieza.length ? `<div class="panel"><h3>Tareas del Hogar</h3><ul style="padding-left:20px;line-height:2">${limpiezaHTML}</ul></div>` : ''}
+        ${limpieza.length ? `<div class="panel" style="margin-top:15px"><h3>Tareas del Hogar</h3><ul style="padding-left:20px;line-height:2">${limpiezaHTML}</ul></div>` : ''}
     `;
 }
 
