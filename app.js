@@ -9,21 +9,122 @@ let pantallaAnterior = 'pantalla-hoy';
 // ── ICONOS ────────────────────────────────────────────
 function obtenerIcono(nombre) {
     const n = nombre.toLowerCase();
-    if (n.includes('gym') || n.includes('gimnasio') || n.includes('entrenar') || n.includes('ejercicio')) return '💪';
-    if (n.includes('comer') || n.includes('comida') || n.includes('almuerzo') || n.includes('desayuno') || n.includes('cenar') || n.includes('cena')) return '🍽️';
-    if (n.includes('corte') || n.includes('cabello') || n.includes('rasurar') || n.includes('bañar') || n.includes('peluqueria')) return '✂️';
-    if (n.includes('salir') || n.includes('casa') || n.includes('manejar') || n.includes('carro')) return '🚗';
-    if (n.includes('trabajo') || n.includes('trabajar') || n.includes('oficina') || n.includes('reunión') || n.includes('junta')) return '💼';
-    if (n.includes('doctor') || n.includes('médico') || n.includes('cita') || n.includes('hospital') || n.includes('medicina') || n.includes('medicinas')) return '🏥';
-    if (n.includes('escuela') || n.includes('clase') || n.includes('estudiar') || n.includes('tarea') || n.includes('universidad')) return '📚';
-    if (n.includes('dormir') || n.includes('siesta') || n.includes('descansar')) return '😴';
-    if (n.includes('compras') || n.includes('super') || n.includes('mercado') || n.includes('tienda')) return '🛒';
-    if (n.includes('pago') || n.includes('banco') || n.includes('dinero') || n.includes('cajero')) return '💰';
-    if (n.includes('llamar') || n.includes('llamada') || n.includes('teléfono')) return '📞';
-    if (n.includes('cumpleaños') || n.includes('fiesta') || n.includes('celebrar')) return '🎉';
-    if (n.includes('perro') || n.includes('gato') || n.includes('mascota') || n.includes('michi') || n.includes('veterinario')) return '🐾';
-    if (n.includes('música') || n.includes('guitarra') || n.includes('piano') || n.includes('ensayo')) return '🎵';
-    if (n.includes('leer') || n.includes('libro') || n.includes('lectura')) return '📖';
+
+    // EJERCICIO Y DEPORTE
+    if (n.includes('gym') || n.includes('gimnasio') || n.includes('pesas') || n.includes('crossfit') || n.includes('entren')) return '💪';
+    if (n.includes('correr') || n.includes('corr') || n.includes('jogging') || n.includes('trotar') || n.includes('trote') || n.includes('maratón')) return '🏃';
+    if (n.includes('nadar') || n.includes('natación') || n.includes('alberca') || n.includes('piscina')) return '🏊';
+    if (n.includes('bici') || n.includes('ciclismo') || n.includes('cycling')) return '🚴';
+    if (n.includes('futbol') || n.includes('fútbol') || n.includes('soccer')) return '⚽';
+    if (n.includes('basquet') || n.includes('básquet') || n.includes('basketball')) return '🏀';
+    if (n.includes('tenis') || n.includes('pádel') || n.includes('padel')) return '🎾';
+    if (n.includes('yoga') || n.includes('meditación') || n.includes('meditar') || n.includes('pilates')) return '🧘';
+    if (n.includes('boxeo') || n.includes('box') || n.includes('artes marciales') || n.includes('karate')) return '🥊';
+    if (n.includes('caminar') || n.includes('caminata') || n.includes('paseo') || n.includes('parque') || n.includes('bosque')) return '🚶';
+    if (n.includes('ejercicio') || n.includes('deporte') || n.includes('entrenar')) return '🏋️';
+
+    // COMIDA Y BEBIDA
+    if (n.includes('desayuno') || n.includes('breakfast')) return '🍳';
+    if (n.includes('almuerzo') || n.includes('lunch') || n.includes('comer') || n.includes('comida')) return '🍽️';
+    if (n.includes('cena') || n.includes('cenar') || n.includes('dinner')) return '🌮';
+    if (n.includes('café') || n.includes('cafe') || n.includes('coffee')) return '☕';
+    if (n.includes('pizza') || n.includes('hamburguesa') || n.includes('tacos')) return '🍕';
+    if (n.includes('sushi') || n.includes('japonés') || n.includes('ramen')) return '🍱';
+    if (n.includes('postre') || n.includes('pastel') || n.includes('helado') || n.includes('dulce')) return '🍰';
+    if (n.includes('bar') || n.includes('cerveza') || n.includes('bebida') || n.includes('trago') || n.includes('copa')) return '🍺';
+    if (n.includes('agua') || n.includes('jugo') || n.includes('smoothie')) return '🥤';
+
+    // SALUD Y MÉDICO
+    if (n.includes('doctor') || n.includes('médico') || n.includes('medico') || n.includes('hospital') || n.includes('clínica') || n.includes('clinica')) return '🏥';
+    if (n.includes('dentista') || n.includes('dental') || n.includes('dientes') || n.includes('ortodoncista')) return '🦷';
+    if (n.includes('medicina') || n.includes('medicinas') || n.includes('pastilla') || n.includes('pastillas') || n.includes('farmacia') || n.includes('pildora')) return '💊';
+    if (n.includes('terapia') || n.includes('psicólogo') || n.includes('psicologo') || n.includes('psiquiatra') || n.includes('terapeuta')) return '🧠';
+    if (n.includes('cita') || n.includes('consulta') || n.includes('revisión') || n.includes('revision') || n.includes('chequeo')) return '📋';
+    if (n.includes('vacuna') || n.includes('inyección') || n.includes('inyeccion')) return '💉';
+    if (n.includes('optometrista') || n.includes('lentes') || n.includes('ojos') || n.includes('oftalmólogo')) return '👁️';
+
+    // TRABAJO Y NEGOCIOS
+    if (n.includes('trabajo') || n.includes('trabajar') || n.includes('oficina') || n.includes('chamba') || n.includes('laboral')) return '💼';
+    if (n.includes('reunión') || n.includes('reunion') || n.includes('junta') || n.includes('meeting') || n.includes('call') || n.includes('zoom') || n.includes('teams')) return '👥';
+    if (n.includes('presentación') || n.includes('presentacion') || n.includes('exposición') || n.includes('pitch')) return '📊';
+    if (n.includes('entrevista') || n.includes('interview')) return '🤝';
+    if (n.includes('cliente') || n.includes('clientes') || n.includes('ventas') || n.includes('vender')) return '💰';
+    if (n.includes('correo') || n.includes('email') || n.includes('inbox')) return '📧';
+    if (n.includes('proyecto') || n.includes('deadline') || n.includes('entrega')) return '📌';
+    if (n.includes('contrato') || n.includes('firma') || n.includes('firmar') || n.includes('documento')) return '📝';
+
+    // EDUCACIÓN
+    if (n.includes('escuela') || n.includes('colegio') || n.includes('prepa') || n.includes('kinder')) return '🏫';
+    if (n.includes('universidad') || n.includes('facultad') || n.includes('campus')) return '🎓';
+    if (n.includes('clase') || n.includes('clases') || n.includes('curso') || n.includes('taller')) return '📚';
+    if (n.includes('estudiar') || n.includes('estudio') || n.includes('repasar') || n.includes('tarea') || n.includes('examen')) return '✏️';
+    if (n.includes('inglés') || n.includes('ingles') || n.includes('idioma') || n.includes('lenguaje')) return '🗣️';
+
+    // COMPRAS Y TRÁMITES
+    if (n.includes('super') || n.includes('supermercado') || n.includes('mercado') || n.includes('mandado') || n.includes('walmart') || n.includes('costco')) return '🛒';
+    if (n.includes('compras') || n.includes('comprar') || n.includes('tienda') || n.includes('mall') || n.includes('plaza')) return '🛍️';
+    if (n.includes('banco') || n.includes('cajero') || n.includes('transferencia') || n.includes('pago') || n.includes('pagar') || n.includes('factura')) return '🏦';
+    if (n.includes('trámite') || n.includes('tramite') || n.includes('ine') || n.includes('sat') || n.includes('pasaporte') || n.includes('gobierno')) return '🏛️';
+    if (n.includes('correos') || n.includes('paquete') || n.includes('envío') || n.includes('envio') || n.includes('fedex') || n.includes('dhl')) return '📦';
+    if (n.includes('gasolina') || n.includes('gasolinera') || n.includes('gas')) return '⛽';
+
+    // TRANSPORTE
+    if (n.includes('manejar') || n.includes('carro') || n.includes('auto') || n.includes('coche') || n.includes('conducir')) return '🚗';
+    if (n.includes('uber') || n.includes('taxi') || n.includes('didi') || n.includes('cabify')) return '🚕';
+    if (n.includes('metro') || n.includes('metrobús') || n.includes('transporte') || n.includes('camión') || n.includes('bus')) return '🚌';
+    if (n.includes('avión') || n.includes('avion') || n.includes('vuelo') || n.includes('aeropuerto') || n.includes('volar')) return '✈️';
+    if (n.includes('tren') || n.includes('subte') || n.includes('subway')) return '🚆';
+    if (n.includes('bici') || n.includes('moto') || n.includes('motocicleta')) return '🏍️';
+    if (n.includes('salir') || n.includes('llegar') || n.includes('casa')) return '🏠';
+
+    // HOGAR Y LIMPIEZA
+    if (n.includes('barrer') || n.includes('trapear') || n.includes('limpiar') || n.includes('limpieza') || n.includes('aspirar')) return '🧹';
+    if (n.includes('lavar') || n.includes('lavadora') || n.includes('ropa') || n.includes('planchar')) return '👕';
+    if (n.includes('cocinar') || n.includes('cocina') || n.includes('hornear') || n.includes('receta')) return '👨‍🍳';
+    if (n.includes('jardín') || n.includes('jardin') || n.includes('plantas') || n.includes('regar')) return '🌱';
+    if (n.includes('plomero') || n.includes('electricista') || n.includes('reparar') || n.includes('arreglar') || n.includes('mantenimiento')) return '🔧';
+    if (n.includes('mudanza') || n.includes('mudar') || n.includes('empacar')) return '📦';
+
+    // MASCOTAS
+    if (n.includes('veterinario') || n.includes('veterinaria') || n.includes('vet')) return '🏥';
+    if (n.includes('perro') || n.includes('pasear perro') || n.includes('dog')) return '🐕';
+    if (n.includes('gato') || n.includes('michi') || n.includes('cat') || n.includes('gatito')) return '🐈';
+    if (n.includes('mascota') || n.includes('pet')) return '🐾';
+
+    // SOCIAL Y FAMILIA
+    if (n.includes('cumpleaños') || n.includes('cumple') || n.includes('birthday')) return '🎂';
+    if (n.includes('fiesta') || n.includes('party') || n.includes('celebrar') || n.includes('celebración')) return '🎉';
+    if (n.includes('boda') || n.includes('matrimonio') || n.includes('casamiento')) return '💍';
+    if (n.includes('familia') || n.includes('papá') || n.includes('papa') || n.includes('mamá') || n.includes('mama') || n.includes('padres') || n.includes('hijos')) return '👨‍👩‍👧‍👦';
+    if (n.includes('amigos') || n.includes('amigo') || n.includes('amiga') || n.includes('friends')) return '👫';
+    if (n.includes('cita') || n.includes('date') || n.includes('novio') || n.includes('novia') || n.includes('pareja')) return '❤️';
+    if (n.includes('iglesia') || n.includes('misa') || n.includes('templo') || n.includes('rezar') || n.includes('orar')) return '⛪';
+
+    // ENTRETENIMIENTO
+    if (n.includes('cine') || n.includes('película') || n.includes('pelicula') || n.includes('movie')) return '🎬';
+    if (n.includes('teatro') || n.includes('obra') || n.includes('musical') || n.includes('concierto') || n.includes('show')) return '🎭';
+    if (n.includes('museo') || n.includes('exposición') || n.includes('galería') || n.includes('arte')) return '🎨';
+    if (n.includes('música') || n.includes('musica') || n.includes('guitarra') || n.includes('piano') || n.includes('ensayo') || n.includes('banda')) return '🎵';
+    if (n.includes('videojuego') || n.includes('gaming') || n.includes('jugar') || n.includes('xbox') || n.includes('playstation')) return '🎮';
+    if (n.includes('leer') || n.includes('libro') || n.includes('lectura') || n.includes('novela')) return '📖';
+    if (n.includes('netflix') || n.includes('serie') || n.includes('episodio') || n.includes('ver') || n.includes('streaming')) return '📺';
+    if (n.includes('viaje') || n.includes('viajar') || n.includes('vacaciones') || n.includes('turismo') || n.includes('hotel')) return '🧳';
+    if (n.includes('playa') || n.includes('mar') || n.includes('alberca') || n.includes('nadar')) return '🏖️';
+    if (n.includes('montaña') || n.includes('senderismo') || n.includes('hiking') || n.includes('bosque') || n.includes('naturaleza')) return '🏔️';
+
+    // PERSONAL Y BIENESTAR
+    if (n.includes('corte') || n.includes('cabello') || n.includes('pelo') || n.includes('peluquería') || n.includes('peluqueria') || n.includes('barber') || n.includes('barbería')) return '✂️';
+    if (n.includes('manicure') || n.includes('manicura') || n.includes('pedicure') || n.includes('uñas') || n.includes('spa')) return '💅';
+    if (n.includes('bañar') || n.includes('baño') || n.includes('ducha') || n.includes('asear')) return '🚿';
+    if (n.includes('rasurar') || n.includes('rasurarse') || n.includes('depilación')) return '🪒';
+    if (n.includes('dormir') || n.includes('siesta') || n.includes('descansar') || n.includes('nap')) return '😴';
+    if (n.includes('despertar') || n.includes('levantarse') || n.includes('madrugar')) return '⏰';
+
+    // COMUNICACIÓN
+    if (n.includes('llamar') || n.includes('llamada') || n.includes('teléfono') || n.includes('telefono') || n.includes('llamar')) return '📞';
+    if (n.includes('whatsapp') || n.includes('mensaje') || n.includes('chat') || n.includes('escribir')) return '💬';
+    if (n.includes('videollamada') || n.includes('facetime') || n.includes('skype')) return '📹';
+
     return '📌';
 }
 
@@ -89,12 +190,10 @@ function mostrarHoy() {
     renderSemanaStrip();
 }
 
-// CAMBIO 3: timeline en lugar de tabla en pantalla principal
 function renderTimelineHoy(fijas, hoy) {
     const ahoraH = hoy.getHours();
     const ahoraM = hoy.getMinutes();
 
-    // Encontrar próxima actividad
     let proximaIdx = -1;
     for (let i = 0; i < fijas.length; i++) {
         const [h, m] = parsearHora(fijas[i].hora);
@@ -104,7 +203,6 @@ function renderTimelineHoy(fijas, hoy) {
         }
     }
 
-    // Mostrar máximo 4 actividades centradas en la próxima
     let inicio = 0;
     if (proximaIdx > 1) inicio = proximaIdx - 1;
     if (inicio + 4 > fijas.length) inicio = Math.max(0, fijas.length - 4);
@@ -153,9 +251,7 @@ function renderHorasVacias(hoy) {
         </div>`;
     }
     return `
-        <div class="timeline-hoy">
-            ${items}
-        </div>
+        <div class="timeline-hoy">${items}</div>
         <div style="text-align:center; margin-top: 16px;">
             <button class="btn-crear-hoy" onclick="mostrarEditor(null)">+ Crear agenda de hoy</button>
         </div>`;
@@ -167,7 +263,6 @@ function renderSemanaStrip() {
     const agendas = cargarAgendas();
     const diasNombre = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
 
-    // CAMBIO 1: empezar desde hoy, mostrar 7 días hacia adelante
     let html = '';
     for (let i = 0; i < 7; i++) {
         const dia = new Date(hoy);
@@ -187,7 +282,6 @@ function renderSemanaStrip() {
         if (i === 0) clases += ' hoy';
         if (agenda) clases += ' tiene-agenda';
 
-        // CAMBIO 2: hoy también es clickeable
         html += `<div class="${clases}" onclick="seleccionarDiaStrip('${fechaKey}', ${!!agenda})">
             <div class="dia-strip-nombre">${diasNombre[dia.getDay()]}</div>
             <div class="dia-strip-num">${dia.getDate()}</div>
@@ -198,7 +292,6 @@ function renderSemanaStrip() {
     document.getElementById('semana-strip').innerHTML = html;
 }
 
-// CAMBIO 2: hoy también abre su dashboard
 function seleccionarDiaStrip(fechaKey, tieneAgenda) {
     if (tieneAgenda) {
         const agenda = cargarAgendas().find(a => a.fechaKey === fechaKey);
