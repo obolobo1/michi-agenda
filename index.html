@@ -17,7 +17,6 @@
             <h2 id="titulo-hoy"></h2>
         </header>
 
-        <!-- ACTIVIDADES DEL DÍA -->
         <div class="seccion-titulo">
             <span>Actividades</span>
             <div class="acciones-hoy" id="acciones-hoy" style="display:none">
@@ -27,14 +26,12 @@
         </div>
         <div id="contenido-hoy"></div>
 
-        <!-- MINI CALENDARIO SEMANAL -->
         <div class="seccion-titulo" style="margin-top:20px">
             <span>Calendario</span>
             <button class="btn-ver-mes" onclick="abrirCalendario()">Ver mes ›</button>
         </div>
         <div class="semana-strip" id="semana-strip"></div>
 
-        <!-- BOTÓN NUEVA AGENDA -->
         <button class="btn-flotante" onclick="mostrarEditor(null)">+</button>
     </div>
 
@@ -98,5 +95,12 @@
     </div>
 
     <script src="app.js"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/michi-agenda/sw.js')
+                .then(() => console.log('Service Worker registrado'))
+                .catch(err => console.log('Error SW:', err));
+        }
+    </script>
 </body>
 </html>

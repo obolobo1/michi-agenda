@@ -6,6 +6,64 @@ let agendaEditandoId = null;
 let agendaViendoId = null;
 let pantallaAnterior = 'pantalla-hoy';
 
+// ── NOTIFICACIONES ────────────────────────────────────
+async function pedirPermisoNotificaciones() {
+    if (!('Notification' in window)) return false;
+    if (Notification.permission === 'granted') return true;
+    if (Notification.permission === 'denied') return false;
+    const permiso = await Notification.requestPermission();
+    return permiso === 'granted';
+}
+
+function programarNotificaciones(fijas, fechaKey) {
+    if (!('Notification' in window) || Notification.permission !== 'granted') return;
+
+    const hoyKey = formatearFechaKey(new Date());
+    if (fechaKey !== hoyKey) return; // Solo notificar agenda de hoy
+
+    // Limpiar timers anteriores
+    if (window._notifTimers) window._notifTimers.forEach(t => clearTimeout(t));
+    window._notifTimers = [];
+
+    const ahora = new Date();
+
+    fijas.forEach(act => {
+        const [h, m] = parsearHora(act.hora);
+        if (h === 99) return;
+
+        const horaActividad = new Date();
+        horaActividad.setHours(h, m, 0, 0);
+
+        // Notificar 15 minutos antes
+        const horaAviso = new Date(horaActividad.getTime() - 15 * 60 * 1000);
+        const msHastaAviso = horaAviso.getTime() - ahora.getTime();
+
+        if (msHastaAviso > 0) {
+            const timer = setTimeout(() => {
+                new Notification('🐱 Michi Agenda', {
+                    body: `En 15 min: ${obtenerIcono(act.actividad)} ${act.actividad} a las ${act.hora}`,
+                    icon: '/michi-agenda/Icono agenda.png',
+                    badge: '/michi-agenda/Icono agenda.png'
+                });
+            }, msHastaAviso);
+            window._notifTimers.push(timer);
+        }
+
+        // Notificar exactamente a la hora
+        const msHastaHora = horaActividad.getTime() - ahora.getTime();
+        if (msHastaHora > 0) {
+            const timer = setTimeout(() => {
+                new Notification('🐱 Michi Agenda', {
+                    body: `¡Ahora! ${obtenerIcono(act.actividad)} ${act.actividad}`,
+                    icon: '/michi-agenda/Icono agenda.png',
+                    badge: '/michi-agenda/Icono agenda.png'
+                });
+            }, msHastaHora);
+            window._notifTimers.push(timer);
+        }
+    });
+}
+
 // ── ICONOS ────────────────────────────────────────────
 function obtenerIcono(nombre) {
     const n = nombre.toLowerCase();
@@ -74,7 +132,6 @@ function obtenerIcono(nombre) {
     if (n.includes('metro') || n.includes('metrobús') || n.includes('transporte') || n.includes('camión') || n.includes('bus')) return '🚌';
     if (n.includes('avión') || n.includes('avion') || n.includes('vuelo') || n.includes('aeropuerto') || n.includes('volar')) return '✈️';
     if (n.includes('tren') || n.includes('subte') || n.includes('subway')) return '🚆';
-    if (n.includes('bici') || n.includes('moto') || n.includes('motocicleta')) return '🏍️';
     if (n.includes('salir') || n.includes('llegar') || n.includes('casa')) return '🏠';
 
     // HOGAR Y LIMPIEZA
@@ -83,7 +140,6 @@ function obtenerIcono(nombre) {
     if (n.includes('cocinar') || n.includes('cocina') || n.includes('hornear') || n.includes('receta')) return '👨‍🍳';
     if (n.includes('jardín') || n.includes('jardin') || n.includes('plantas') || n.includes('regar')) return '🌱';
     if (n.includes('plomero') || n.includes('electricista') || n.includes('reparar') || n.includes('arreglar') || n.includes('mantenimiento')) return '🔧';
-    if (n.includes('mudanza') || n.includes('mudar') || n.includes('empacar')) return '📦';
 
     // MASCOTAS
     if (n.includes('veterinario') || n.includes('veterinaria') || n.includes('vet')) return '🏥';
@@ -121,7 +177,7 @@ function obtenerIcono(nombre) {
     if (n.includes('despertar') || n.includes('levantarse') || n.includes('madrugar')) return '⏰';
 
     // COMUNICACIÓN
-    if (n.includes('llamar') || n.includes('llamada') || n.includes('teléfono') || n.includes('telefono') || n.includes('llamar')) return '📞';
+    if (n.includes('llamar') || n.includes('llamada') || n.includes('teléfono') || n.includes('telefono')) return '📞';
     if (n.includes('whatsapp') || n.includes('mensaje') || n.includes('chat') || n.includes('escribir')) return '💬';
     if (n.includes('videollamada') || n.includes('facetime') || n.includes('skype')) return '📹';
 
@@ -173,7 +229,6 @@ function mostrarHoy() {
     const agendaHoy = agendas.find(a => a.fechaKey === fechaKey);
 
     document.getElementById('titulo-hoy').textContent = formatearFechaDisplay(hoy);
-
     const accionesHoy = document.getElementById('acciones-hoy');
 
     if (agendaHoy) {
@@ -181,6 +236,7 @@ function mostrarHoy() {
         accionesHoy.style.display = 'flex';
         const { fijas } = parsearActividades(agendaHoy.texto);
         document.getElementById('contenido-hoy').innerHTML = renderTimelineHoy(fijas, hoy);
+        programarNotificaciones(fijas, fechaKey);
     } else {
         agendaViendoId = null;
         accionesHoy.style.display = 'none';
@@ -634,4 +690,5 @@ function renderDiario({ fijas, limpieza }) {
 }
 
 // ── INIT ──────────────────────────────────────────────
+pedirPermisoNotificaciones();
 mostrarHoy();
