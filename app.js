@@ -78,8 +78,8 @@ function mostrarHoy() {
     if (agendaHoy) {
         agendaViendoId = agendaHoy.id;
         accionesHoy.style.display = 'flex';
-        const { fijas, limpieza } = parsearActividades(agendaHoy.texto);
-        document.getElementById('contenido-hoy').innerHTML = renderTablaHoy(fijas, hoy);
+        const { fijas } = parsearActividades(agendaHoy.texto);
+        document.getElementById('contenido-hoy').innerHTML = renderTimelineHoy(fijas, hoy);
     } else {
         agendaViendoId = null;
         accionesHoy.style.display = 'none';
@@ -89,11 +89,12 @@ function mostrarHoy() {
     renderSemanaStrip();
 }
 
-function renderTablaHoy(fijas, hoy) {
+// CAMBIO 3: timeline en lugar de tabla en pantalla principal
+function renderTimelineHoy(fijas, hoy) {
     const ahoraH = hoy.getHours();
     const ahoraM = hoy.getMinutes();
 
-    // Encontrar la próxima actividad
+    // Encontrar próxima actividad
     let proximaIdx = -1;
     for (let i = 0; i < fijas.length; i++) {
         const [h, m] = parsearHora(fijas[i].hora);
@@ -109,38 +110,55 @@ function renderTablaHoy(fijas, hoy) {
     if (inicio + 4 > fijas.length) inicio = Math.max(0, fijas.length - 4);
     const visibles = fijas.slice(inicio, inicio + 4);
 
-    let filas = visibles.map((act, idx) => {
+    let items = visibles.map((act, idx) => {
         const realIdx = inicio + idx;
         const icono = obtenerIcono(act.actividad);
+        const clase = obtenerClase(icono, realIdx);
         const esProxima = realIdx === proximaIdx;
-        return `<tr class="${esProxima ? 'fila-proxima' : ''}">
-            <td class="hora-col">${act.hora}</td>
-            <td><div class="act-col"><span class="emoji">${icono}</span>${act.actividad}</div></td>
-        </tr>`;
+        const esUltimo = idx === visibles.length - 1;
+        return `
+        <div class="timeline-item ${esProxima ? 'proxima' : ''}">
+            <div class="timeline-left">
+                <div class="tl-circle ${clase}">${icono}</div>
+                ${!esUltimo ? '<div class="tl-line"></div>' : ''}
+            </div>
+            <div class="tl-content">
+                <div class="tl-hora">${act.hora} ${esProxima ? '<span class="tag-proxima">próxima</span>' : ''}</div>
+                <div class="tl-nombre">${act.actividad}</div>
+            </div>
+        </div>`;
     }).join('');
 
-    return `<table class="tabla-hoy">
-        <thead><tr><th>HORA</th><th>ACTIVIDAD</th></tr></thead>
-        <tbody>${filas}</tbody>
-    </table>`;
+    return `<div class="timeline-hoy">${items}</div>`;
 }
 
 function renderHorasVacias(hoy) {
     const ahoraH = hoy.getHours();
-    let filas = '';
+    let items = '';
     for (let i = 0; i < 3; i++) {
         const h = ahoraH + i;
         if (h > 23) break;
         const hora = `${String(h).padStart(2,'0')}:00`;
-        filas += `<tr class="fila-vacia">
-            <td class="hora-col">${hora}</td>
-            <td><div class="act-col">—</div></td>
-        </tr>`;
+        const esUltimo = i === 2;
+        items += `
+        <div class="timeline-item">
+            <div class="timeline-left">
+                <div class="tl-circle vacio"></div>
+                ${!esUltimo ? '<div class="tl-line tl-line-vacia"></div>' : ''}
+            </div>
+            <div class="tl-content">
+                <div class="tl-hora">${hora}</div>
+                <div class="tl-nombre tl-vacio">Sin actividad</div>
+            </div>
+        </div>`;
     }
-    return `<table class="tabla-hoy">
-        <thead><tr><th>HORA</th><th>ACTIVIDAD</th></tr></thead>
-        <tbody>${filas}</tbody>
-    </table>`;
+    return `
+        <div class="timeline-hoy">
+            ${items}
+        </div>
+        <div style="text-align:center; margin-top: 16px;">
+            <button class="btn-crear-hoy" onclick="mostrarEditor(null)">+ Crear agenda de hoy</button>
+        </div>`;
 }
 
 // ── SEMANA STRIP ──────────────────────────────────────
@@ -149,15 +167,11 @@ function renderSemanaStrip() {
     const agendas = cargarAgendas();
     const diasNombre = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
 
-    // Obtener lunes de esta semana
-    const diaSemana = hoy.getDay();
-    const lunes = new Date(hoy);
-    lunes.setDate(hoy.getDate() - diaSemana);
-
+    // CAMBIO 1: empezar desde hoy, mostrar 7 días hacia adelante
     let html = '';
     for (let i = 0; i < 7; i++) {
-        const dia = new Date(lunes);
-        dia.setDate(lunes.getDate() + i);
+        const dia = new Date(hoy);
+        dia.setDate(hoy.getDate() + i);
         const fechaKey = formatearFechaKey(dia);
         const agenda = agendas.find(a => a.fechaKey === fechaKey);
 
@@ -170,9 +184,10 @@ function renderSemanaStrip() {
         }
 
         let clases = 'dia-strip';
-        if (esMismaFecha(dia, hoy)) clases += ' hoy';
+        if (i === 0) clases += ' hoy';
         if (agenda) clases += ' tiene-agenda';
 
+        // CAMBIO 2: hoy también es clickeable
         html += `<div class="${clases}" onclick="seleccionarDiaStrip('${fechaKey}', ${!!agenda})">
             <div class="dia-strip-nombre">${diasNombre[dia.getDay()]}</div>
             <div class="dia-strip-num">${dia.getDate()}</div>
@@ -183,12 +198,8 @@ function renderSemanaStrip() {
     document.getElementById('semana-strip').innerHTML = html;
 }
 
+// CAMBIO 2: hoy también abre su dashboard
 function seleccionarDiaStrip(fechaKey, tieneAgenda) {
-    const hoyKey = formatearFechaKey(new Date());
-    if (fechaKey === hoyKey) {
-        // Ya estamos en hoy
-        return;
-    }
     if (tieneAgenda) {
         const agenda = cargarAgendas().find(a => a.fechaKey === fechaKey);
         if (!agenda) return;
@@ -267,11 +278,6 @@ function renderCalendario() {
 
 function seleccionarDiaCalendario(fechaKey, tieneAgenda) {
     document.getElementById('modal-calendario').classList.add('oculto');
-    const hoyKey = formatearFechaKey(new Date());
-
-    if (fechaKey === hoyKey) {
-        return;
-    }
 
     if (tieneAgenda) {
         const agenda = cargarAgendas().find(a => a.fechaKey === fechaKey);
@@ -352,7 +358,6 @@ function mostrarEditor(fechaParam) {
     mesActualMini = new Date(fechaSeleccionada);
     pantallaAnterior = 'pantalla-hoy';
 
-    // Si hay agenda para esa fecha, cargarla
     const fechaKey = formatearFechaKey(fechaSeleccionada);
     const agenda = cargarAgendas().find(a => a.fechaKey === fechaKey);
     if (agenda) {

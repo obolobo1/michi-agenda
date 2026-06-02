@@ -215,3 +215,22 @@ table { width: 100%; border-collapse: collapse; }
 th, td { padding: 8px 6px; border-bottom: 1px solid rgba(255,255,255,0.08); font-size: 0.78rem; }
 th { color: #9ca3af; font-size: 0.7rem; text-transform: uppercase; }
 .time-cell { color: #38bdf8; font-weight: bold; white-space: nowrap; }
+/* TIMELINE EN PANTALLA HOY */
+.timeline-hoy { display: flex; flex-direction: column; margin-bottom: 8px; }
+.timeline-item.proxima .tl-nombre { color: #ffffff; font-weight: 700; }
+.timeline-item.proxima .tl-hora { color: #38bdf8; }
+.tag-proxima {
+    background: #2563eb; color: white; font-size: 0.6rem;
+    padding: 1px 6px; border-radius: 10px; margin-left: 6px;
+    font-weight: bold; text-transform: uppercase;
+}
+.tl-circle.vacio {
+    background: rgba(255,255,255,0.05); border: 2px dashed rgba(255,255,255,0.15);
+}
+.tl-line-vacia { background: rgba(255,255,255,0.1); }
+.tl-vacio { color: #4b5563; font-style: italic; }
+.btn-crear-hoy {
+    padding: 12px 28px; background: #2563eb; border: none;
+    border-radius: 14px; color: white; font-size: 0.95rem;
+    font-weight: bold; cursor: pointer;
+}
