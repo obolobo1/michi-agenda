@@ -18,7 +18,7 @@ header h1 {
     -webkit-text-fill-color: transparent;
 }
 header p { color: #9ca3af; margin-top: 5px; }
-header h2 { font-size: 1.4rem; color: #f3f4f6; }
+header h2 { font-size: 1.3rem; color: #f3f4f6; }
 
 .botones-modo { display: flex; flex-direction: column; gap: 15px; margin-top: 20px; }
 
@@ -29,7 +29,6 @@ header h2 { font-size: 1.4rem; color: #f3f4f6; }
 }
 .btn-modo:active { transform: scale(0.97); }
 .btn-azul { background: #2563eb; }
-.btn-morado { background: #7c3aed; }
 
 .btn-back {
     background: rgba(255,255,255,0.1); border: none; color: #9ca3af;
@@ -39,13 +38,57 @@ header h2 { font-size: 1.4rem; color: #f3f4f6; }
 
 .instrucciones { color: #9ca3af; font-size: 0.85rem; margin-bottom: 12px; line-height: 1.5; }
 
-.input-nombre {
-    width: 100%; background: #1f2937;
-    border: 1px solid rgba(255,255,255,0.15); border-radius: 12px;
-    color: #f9fafb; font-size: 0.95rem; padding: 12px 14px;
-    margin-bottom: 10px;
+/* SELECTOR DE FECHA */
+.fecha-selector {
+    display: flex; align-items: center; gap: 10px;
+    background: #1f2937; border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 12px; padding: 14px; margin-bottom: 10px;
+    cursor: pointer; transition: background 0.2s;
 }
-.input-nombre::placeholder { color: #6b7280; }
+.fecha-selector:hover { background: #273548; }
+.fecha-icono { font-size: 1.2rem; }
+.fecha-display { flex: 1; font-size: 0.95rem; font-weight: 600; color: #f9fafb; }
+.fecha-chevron { color: #9ca3af; font-size: 0.8rem; }
+
+/* MINI CALENDARIO */
+.mini-calendario {
+    background: #1f2937; border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px; padding: 15px; margin-bottom: 12px;
+    transition: all 0.3s;
+}
+.mini-calendario.oculto { display: none; }
+
+.mini-cal-nav {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 12px;
+}
+.mini-cal-nav button {
+    background: rgba(255,255,255,0.1); border: none; color: #f9fafb;
+    width: 30px; height: 30px; border-radius: 8px; cursor: pointer;
+    font-size: 1.1rem;
+}
+.mini-cal-nav span { font-weight: 600; font-size: 0.95rem; color: #f3f4f6; }
+
+.mini-cal-dias-semana {
+    display: grid; grid-template-columns: repeat(7, 1fr);
+    text-align: center; margin-bottom: 6px;
+}
+.mini-cal-dias-semana span { font-size: 0.7rem; color: #6b7280; padding: 4px 0; }
+
+#mini-cal-grid {
+    display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px;
+}
+
+.mini-dia {
+    aspect-ratio: 1; display: flex; align-items: center; justify-content: center;
+    border-radius: 8px; font-size: 0.8rem; cursor: pointer;
+    transition: background 0.15s;
+}
+.mini-dia:hover { background: rgba(255,255,255,0.1); }
+.mini-dia.hoy { background: rgba(59,130,246,0.3); color: #60a5fa; font-weight: bold; }
+.mini-dia.seleccionado { background: #2563eb; color: white; font-weight: bold; }
+.mini-dia.otro-mes { color: #374151; }
+.mini-dia.vacio { cursor: default; }
 
 textarea {
     width: 100%; height: 200px; background: #1f2937;
@@ -65,7 +108,6 @@ textarea {
     color: #9ca3af; font-size: 0.85rem; text-transform: uppercase;
     letter-spacing: 1px; margin-bottom: 12px;
 }
-
 .agenda-guardada {
     background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
     border-radius: 14px; padding: 14px; margin-bottom: 10px;
@@ -73,17 +115,10 @@ textarea {
     cursor: pointer; transition: background 0.2s;
 }
 .agenda-guardada:hover { background: rgba(255,255,255,0.08); }
-
 .agenda-info { display: flex; flex-direction: column; gap: 3px; }
 .agenda-nombre { font-weight: 600; font-size: 0.95rem; }
 .agenda-meta { font-size: 0.75rem; color: #9ca3af; }
-
-.agenda-tipo {
-    font-size: 0.7rem; padding: 3px 8px; border-radius: 20px;
-    font-weight: bold; flex-shrink: 0;
-}
-.tipo-diario { background: rgba(37,99,235,0.3); color: #60a5fa; border: 1px solid #2563eb; }
-.tipo-semanal { background: rgba(124,58,237,0.3); color: #a78bfa; border: 1px solid #7c3aed; }
+.agenda-emoji { font-size: 1.5rem; }
 
 /* ACCIONES DASHBOARD */
 .acciones-dashboard {
@@ -98,12 +133,9 @@ textarea {
 
 /* DASHBOARD DIARIO */
 .dashboard-diario {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 15px;
-    width: 100%;
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 15px; width: 100%;
 }
-
 .panel {
     background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
     border-radius: 20px; padding: 15px; margin-top: 0;
@@ -112,29 +144,18 @@ textarea {
 
 /* TIMELINE VERTICAL */
 .timeline-vertical { display: flex; flex-direction: column; }
-
-.timeline-item {
-    display: flex; flex-direction: row;
-    gap: 10px; align-items: flex-start;
-}
-
-.timeline-left {
-    display: flex; flex-direction: column;
-    align-items: center; flex-shrink: 0;
-}
-
+.timeline-item { display: flex; flex-direction: row; gap: 10px; align-items: flex-start; }
+.timeline-left { display: flex; flex-direction: column; align-items: center; flex-shrink: 0; }
 .tl-circle {
     width: 36px; height: 36px; border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
     font-size: 1rem; flex-shrink: 0;
 }
-
 .tl-line {
     width: 2px; height: 30px;
     background: linear-gradient(to bottom, #3b82f6, #ec4899);
     margin: 3px 0;
 }
-
 .tl-content { padding-top: 4px; padding-bottom: 10px; }
 .tl-hora { font-size: 0.7rem; color: #38bdf8; font-weight: bold; }
 .tl-nombre { font-size: 0.8rem; font-weight: 500; margin-top: 2px; }
@@ -151,12 +172,3 @@ table { width: 100%; border-collapse: collapse; }
 th, td { padding: 8px 6px; border-bottom: 1px solid rgba(255,255,255,0.08); font-size: 0.78rem; }
 th { color: #9ca3af; font-size: 0.7rem; text-transform: uppercase; }
 .time-cell { color: #38bdf8; font-weight: bold; white-space: nowrap; }
-
-/* VISTA SEMANAL */
-.semana-grid { display: grid; grid-template-columns: 1fr; gap: 12px; margin-top: 10px; }
-.dia-col { background: rgba(255,255,255,0.04); border-radius: 16px; padding: 14px; }
-.dia-titulo { color: #38bdf8; font-weight: bold; margin-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 6px; }
-.act-card { background: rgba(255,255,255,0.04); border-radius: 10px; padding: 10px; margin-bottom: 8px; border-left: 4px solid #3b82f6; }
-.act-time { font-size: 0.75rem; color: #9ca3af; font-weight: bold; }
-.act-nombre { font-size: 0.85rem; margin-top: 2px; }
-.libre { color: #6b7280; font-style: italic; font-size: 0.8rem; text-align: center; padding: 10px; }

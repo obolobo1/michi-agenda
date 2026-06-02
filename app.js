@@ -1,162 +1,27 @@
-let modoActual = '';
+// ── ESTADO GLOBAL ─────────────────────────────────────
+let fechaSeleccionada = new Date();
+let mesActualMini = new Date();
 let agendaEditandoId = null;
 let agendaViendoId = null;
 
-// ── NAVEGACIÓN ──────────────────────────────────────────
-function mostrarEditor(modo, id = null) {
-    modoActual = modo;
-    agendaEditandoId = id;
-
-    document.querySelectorAll('.pantalla').forEach(p => p.classList.remove('activa'));
-    document.getElementById('pantalla-editor').classList.add('activa');
-
-    if (id) {
-        const agendas = cargarAgendas();
-        const agenda = agendas.find(a => a.id === id);
-        document.getElementById('nombre-agenda').value = agenda.nombre;
-        document.getElementById('input-actividades').value = agenda.texto;
-    } else {
-        document.getElementById('nombre-agenda').value = '';
-        document.getElementById('input-actividades').value = modo === 'semanal'
-            ? 'Lunes: GYM - 12:00\nLunes: Comer - 14:00\nMartes: Arwen - 11:00\nMiercoles: Carlos Juan - 10:00'
-            : '';
-    }
-
-    if (modo === 'diario') {
-        document.getElementById('titulo-modo').textContent = '📅 Agenda Diaria';
-        document.getElementById('instrucciones').textContent =
-            'Formato: Actividad - Hora (Ej: GYM - 12:00 o Desayuno - 9). Las tareas de limpieza ponlas sin hora al final.';
-    } else {
-        document.getElementById('titulo-modo').textContent = '🔮 Agenda Semanal';
-        document.getElementById('instrucciones').textContent =
-            'Formato: Día: Actividad - Hora (Ej: Lunes: GYM - 12:00). Días válidos: Lunes, Martes, Miercoles, Jueves, Viernes, Sabado, Domingo.';
-    }
-}
-
-function volverAtras() {
-    document.querySelectorAll('.pantalla').forEach(p => p.classList.remove('activa'));
-    document.getElementById('pantalla-seleccion').classList.add('activa');
-    document.getElementById('input-actividades').value = '';
-    document.getElementById('contenido-dashboard').innerHTML = '';
-    agendaViendoId = null;
-    mostrarAgendas();
-}
-
-// ── STORAGE ─────────────────────────────────────────────
-function cargarAgendas() {
-    return JSON.parse(localStorage.getItem('michi-agendas') || '[]');
-}
-
-function guardarAgendas(agendas) {
-    localStorage.setItem('michi-agendas', JSON.stringify(agendas));
-}
-
-function mostrarAgendas() {
-    const agendas = cargarAgendas();
-    const seccion = document.getElementById('seccion-guardadas');
-    const lista = document.getElementById('lista-guardadas');
-
-    if (agendas.length === 0) {
-        seccion.style.display = 'none';
-        return;
-    }
-
-    seccion.style.display = 'block';
-    lista.innerHTML = agendas.map(a => `
-        <div class="agenda-guardada" onclick="abrirAgenda('${a.id}')">
-            <div class="agenda-info">
-                <span class="agenda-nombre">${a.nombre}</span>
-                <span class="agenda-meta">${a.fecha}</span>
-            </div>
-            <span class="agenda-tipo ${a.modo === 'diario' ? 'tipo-diario' : 'tipo-semanal'}">
-                ${a.modo === 'diario' ? '📆 Diaria' : '📚 Semanal'}
-            </span>
-        </div>
-    `).join('');
-}
-
-function abrirAgenda(id) {
-    const agendas = cargarAgendas();
-    const agenda = agendas.find(a => a.id === id);
-    if (!agenda) return;
-
-    agendaViendoId = id;
-    modoActual = agenda.modo;
-
-    document.querySelectorAll('.pantalla').forEach(p => p.classList.remove('activa'));
-    document.getElementById('pantalla-dashboard').classList.add('activa');
-    document.getElementById('titulo-dashboard').textContent = agenda.nombre;
-
-    if (agenda.modo === 'diario') {
-        procesarDiario(agenda.texto);
-    } else {
-        procesarSemanal(agenda.texto);
-    }
-}
-
-function editarAgendaActual() {
-    if (agendaViendoId) mostrarEditor(modoActual, agendaViendoId);
-}
-
-function borrarAgendaActual() {
-    if (!agendaViendoId) return;
-    if (!confirm('¿Borrar esta agenda?')) return;
-    let agendas = cargarAgendas();
-    agendas = agendas.filter(a => a.id !== agendaViendoId);
-    guardarAgendas(agendas);
-    volverAtras();
-}
-
-// ── PROCESAR ─────────────────────────────────────────────
-function procesarAgenda() {
-    const texto = document.getElementById('input-actividades').value.trim();
-    const nombre = document.getElementById('nombre-agenda').value.trim() ||
-        (modoActual === 'diario' ? 'Agenda del día' : 'Agenda semanal');
-
-    if (!texto) { alert('Por favor ingresa tus actividades.'); return; }
-
-    const agendas = cargarAgendas();
-    const ahora = new Date();
-    const fecha = ahora.toLocaleDateString('es-MX', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-
-    if (agendaEditandoId) {
-        const idx = agendas.findIndex(a => a.id === agendaEditandoId);
-        if (idx !== -1) {
-            agendas[idx].nombre = nombre;
-            agendas[idx].texto = texto;
-            agendas[idx].fecha = fecha;
-        }
-        agendaViendoId = agendaEditandoId;
-        agendaEditandoId = null;
-    } else {
-        const nueva = { id: Date.now().toString(), nombre, texto, modo: modoActual, fecha };
-        agendas.unshift(nueva);
-        agendaViendoId = nueva.id;
-    }
-
-    guardarAgendas(agendas);
-
-    document.querySelectorAll('.pantalla').forEach(p => p.classList.remove('activa'));
-    document.getElementById('pantalla-dashboard').classList.add('activa');
-    document.getElementById('titulo-dashboard').textContent = nombre;
-
-    if (modoActual === 'diario') {
-        procesarDiario(texto);
-    } else {
-        procesarSemanal(texto);
-    }
-}
-
-// ── ICONOS ───────────────────────────────────────────────
+// ── ICONOS ────────────────────────────────────────────
 function obtenerIcono(nombre) {
     const n = nombre.toLowerCase();
-    if (n.includes('gym') || n.includes('gimnasio') || n.includes('entrenar')) return '💪';
-    if (n.includes('comer') || n.includes('comida') || n.includes('almuerzo') || n.includes('desayuno')) return '🍽️';
-    if (n.includes('corte') || n.includes('cabello') || n.includes('rasurar') || n.includes('bañar')) return '✂️';
-    if (n.includes('salir') || n.includes('casa')) return '🚗';
-    if (n.includes('trabajo') || n.includes('trabajar') || n.includes('oficina')) return '💼';
-    if (n.includes('doctor') || n.includes('médico') || n.includes('cita')) return '🏥';
-    if (n.includes('escuela') || n.includes('clase') || n.includes('estudiar')) return '📚';
+    if (n.includes('gym') || n.includes('gimnasio') || n.includes('entrenar') || n.includes('ejercicio')) return '💪';
+    if (n.includes('comer') || n.includes('comida') || n.includes('almuerzo') || n.includes('desayuno') || n.includes('cenar') || n.includes('cena')) return '🍽️';
+    if (n.includes('corte') || n.includes('cabello') || n.includes('rasurar') || n.includes('bañar') || n.includes('peluqueria')) return '✂️';
+    if (n.includes('salir') || n.includes('casa') || n.includes('manejar') || n.includes('carro')) return '🚗';
+    if (n.includes('trabajo') || n.includes('trabajar') || n.includes('oficina') || n.includes('reunión') || n.includes('junta')) return '💼';
+    if (n.includes('doctor') || n.includes('médico') || n.includes('cita') || n.includes('hospital') || n.includes('medicina') || n.includes('medicinas')) return '🏥';
+    if (n.includes('escuela') || n.includes('clase') || n.includes('estudiar') || n.includes('tarea') || n.includes('universidad')) return '📚';
+    if (n.includes('dormir') || n.includes('siesta') || n.includes('descansar')) return '😴';
+    if (n.includes('compras') || n.includes('super') || n.includes('mercado') || n.includes('tienda')) return '🛒';
+    if (n.includes('pago') || n.includes('banco') || n.includes('dinero') || n.includes('cajero')) return '💰';
+    if (n.includes('llamar') || n.includes('llamada') || n.includes('teléfono')) return '📞';
+    if (n.includes('cumpleaños') || n.includes('fiesta') || n.includes('celebrar')) return '🎉';
+    if (n.includes('perro') || n.includes('gato') || n.includes('mascota') || n.includes('michi') || n.includes('veterinario')) return '🐾';
+    if (n.includes('música') || n.includes('guitarra') || n.includes('piano') || n.includes('ensayo')) return '🎵';
+    if (n.includes('leer') || n.includes('libro') || n.includes('lectura')) return '📖';
     return '📌';
 }
 
@@ -173,7 +38,216 @@ function parsearHora(horaStr) {
     return [parseInt(partes[0]), parseInt(partes[1] || 0)];
 }
 
-// ── DIARIO ───────────────────────────────────────────────
+// ── FECHAS ────────────────────────────────────────────
+function formatearFechaKey(date) {
+    return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
+}
+
+function formatearFechaDisplay(date) {
+    return date.toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+}
+
+function esMismaFecha(a, b) {
+    return a.getFullYear() === b.getFullYear() &&
+           a.getMonth() === b.getMonth() &&
+           a.getDate() === b.getDate();
+}
+
+// ── SELECTOR DE FECHA ─────────────────────────────────
+function toggleCalendario() {
+    const cal = document.getElementById('mini-calendario');
+    cal.classList.toggle('oculto');
+    if (!cal.classList.contains('oculto')) {
+        mesActualMini = new Date(fechaSeleccionada);
+        renderMiniCalendario();
+    }
+}
+
+function cambiarMesMini(delta) {
+    mesActualMini.setMonth(mesActualMini.getMonth() + delta);
+    renderMiniCalendario();
+}
+
+function renderMiniCalendario() {
+    const hoy = new Date();
+    const año = mesActualMini.getFullYear();
+    const mes = mesActualMini.getMonth();
+
+    document.getElementById('mini-mes-titulo').textContent =
+        mesActualMini.toLocaleDateString('es-MX', { month: 'long', year: 'numeric' });
+
+    const primerDia = new Date(año, mes, 1).getDay();
+    const diasEnMes = new Date(año, mes + 1, 0).getDate();
+
+    let html = '';
+    for (let i = 0; i < primerDia; i++) {
+        html += '<div class="mini-dia vacio"></div>';
+    }
+    for (let d = 1; d <= diasEnMes; d++) {
+        const fecha = new Date(año, mes, d);
+        let clases = 'mini-dia';
+        if (esMismaFecha(fecha, hoy)) clases += ' hoy';
+        if (esMismaFecha(fecha, fechaSeleccionada)) clases += ' seleccionado';
+        html += `<div class="${clases}" onclick="seleccionarFecha(${año}, ${mes}, ${d})">${d}</div>`;
+    }
+
+    document.getElementById('mini-cal-grid').innerHTML = html;
+}
+
+function seleccionarFecha(año, mes, dia) {
+    fechaSeleccionada = new Date(año, mes, dia);
+    actualizarDisplayFecha();
+    document.getElementById('mini-calendario').classList.add('oculto');
+}
+
+function actualizarDisplayFecha() {
+    const hoy = new Date();
+    const display = document.getElementById('fecha-display');
+    if (esMismaFecha(fechaSeleccionada, hoy)) {
+        display.textContent = 'Hoy — ' + formatearFechaDisplay(fechaSeleccionada);
+    } else {
+        display.textContent = formatearFechaDisplay(fechaSeleccionada);
+    }
+}
+
+// ── STORAGE ───────────────────────────────────────────
+function cargarAgendas() {
+    return JSON.parse(localStorage.getItem('michi-agendas') || '[]');
+}
+
+function guardarAgendas(agendas) {
+    localStorage.setItem('michi-agendas', JSON.stringify(agendas));
+}
+
+function buscarAgendaPorFecha(fechaKey) {
+    return cargarAgendas().find(a => a.fechaKey === fechaKey) || null;
+}
+
+// ── NAVEGACIÓN ────────────────────────────────────────
+function mostrarEditor(fechaParam = null) {
+    agendaEditandoId = null;
+    fechaSeleccionada = fechaParam ? new Date(fechaParam + 'T12:00:00') : new Date();
+    mesActualMini = new Date(fechaSeleccionada);
+
+    document.querySelectorAll('.pantalla').forEach(p => p.classList.remove('activa'));
+    document.getElementById('pantalla-editor').classList.add('activa');
+    document.getElementById('input-actividades').value = '';
+    actualizarDisplayFecha();
+}
+
+function volverAtras() {
+    document.querySelectorAll('.pantalla').forEach(p => p.classList.remove('activa'));
+    document.getElementById('pantalla-seleccion').classList.add('activa');
+    document.getElementById('contenido-dashboard').innerHTML = '';
+    agendaViendoId = null;
+    mostrarAgendas();
+}
+
+function editarAgendaActual() {
+    if (!agendaViendoId) return;
+    const agenda = cargarAgendas().find(a => a.id === agendaViendoId);
+    if (!agenda) return;
+
+    agendaEditandoId = agendaViendoId;
+    fechaSeleccionada = new Date(agenda.fechaKey + 'T12:00:00');
+    mesActualMini = new Date(fechaSeleccionada);
+
+    document.querySelectorAll('.pantalla').forEach(p => p.classList.remove('activa'));
+    document.getElementById('pantalla-editor').classList.add('activa');
+    document.getElementById('input-actividades').value = agenda.texto;
+    actualizarDisplayFecha();
+}
+
+function borrarAgendaActual() {
+    if (!agendaViendoId) return;
+    if (!confirm('¿Borrar esta agenda?')) return;
+    let agendas = cargarAgendas();
+    agendas = agendas.filter(a => a.id !== agendaViendoId);
+    guardarAgendas(agendas);
+    volverAtras();
+}
+
+// ── PROCESAR ──────────────────────────────────────────
+function procesarAgenda() {
+    const texto = document.getElementById('input-actividades').value.trim();
+    if (!texto) { alert('Por favor ingresa tus actividades.'); return; }
+
+    const fechaKey = formatearFechaKey(fechaSeleccionada);
+    const nombre = formatearFechaDisplay(fechaSeleccionada);
+    let agendas = cargarAgendas();
+
+    if (agendaEditandoId) {
+        const idx = agendas.findIndex(a => a.id === agendaEditandoId);
+        if (idx !== -1) {
+            agendas[idx].texto = texto;
+            agendas[idx].nombre = nombre;
+            agendas[idx].fechaKey = fechaKey;
+        }
+        agendaViendoId = agendaEditandoId;
+        agendaEditandoId = null;
+    } else {
+        // Si ya existe agenda para esa fecha, reemplazar
+        const existente = agendas.findIndex(a => a.fechaKey === fechaKey);
+        if (existente !== -1) {
+            agendas[existente].texto = texto;
+            agendaViendoId = agendas[existente].id;
+        } else {
+            const nueva = { id: Date.now().toString(), nombre, texto, fechaKey };
+            agendas.unshift(nueva);
+            agendaViendoId = nueva.id;
+        }
+    }
+
+    // Ordenar por fecha más reciente
+    agendas.sort((a, b) => b.fechaKey.localeCompare(a.fechaKey));
+    guardarAgendas(agendas);
+
+    document.querySelectorAll('.pantalla').forEach(p => p.classList.remove('activa'));
+    document.getElementById('pantalla-dashboard').classList.add('activa');
+    document.getElementById('titulo-dashboard').textContent = nombre;
+    procesarDiario(texto);
+}
+
+// ── MOSTRAR AGENDAS ───────────────────────────────────
+function mostrarAgendas() {
+    const agendas = cargarAgendas();
+    const seccion = document.getElementById('seccion-guardadas');
+    const lista = document.getElementById('lista-guardadas');
+
+    if (agendas.length === 0) {
+        seccion.style.display = 'none';
+        return;
+    }
+
+    seccion.style.display = 'block';
+    lista.innerHTML = agendas.map(a => {
+        const primeraLinea = a.texto.split('\n').find(l => l.trim()) || '';
+        const match = primeraLinea.match(/(.*?)[-–—]?\s*(\d{1,2}:\d{2}|\d{1,2})\s*$/);
+        const primeraAct = match ? match[1].trim().replace(/[-–—]\s*$/, '') : primeraLinea;
+        const emoji = obtenerIcono(primeraAct);
+        return `
+        <div class="agenda-guardada" onclick="abrirAgenda('${a.id}')">
+            <div class="agenda-info">
+                <span class="agenda-nombre">${a.nombre}</span>
+                <span class="agenda-meta">${a.fechaKey}</span>
+            </div>
+            <span class="agenda-emoji">${emoji}</span>
+        </div>`;
+    }).join('');
+}
+
+function abrirAgenda(id) {
+    const agenda = cargarAgendas().find(a => a.id === id);
+    if (!agenda) return;
+
+    agendaViendoId = id;
+    document.querySelectorAll('.pantalla').forEach(p => p.classList.remove('activa'));
+    document.getElementById('pantalla-dashboard').classList.add('activa');
+    document.getElementById('titulo-dashboard').textContent = agenda.nombre;
+    procesarDiario(agenda.texto);
+}
+
+// ── DIARIO ────────────────────────────────────────────
 function procesarDiario(texto) {
     const lineas = texto.split('\n');
     const palabrasLimpieza = ['barrer', 'trapear', 'lavar', 'ropa', 'limpieza'];
@@ -233,11 +307,11 @@ function renderDiario(fijas, limpieza) {
 
     return `
         <div class="dashboard-diario">
-            <div class="panel panel-timeline">
+            <div class="panel">
                 <h3>Línea de Tiempo</h3>
                 <div class="timeline-vertical">${timelineItems}</div>
             </div>
-            <div class="panel panel-tabla">
+            <div class="panel">
                 <h3>Actividades</h3>
                 <table><thead><tr><th>Hora</th><th>Actividad</th></tr></thead>
                 <tbody>${filas}</tbody></table>
@@ -247,63 +321,6 @@ function renderDiario(fijas, limpieza) {
     `;
 }
 
-// ── SEMANAL ──────────────────────────────────────────────
-function procesarSemanal(texto) {
-    const dias = ['Lunes','Martes','Miercoles','Jueves','Viernes','Sabado','Domingo'];
-    const semana = {};
-    dias.forEach(d => semana[d] = []);
-
-    texto.split('\n').forEach(linea => {
-        linea = linea.trim();
-        if (!linea) return;
-        const matchDia = linea.match(/^([^:]+):\s*(.*)$/);
-        if (matchDia) {
-            let dia = matchDia[1].trim();
-            dia = dia.charAt(0).toUpperCase() + dia.slice(1).toLowerCase();
-            dia = dia.replace('ércoles','ercoles').replace('ábado','abado');
-            if (semana[dia] !== undefined) {
-                const resto = matchDia[2].trim();
-                const matchHora = resto.match(/(.*?)[-–—]?\s*(\d{1,2}:\d{2}|\d{1,2})\s*$/);
-                if (matchHora) {
-                    let hora = matchHora[2].trim();
-                    if (!hora.includes(':')) hora = hora + ':00';
-                    semana[dia].push({ actividad: matchHora[1].trim().replace(/[-–—]\s*$/, ''), hora });
-                } else {
-                    semana[dia].push({ actividad: resto, hora: '--:--' });
-                }
-            }
-        }
-    });
-
-    dias.forEach(dia => {
-        semana[dia].sort((a, b) => {
-            const [ah, am] = parsearHora(a.hora);
-            const [bh, bm] = parsearHora(b.hora);
-            return ah !== bh ? ah - bh : am - bm;
-        });
-    });
-
-    document.getElementById('contenido-dashboard').innerHTML = renderSemanal(semana, dias);
-}
-
-function renderSemanal(semana, dias) {
-    const cols = dias.map(dia => {
-        const actividades = semana[dia];
-        const contenido = actividades.length === 0
-            ? '<div class="libre">¡Día libre! 🐾</div>'
-            : actividades.map(act => {
-                const icono = obtenerIcono(act.actividad);
-                const color = icono === '💪' ? '#10b981' : icono === '🍽️' ? '#ef4444' : '#3b82f6';
-                return `<div class="act-card" style="border-left-color:${color}">
-                    <div class="act-time">${act.hora}</div>
-                    <div class="act-nombre">${icono} ${act.actividad}</div>
-                </div>`;
-            }).join('');
-        return `<div class="dia-col"><div class="dia-titulo">${dia}</div>${contenido}</div>`;
-    }).join('');
-
-    return `<div class="semana-grid">${cols}</div>`;
-}
-
-// ── INIT ─────────────────────────────────────────────────
+// ── INIT ──────────────────────────────────────────────
+actualizarDisplayFecha();
 mostrarAgendas();

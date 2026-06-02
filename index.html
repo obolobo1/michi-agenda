@@ -10,22 +10,17 @@
 </head>
 <body>
 
-    <!-- PANTALLA 1: SELECCIÓN -->
+    <!-- PANTALLA 1: INICIO -->
     <div id="pantalla-seleccion" class="pantalla activa">
         <header>
             <h1>🐱 Michi Agenda</h1>
             <p>Centro de Control</p>
         </header>
         <div class="botones-modo">
-            <button class="btn-modo btn-azul" onclick="mostrarEditor('diario')">
-                📆 Nueva Agenda Diaria
-            </button>
-            <button class="btn-modo btn-morado" onclick="mostrarEditor('semanal')">
-                📚 Nueva Agenda Semanal
+            <button class="btn-modo btn-azul" onclick="mostrarEditor()">
+                📆 Nueva Agenda
             </button>
         </div>
-
-        <!-- AGENDAS GUARDADAS -->
         <div id="seccion-guardadas" style="margin-top: 30px; display: none;">
             <h3 class="titulo-guardadas">📂 Agendas Guardadas</h3>
             <div id="lista-guardadas"></div>
@@ -36,12 +31,32 @@
     <div id="pantalla-editor" class="pantalla">
         <header>
             <button class="btn-back" onclick="volverAtras()">← Volver</button>
-            <h2 id="titulo-modo"></h2>
+            <h2 id="titulo-editor">📅 Nueva Agenda</h2>
         </header>
-        <p id="instrucciones" class="instrucciones"></p>
-        <input type="text" id="nombre-agenda" placeholder="Nombre de esta agenda (ej: Semana del lunes)" class="input-nombre"/>
+        <p class="instrucciones">
+            Formato: Actividad - Hora (Ej: GYM - 12:00). Las tareas de limpieza ponlas sin hora al final.
+        </p>
+
+        <!-- SELECTOR DE FECHA -->
+        <div class="fecha-selector" onclick="toggleCalendario()">
+            <span class="fecha-icono">📅</span>
+            <span id="fecha-display">Hoy</span>
+            <span class="fecha-chevron">▾</span>
+        </div>
+        <div id="mini-calendario" class="mini-calendario oculto">
+            <div class="mini-cal-nav">
+                <button onclick="cambiarMesMini(-1)">‹</button>
+                <span id="mini-mes-titulo"></span>
+                <button onclick="cambiarMesMini(1)">›</button>
+            </div>
+            <div class="mini-cal-dias-semana">
+                <span>D</span><span>L</span><span>M</span><span>M</span><span>J</span><span>V</span><span>S</span>
+            </div>
+            <div id="mini-cal-grid"></div>
+        </div>
+
         <textarea id="input-actividades" placeholder="Escribe tus actividades aquí..."></textarea>
-        <button class="btn-generar" onclick="procesarAgenda()">🚀 Generar y Guardar</button>
+        <button class="btn-generar" onclick="procesarAgenda()">🚀 Guardar Agenda</button>
     </div>
 
     <!-- PANTALLA 3: DASHBOARD -->
