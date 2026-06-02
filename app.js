@@ -1,8 +1,10 @@
 // ── ESTADO GLOBAL ─────────────────────────────────────
 let fechaSeleccionada = new Date();
 let mesActualMini = new Date();
+let mesActualCal = new Date();
 let agendaEditandoId = null;
 let agendaViendoId = null;
+let pantallaAnterior = 'pantalla-hoy';
 
 // ── ICONOS ────────────────────────────────────────────
 function obtenerIcono(nombre) {
@@ -53,7 +55,240 @@ function esMismaFecha(a, b) {
            a.getDate() === b.getDate();
 }
 
-// ── SELECTOR DE FECHA ─────────────────────────────────
+// ── STORAGE ───────────────────────────────────────────
+function cargarAgendas() {
+    return JSON.parse(localStorage.getItem('michi-agendas') || '[]');
+}
+
+function guardarAgendas(agendas) {
+    localStorage.setItem('michi-agendas', JSON.stringify(agendas));
+}
+
+// ── PANTALLA HOY ──────────────────────────────────────
+function mostrarHoy() {
+    const hoy = new Date();
+    const fechaKey = formatearFechaKey(hoy);
+    const agendas = cargarAgendas();
+    const agendaHoy = agendas.find(a => a.fechaKey === fechaKey);
+
+    document.getElementById('titulo-hoy').textContent = formatearFechaDisplay(hoy);
+
+    const accionesHoy = document.getElementById('acciones-hoy');
+
+    if (agendaHoy) {
+        agendaViendoId = agendaHoy.id;
+        accionesHoy.style.display = 'flex';
+        const { fijas, limpieza } = parsearActividades(agendaHoy.texto);
+        document.getElementById('contenido-hoy').innerHTML = renderTablaHoy(fijas, hoy);
+    } else {
+        agendaViendoId = null;
+        accionesHoy.style.display = 'none';
+        document.getElementById('contenido-hoy').innerHTML = renderHorasVacias(hoy);
+    }
+
+    renderSemanaStrip();
+}
+
+function renderTablaHoy(fijas, hoy) {
+    const ahoraH = hoy.getHours();
+    const ahoraM = hoy.getMinutes();
+
+    // Encontrar la próxima actividad
+    let proximaIdx = -1;
+    for (let i = 0; i < fijas.length; i++) {
+        const [h, m] = parsearHora(fijas[i].hora);
+        if (h > ahoraH || (h === ahoraH && m >= ahoraM)) {
+            proximaIdx = i;
+            break;
+        }
+    }
+
+    // Mostrar máximo 4 actividades centradas en la próxima
+    let inicio = 0;
+    if (proximaIdx > 1) inicio = proximaIdx - 1;
+    if (inicio + 4 > fijas.length) inicio = Math.max(0, fijas.length - 4);
+    const visibles = fijas.slice(inicio, inicio + 4);
+
+    let filas = visibles.map((act, idx) => {
+        const realIdx = inicio + idx;
+        const icono = obtenerIcono(act.actividad);
+        const esProxima = realIdx === proximaIdx;
+        return `<tr class="${esProxima ? 'fila-proxima' : ''}">
+            <td class="hora-col">${act.hora}</td>
+            <td><div class="act-col"><span class="emoji">${icono}</span>${act.actividad}</div></td>
+        </tr>`;
+    }).join('');
+
+    return `<table class="tabla-hoy">
+        <thead><tr><th>HORA</th><th>ACTIVIDAD</th></tr></thead>
+        <tbody>${filas}</tbody>
+    </table>`;
+}
+
+function renderHorasVacias(hoy) {
+    const ahoraH = hoy.getHours();
+    let filas = '';
+    for (let i = 0; i < 3; i++) {
+        const h = ahoraH + i;
+        if (h > 23) break;
+        const hora = `${String(h).padStart(2,'0')}:00`;
+        filas += `<tr class="fila-vacia">
+            <td class="hora-col">${hora}</td>
+            <td><div class="act-col">—</div></td>
+        </tr>`;
+    }
+    return `<table class="tabla-hoy">
+        <thead><tr><th>HORA</th><th>ACTIVIDAD</th></tr></thead>
+        <tbody>${filas}</tbody>
+    </table>`;
+}
+
+// ── SEMANA STRIP ──────────────────────────────────────
+function renderSemanaStrip() {
+    const hoy = new Date();
+    const agendas = cargarAgendas();
+    const diasNombre = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+
+    // Obtener lunes de esta semana
+    const diaSemana = hoy.getDay();
+    const lunes = new Date(hoy);
+    lunes.setDate(hoy.getDate() - diaSemana);
+
+    let html = '';
+    for (let i = 0; i < 7; i++) {
+        const dia = new Date(lunes);
+        dia.setDate(lunes.getDate() + i);
+        const fechaKey = formatearFechaKey(dia);
+        const agenda = agendas.find(a => a.fechaKey === fechaKey);
+
+        let emoji = '';
+        if (agenda) {
+            const primeraLinea = agenda.texto.split('\n').find(l => l.trim()) || '';
+            const match = primeraLinea.match(/(.*?)[-–—]?\s*(\d{1,2}:\d{2}|\d{1,2})\s*$/);
+            const primeraAct = match ? match[1].trim().replace(/[-–—]\s*$/, '') : primeraLinea;
+            emoji = obtenerIcono(primeraAct);
+        }
+
+        let clases = 'dia-strip';
+        if (esMismaFecha(dia, hoy)) clases += ' hoy';
+        if (agenda) clases += ' tiene-agenda';
+
+        html += `<div class="${clases}" onclick="seleccionarDiaStrip('${fechaKey}', ${!!agenda})">
+            <div class="dia-strip-nombre">${diasNombre[dia.getDay()]}</div>
+            <div class="dia-strip-num">${dia.getDate()}</div>
+            <div class="dia-strip-emoji">${emoji}</div>
+        </div>`;
+    }
+
+    document.getElementById('semana-strip').innerHTML = html;
+}
+
+function seleccionarDiaStrip(fechaKey, tieneAgenda) {
+    const hoyKey = formatearFechaKey(new Date());
+    if (fechaKey === hoyKey) {
+        // Ya estamos en hoy
+        return;
+    }
+    if (tieneAgenda) {
+        const agenda = cargarAgendas().find(a => a.fechaKey === fechaKey);
+        if (!agenda) return;
+        agendaViendoId = agenda.id;
+        pantallaAnterior = 'pantalla-hoy';
+        document.querySelectorAll('.pantalla').forEach(p => p.classList.remove('activa'));
+        document.getElementById('pantalla-dashboard').classList.add('activa');
+        document.getElementById('titulo-dashboard').textContent = agenda.nombre;
+        document.getElementById('contenido-dashboard').innerHTML =
+            renderDiario(parsearActividades(agenda.texto));
+    } else {
+        mostrarEditor(fechaKey);
+    }
+}
+
+// ── CALENDARIO MENSUAL ────────────────────────────────
+function abrirCalendario() {
+    mesActualCal = new Date();
+    renderCalendario();
+    document.getElementById('modal-calendario').classList.remove('oculto');
+}
+
+function cerrarCalendario(event) {
+    if (event.target.id === 'modal-calendario') {
+        document.getElementById('modal-calendario').classList.add('oculto');
+    }
+}
+
+function cambiarMes(delta) {
+    mesActualCal.setMonth(mesActualCal.getMonth() + delta);
+    renderCalendario();
+}
+
+function renderCalendario() {
+    const hoy = new Date();
+    const año = mesActualCal.getFullYear();
+    const mes = mesActualCal.getMonth();
+    const agendas = cargarAgendas();
+
+    document.getElementById('titulo-mes').textContent =
+        mesActualCal.toLocaleDateString('es-MX', { month: 'long', year: 'numeric' });
+
+    const primerDia = new Date(año, mes, 1).getDay();
+    const diasEnMes = new Date(año, mes + 1, 0).getDate();
+
+    let html = '';
+    for (let i = 0; i < primerDia; i++) {
+        html += '<div class="cal-dia vacio"></div>';
+    }
+
+    for (let d = 1; d <= diasEnMes; d++) {
+        const fecha = new Date(año, mes, d);
+        const fechaKey = formatearFechaKey(fecha);
+        const agenda = agendas.find(a => a.fechaKey === fechaKey);
+
+        let clases = 'cal-dia';
+        if (esMismaFecha(fecha, hoy)) clases += ' hoy';
+        if (agenda) clases += ' tiene-agenda';
+
+        let emoji = '';
+        if (agenda) {
+            const primeraLinea = agenda.texto.split('\n').find(l => l.trim()) || '';
+            const match = primeraLinea.match(/(.*?)[-–—]?\s*(\d{1,2}:\d{2}|\d{1,2})\s*$/);
+            const primeraAct = match ? match[1].trim().replace(/[-–—]\s*$/, '') : primeraLinea;
+            emoji = `<div class="cal-dia-emoji">${obtenerIcono(primeraAct)}</div>`;
+        }
+
+        html += `<div class="${clases}" onclick="seleccionarDiaCalendario('${fechaKey}', ${!!agenda})">
+            <div class="cal-dia-num">${d}</div>
+            ${emoji}
+        </div>`;
+    }
+
+    document.getElementById('cal-grid').innerHTML = html;
+}
+
+function seleccionarDiaCalendario(fechaKey, tieneAgenda) {
+    document.getElementById('modal-calendario').classList.add('oculto');
+    const hoyKey = formatearFechaKey(new Date());
+
+    if (fechaKey === hoyKey) {
+        return;
+    }
+
+    if (tieneAgenda) {
+        const agenda = cargarAgendas().find(a => a.fechaKey === fechaKey);
+        if (!agenda) return;
+        agendaViendoId = agenda.id;
+        pantallaAnterior = 'pantalla-hoy';
+        document.querySelectorAll('.pantalla').forEach(p => p.classList.remove('activa'));
+        document.getElementById('pantalla-dashboard').classList.add('activa');
+        document.getElementById('titulo-dashboard').textContent = agenda.nombre;
+        document.getElementById('contenido-dashboard').innerHTML =
+            renderDiario(parsearActividades(agenda.texto));
+    } else {
+        mostrarEditor(fechaKey);
+    }
+}
+
+// ── SELECTOR FECHA MINI ───────────────────────────────
 function toggleCalendario() {
     const cal = document.getElementById('mini-calendario');
     cal.classList.toggle('oculto');
@@ -110,50 +345,70 @@ function actualizarDisplayFecha() {
     }
 }
 
-// ── STORAGE ───────────────────────────────────────────
-function cargarAgendas() {
-    return JSON.parse(localStorage.getItem('michi-agendas') || '[]');
-}
-
-function guardarAgendas(agendas) {
-    localStorage.setItem('michi-agendas', JSON.stringify(agendas));
-}
-
-function buscarAgendaPorFecha(fechaKey) {
-    return cargarAgendas().find(a => a.fechaKey === fechaKey) || null;
-}
-
 // ── NAVEGACIÓN ────────────────────────────────────────
-function mostrarEditor(fechaParam = null) {
+function mostrarEditor(fechaParam) {
     agendaEditandoId = null;
     fechaSeleccionada = fechaParam ? new Date(fechaParam + 'T12:00:00') : new Date();
     mesActualMini = new Date(fechaSeleccionada);
+    pantallaAnterior = 'pantalla-hoy';
+
+    // Si hay agenda para esa fecha, cargarla
+    const fechaKey = formatearFechaKey(fechaSeleccionada);
+    const agenda = cargarAgendas().find(a => a.fechaKey === fechaKey);
+    if (agenda) {
+        agendaEditandoId = agenda.id;
+        agendaViendoId = agenda.id;
+    }
 
     document.querySelectorAll('.pantalla').forEach(p => p.classList.remove('activa'));
     document.getElementById('pantalla-editor').classList.add('activa');
-    document.getElementById('input-actividades').value = '';
+    document.getElementById('titulo-editor').textContent = agenda ? '✏️ Editar Agenda' : '📅 Nueva Agenda';
+    document.getElementById('input-actividades').value = agenda ? agenda.texto : '';
     actualizarDisplayFecha();
 }
 
 function volverAtras() {
     document.querySelectorAll('.pantalla').forEach(p => p.classList.remove('activa'));
-    document.getElementById('pantalla-seleccion').classList.add('activa');
-    document.getElementById('contenido-dashboard').innerHTML = '';
-    agendaViendoId = null;
-    mostrarAgendas();
+    document.getElementById(pantallaAnterior).classList.add('activa');
+    if (pantallaAnterior === 'pantalla-hoy') mostrarHoy();
+    agendaEditandoId = null;
+}
+
+function editarHoy() {
+    if (!agendaViendoId) return;
+    const agenda = cargarAgendas().find(a => a.id === agendaViendoId);
+    if (!agenda) return;
+    agendaEditandoId = agendaViendoId;
+    fechaSeleccionada = new Date(agenda.fechaKey + 'T12:00:00');
+    mesActualMini = new Date(fechaSeleccionada);
+    pantallaAnterior = 'pantalla-hoy';
+    document.querySelectorAll('.pantalla').forEach(p => p.classList.remove('activa'));
+    document.getElementById('pantalla-editor').classList.add('activa');
+    document.getElementById('titulo-editor').textContent = '✏️ Editar Agenda';
+    document.getElementById('input-actividades').value = agenda.texto;
+    actualizarDisplayFecha();
+}
+
+function borrarHoy() {
+    if (!agendaViendoId) return;
+    if (!confirm('¿Borrar la agenda de hoy?')) return;
+    let agendas = cargarAgendas();
+    agendas = agendas.filter(a => a.id !== agendaViendoId);
+    guardarAgendas(agendas);
+    mostrarHoy();
 }
 
 function editarAgendaActual() {
     if (!agendaViendoId) return;
     const agenda = cargarAgendas().find(a => a.id === agendaViendoId);
     if (!agenda) return;
-
     agendaEditandoId = agendaViendoId;
     fechaSeleccionada = new Date(agenda.fechaKey + 'T12:00:00');
     mesActualMini = new Date(fechaSeleccionada);
-
+    pantallaAnterior = 'pantalla-dashboard';
     document.querySelectorAll('.pantalla').forEach(p => p.classList.remove('activa'));
     document.getElementById('pantalla-editor').classList.add('activa');
+    document.getElementById('titulo-editor').textContent = '✏️ Editar Agenda';
     document.getElementById('input-actividades').value = agenda.texto;
     actualizarDisplayFecha();
 }
@@ -167,7 +422,7 @@ function borrarAgendaActual() {
     volverAtras();
 }
 
-// ── PROCESAR ──────────────────────────────────────────
+// ── PROCESAR AGENDA ───────────────────────────────────
 function procesarAgenda() {
     const texto = document.getElementById('input-actividades').value.trim();
     if (!texto) { alert('Por favor ingresa tus actividades.'); return; }
@@ -186,10 +441,10 @@ function procesarAgenda() {
         agendaViendoId = agendaEditandoId;
         agendaEditandoId = null;
     } else {
-        // Si ya existe agenda para esa fecha, reemplazar
         const existente = agendas.findIndex(a => a.fechaKey === fechaKey);
         if (existente !== -1) {
             agendas[existente].texto = texto;
+            agendas[existente].nombre = nombre;
             agendaViendoId = agendas[existente].id;
         } else {
             const nueva = { id: Date.now().toString(), nombre, texto, fechaKey };
@@ -198,57 +453,16 @@ function procesarAgenda() {
         }
     }
 
-    // Ordenar por fecha más reciente
     agendas.sort((a, b) => b.fechaKey.localeCompare(a.fechaKey));
     guardarAgendas(agendas);
 
     document.querySelectorAll('.pantalla').forEach(p => p.classList.remove('activa'));
-    document.getElementById('pantalla-dashboard').classList.add('activa');
-    document.getElementById('titulo-dashboard').textContent = nombre;
-    procesarDiario(texto);
+    document.getElementById('pantalla-hoy').classList.add('activa');
+    mostrarHoy();
 }
 
-// ── MOSTRAR AGENDAS ───────────────────────────────────
-function mostrarAgendas() {
-    const agendas = cargarAgendas();
-    const seccion = document.getElementById('seccion-guardadas');
-    const lista = document.getElementById('lista-guardadas');
-
-    if (agendas.length === 0) {
-        seccion.style.display = 'none';
-        return;
-    }
-
-    seccion.style.display = 'block';
-    lista.innerHTML = agendas.map(a => {
-        const primeraLinea = a.texto.split('\n').find(l => l.trim()) || '';
-        const match = primeraLinea.match(/(.*?)[-–—]?\s*(\d{1,2}:\d{2}|\d{1,2})\s*$/);
-        const primeraAct = match ? match[1].trim().replace(/[-–—]\s*$/, '') : primeraLinea;
-        const emoji = obtenerIcono(primeraAct);
-        return `
-        <div class="agenda-guardada" onclick="abrirAgenda('${a.id}')">
-            <div class="agenda-info">
-                <span class="agenda-nombre">${a.nombre}</span>
-                <span class="agenda-meta">${a.fechaKey}</span>
-            </div>
-            <span class="agenda-emoji">${emoji}</span>
-        </div>`;
-    }).join('');
-}
-
-function abrirAgenda(id) {
-    const agenda = cargarAgendas().find(a => a.id === id);
-    if (!agenda) return;
-
-    agendaViendoId = id;
-    document.querySelectorAll('.pantalla').forEach(p => p.classList.remove('activa'));
-    document.getElementById('pantalla-dashboard').classList.add('activa');
-    document.getElementById('titulo-dashboard').textContent = agenda.nombre;
-    procesarDiario(agenda.texto);
-}
-
-// ── DIARIO ────────────────────────────────────────────
-function procesarDiario(texto) {
+// ── PARSEAR Y RENDER ──────────────────────────────────
+function parsearActividades(texto) {
     const lineas = texto.split('\n');
     const palabrasLimpieza = ['barrer', 'trapear', 'lavar', 'ropa', 'limpieza'];
     let fijas = [], limpieza = [];
@@ -277,10 +491,10 @@ function procesarDiario(texto) {
         return ah !== bh ? ah - bh : am - bm;
     });
 
-    document.getElementById('contenido-dashboard').innerHTML = renderDiario(fijas, limpieza);
+    return { fijas, limpieza };
 }
 
-function renderDiario(fijas, limpieza) {
+function renderDiario({ fijas, limpieza }) {
     let timelineItems = fijas.map((act, idx) => {
         const icono = obtenerIcono(act.actividad);
         const clase = obtenerClase(icono, idx);
@@ -322,5 +536,4 @@ function renderDiario(fijas, limpieza) {
 }
 
 // ── INIT ──────────────────────────────────────────────
-actualizarDisplayFecha();
-mostrarAgendas();
+mostrarHoy();

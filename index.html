@@ -10,37 +10,46 @@
 </head>
 <body>
 
-    <!-- PANTALLA 1: INICIO -->
-    <div id="pantalla-seleccion" class="pantalla activa">
+    <!-- PANTALLA PRINCIPAL: HOY -->
+    <div id="pantalla-hoy" class="pantalla activa">
         <header>
             <h1>🐱 Michi Agenda</h1>
-            <p>Centro de Control</p>
+            <h2 id="titulo-hoy"></h2>
         </header>
-        <div class="botones-modo">
-            <button class="btn-modo btn-azul" onclick="mostrarEditor()">
-                📆 Nueva Agenda
-            </button>
+
+        <!-- ACTIVIDADES DEL DÍA -->
+        <div class="seccion-titulo">
+            <span>Actividades</span>
+            <div class="acciones-hoy" id="acciones-hoy" style="display:none">
+                <button class="btn-accion btn-editar" onclick="editarHoy()">✏️</button>
+                <button class="btn-accion btn-borrar" onclick="borrarHoy()">🗑️</button>
+            </div>
         </div>
-        <div id="seccion-guardadas" style="margin-top: 30px; display: none;">
-            <h3 class="titulo-guardadas">📂 Agendas Guardadas</h3>
-            <div id="lista-guardadas"></div>
+        <div id="contenido-hoy"></div>
+
+        <!-- MINI CALENDARIO SEMANAL -->
+        <div class="seccion-titulo" style="margin-top:20px">
+            <span>Calendario</span>
+            <button class="btn-ver-mes" onclick="abrirCalendario()">Ver mes ›</button>
         </div>
+        <div class="semana-strip" id="semana-strip"></div>
+
+        <!-- BOTÓN NUEVA AGENDA -->
+        <button class="btn-flotante" onclick="mostrarEditor(null)">+</button>
     </div>
 
-    <!-- PANTALLA 2: EDITOR -->
+    <!-- PANTALLA: EDITOR -->
     <div id="pantalla-editor" class="pantalla">
         <header>
             <button class="btn-back" onclick="volverAtras()">← Volver</button>
-            <h2 id="titulo-editor">📅 Nueva Agenda</h2>
+            <h2 id="titulo-editor"></h2>
         </header>
         <p class="instrucciones">
             Formato: Actividad - Hora (Ej: GYM - 12:00). Las tareas de limpieza ponlas sin hora al final.
         </p>
-
-        <!-- SELECTOR DE FECHA -->
         <div class="fecha-selector" onclick="toggleCalendario()">
             <span class="fecha-icono">📅</span>
-            <span id="fecha-display">Hoy</span>
+            <span id="fecha-display"></span>
             <span class="fecha-chevron">▾</span>
         </div>
         <div id="mini-calendario" class="mini-calendario oculto">
@@ -50,16 +59,16 @@
                 <button onclick="cambiarMesMini(1)">›</button>
             </div>
             <div class="mini-cal-dias-semana">
-                <span>D</span><span>L</span><span>M</span><span>M</span><span>J</span><span>V</span><span>S</span>
+                <span>D</span><span>L</span><span>M</span>
+                <span>M</span><span>J</span><span>V</span><span>S</span>
             </div>
             <div id="mini-cal-grid"></div>
         </div>
-
         <textarea id="input-actividades" placeholder="Escribe tus actividades aquí..."></textarea>
         <button class="btn-generar" onclick="procesarAgenda()">🚀 Guardar Agenda</button>
     </div>
 
-    <!-- PANTALLA 3: DASHBOARD -->
+    <!-- PANTALLA: DASHBOARD DÍA -->
     <div id="pantalla-dashboard" class="pantalla">
         <header>
             <button class="btn-back" onclick="volverAtras()">← Volver</button>
@@ -70,6 +79,22 @@
             <button class="btn-accion btn-borrar" onclick="borrarAgendaActual()">🗑️ Borrar</button>
         </div>
         <div id="contenido-dashboard"></div>
+    </div>
+
+    <!-- MODAL: CALENDARIO MENSUAL -->
+    <div id="modal-calendario" class="modal-overlay oculto" onclick="cerrarCalendario(event)">
+        <div class="modal-contenido">
+            <div class="cal-nav">
+                <button class="btn-nav" onclick="cambiarMes(-1)">‹</button>
+                <h3 id="titulo-mes"></h3>
+                <button class="btn-nav" onclick="cambiarMes(1)">›</button>
+            </div>
+            <div class="cal-dias-semana">
+                <span>Dom</span><span>Lun</span><span>Mar</span>
+                <span>Mié</span><span>Jue</span><span>Vie</span><span>Sáb</span>
+            </div>
+            <div id="cal-grid" class="cal-grid"></div>
+        </div>
     </div>
 
     <script src="app.js"></script>
