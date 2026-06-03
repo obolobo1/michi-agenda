@@ -26,11 +26,24 @@
         </div>
         <div id="contenido-hoy"></div>
 
+        <!-- PENDIENTES -->
+        <div class="seccion-titulo" style="margin-top:20px">
+            <span>Pendientes</span>
+        </div>
+        <div class="pendientes-box">
+            <div class="pendientes-input-row">
+                <input type="text" id="input-pendiente" placeholder="Agregar pendiente..." class="input-pendiente" onkeydown="if(event.key==='Enter') agregarPendiente()"/>
+                <button class="btn-add-pendiente" onclick="agregarPendiente()">+</button>
+            </div>
+            <ul id="lista-pendientes" class="lista-pendientes"></ul>
+        </div>
+
+        <!-- CALENDARIO -->
         <div class="seccion-titulo" style="margin-top:20px">
             <span>Calendario</span>
-            <button class="btn-ver-mes" onclick="abrirCalendario()">Ver mes ›</button>
         </div>
         <div class="semana-strip" id="semana-strip"></div>
+        <button class="btn-ver-mes-grande" onclick="abrirCalendario()">📅 Ver mes completo</button>
 
         <button class="btn-flotante" onclick="mostrarEditor(null)">+</button>
     </div>

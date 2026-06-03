@@ -17,51 +17,89 @@ async function pedirPermisoNotificaciones() {
 
 function programarNotificaciones(fijas, fechaKey) {
     if (!('Notification' in window) || Notification.permission !== 'granted') return;
-
     const hoyKey = formatearFechaKey(new Date());
-    if (fechaKey !== hoyKey) return; // Solo notificar agenda de hoy
-
-    // Limpiar timers anteriores
+    if (fechaKey !== hoyKey) return;
     if (window._notifTimers) window._notifTimers.forEach(t => clearTimeout(t));
     window._notifTimers = [];
-
     const ahora = new Date();
-
     fijas.forEach(act => {
         const [h, m] = parsearHora(act.hora);
         if (h === 99) return;
-
         const horaActividad = new Date();
         horaActividad.setHours(h, m, 0, 0);
-
-        // Notificar 15 minutos antes
         const horaAviso = new Date(horaActividad.getTime() - 15 * 60 * 1000);
         const msHastaAviso = horaAviso.getTime() - ahora.getTime();
-
         if (msHastaAviso > 0) {
             const timer = setTimeout(() => {
                 new Notification('🐱 Michi Agenda', {
                     body: `En 15 min: ${obtenerIcono(act.actividad)} ${act.actividad} a las ${act.hora}`,
-                    icon: '/michi-agenda/Icono agenda.png',
-                    badge: '/michi-agenda/Icono agenda.png'
+                    icon: '/michi-agenda/Icono agenda.png'
                 });
             }, msHastaAviso);
             window._notifTimers.push(timer);
         }
-
-        // Notificar exactamente a la hora
         const msHastaHora = horaActividad.getTime() - ahora.getTime();
         if (msHastaHora > 0) {
             const timer = setTimeout(() => {
                 new Notification('🐱 Michi Agenda', {
                     body: `¡Ahora! ${obtenerIcono(act.actividad)} ${act.actividad}`,
-                    icon: '/michi-agenda/Icono agenda.png',
-                    badge: '/michi-agenda/Icono agenda.png'
+                    icon: '/michi-agenda/Icono agenda.png'
                 });
             }, msHastaHora);
             window._notifTimers.push(timer);
         }
     });
+}
+
+// ── PENDIENTES ────────────────────────────────────────
+function cargarPendientes() {
+    return JSON.parse(localStorage.getItem('michi-pendientes') || '[]');
+}
+
+function guardarPendientes(pendientes) {
+    localStorage.setItem('michi-pendientes', JSON.stringify(pendientes));
+}
+
+function agregarPendiente() {
+    const input = document.getElementById('input-pendiente');
+    const texto = input.value.trim();
+    if (!texto) return;
+    const pendientes = cargarPendientes();
+    pendientes.unshift({ id: Date.now().toString(), texto, completado: false });
+    guardarPendientes(pendientes);
+    input.value = '';
+    renderPendientes();
+}
+
+function togglePendiente(id) {
+    const pendientes = cargarPendientes();
+    const idx = pendientes.findIndex(p => p.id === id);
+    if (idx !== -1) pendientes[idx].completado = !pendientes[idx].completado;
+    guardarPendientes(pendientes);
+    renderPendientes();
+}
+
+function borrarPendiente(id) {
+    let pendientes = cargarPendientes();
+    pendientes = pendientes.filter(p => p.id !== id);
+    guardarPendientes(pendientes);
+    renderPendientes();
+}
+
+function renderPendientes() {
+    const pendientes = cargarPendientes();
+    const lista = document.getElementById('lista-pendientes');
+    if (!lista) return;
+    if (pendientes.length === 0) {
+        lista.innerHTML = '<li style="color:#4b5563;font-style:italic;font-size:0.82rem;padding:6px 0">Sin pendientes por ahora 🐾</li>';
+        return;
+    }
+    lista.innerHTML = pendientes.map(p => `
+        <li class="pendiente-item ${p.completado ? 'completado' : ''}">
+            <span class="pendiente-texto" onclick="togglePendiente('${p.id}')">${p.completado ? '✅' : '⬜'} ${p.texto}</span>
+            <button class="btn-borrar-pendiente" onclick="borrarPendiente('${p.id}')">✕</button>
+        </li>
+    `).join('');
 }
 
 // ── ICONOS ────────────────────────────────────────────
@@ -244,6 +282,7 @@ function mostrarHoy() {
     }
 
     renderSemanaStrip();
+    renderPendientes();
 }
 
 function renderTimelineHoy(fijas, hoy) {
@@ -313,14 +352,14 @@ function renderHorasVacias(hoy) {
         </div>`;
 }
 
-// ── SEMANA STRIP ──────────────────────────────────────
+// ── SEMANA STRIP — 14 días en 2 filas ─────────────────
 function renderSemanaStrip() {
     const hoy = new Date();
     const agendas = cargarAgendas();
     const diasNombre = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
 
     let html = '';
-    for (let i = 0; i < 7; i++) {
+    for (let i = 0; i < 14; i++) {
         const dia = new Date(hoy);
         dia.setDate(hoy.getDate() + i);
         const fechaKey = formatearFechaKey(dia);
