@@ -17,25 +17,28 @@
             <h2 id="titulo-hoy"></h2>
         </header>
 
-        <div class="seccion-titulo">
-            <span>Actividades</span>
-            <div class="acciones-hoy" id="acciones-hoy" style="display:none">
-                <button class="btn-accion btn-editar" onclick="editarHoy()">✏️</button>
-                <button class="btn-accion btn-borrar" onclick="borrarHoy()">🗑️</button>
+        <!-- TÍTULOS DE COLUMNAS -->
+        <div class="hoy-layout" style="margin-bottom:6px">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+                <span class="hoy-col-titulo">Actividades</span>
+                <div class="acciones-hoy" id="acciones-hoy" style="display:none">
+                    <button class="btn-accion btn-editar" onclick="editarHoy()">✏️</button>
+                    <button class="btn-accion btn-borrar" onclick="borrarHoy()">🗑️</button>
+                </div>
             </div>
+            <span class="hoy-col-titulo">Pendientes</span>
         </div>
-        <div id="contenido-hoy"></div>
 
-        <!-- PENDIENTES -->
-        <div class="seccion-titulo" style="margin-top:20px">
-            <span>Pendientes</span>
-        </div>
-        <div class="pendientes-box">
-            <div class="pendientes-input-row">
-                <input type="text" id="input-pendiente" placeholder="Agregar pendiente..." class="input-pendiente" onkeydown="if(event.key==='Enter') agregarPendiente()"/>
-                <button class="btn-add-pendiente" onclick="agregarPendiente()">+</button>
+        <!-- LAYOUT LADO A LADO -->
+        <div class="hoy-layout">
+            <div id="contenido-hoy"></div>
+            <div class="pendientes-box">
+                <div class="pendientes-input-row">
+                    <input type="text" id="input-pendiente" placeholder="Agregar..." class="input-pendiente" onkeydown="if(event.key==='Enter') agregarPendiente()"/>
+                    <button class="btn-add-pendiente" onclick="agregarPendiente()">+</button>
+                </div>
+                <ul id="lista-pendientes" class="lista-pendientes"></ul>
             </div>
-            <ul id="lista-pendientes" class="lista-pendientes"></ul>
         </div>
 
         <!-- CALENDARIO -->
