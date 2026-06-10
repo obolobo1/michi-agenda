@@ -91,7 +91,7 @@ function renderPendientes() {
     const lista = document.getElementById('lista-pendientes');
     if (!lista) return;
     if (pendientes.length === 0) {
-        lista.innerHTML = '<li style="color:#4b5563;font-style:italic;font-size:0.82rem;padding:6px 0">Sin pendientes por ahora 🐾</li>';
+        lista.innerHTML = '<li style="color:#4b5563;font-style:italic;font-size:0.78rem;padding:6px 0">Sin pendientes 🐾</li>';
         return;
     }
     lista.innerHTML = pendientes.map(p => `
@@ -102,9 +102,66 @@ function renderPendientes() {
     `).join('');
 }
 
+// ── EMOJIS PERSONALIZADOS ─────────────────────────────
+function cargarEmojisCustom() {
+    return JSON.parse(localStorage.getItem('michi-emojis-custom') || '[]');
+}
+
+function guardarEmojisCustom(emojis) {
+    localStorage.setItem('michi-emojis-custom', JSON.stringify(emojis));
+}
+
+function agregarEmojiPersonalizado() {
+    const palabra = document.getElementById('input-palabra').value.trim().toLowerCase();
+    const emoji = document.getElementById('input-emoji').value.trim();
+    if (!palabra || !emoji) { alert('Escribe una palabra clave y un emoji.'); return; }
+    const emojis = cargarEmojisCustom();
+    const existente = emojis.findIndex(e => e.palabra === palabra);
+    if (existente !== -1) {
+        emojis[existente].emoji = emoji;
+    } else {
+        emojis.unshift({ id: Date.now().toString(), palabra, emoji });
+    }
+    guardarEmojisCustom(emojis);
+    document.getElementById('input-palabra').value = '';
+    document.getElementById('input-emoji').value = '';
+    renderEmojisCustom();
+}
+
+function borrarEmojiCustom(id) {
+    let emojis = cargarEmojisCustom();
+    emojis = emojis.filter(e => e.id !== id);
+    guardarEmojisCustom(emojis);
+    renderEmojisCustom();
+}
+
+function renderEmojisCustom() {
+    const emojis = cargarEmojisCustom();
+    const lista = document.getElementById('lista-emojis-custom');
+    if (!lista) return;
+    if (emojis.length === 0) {
+        lista.innerHTML = '<li style="color:#4b5563;font-style:italic;font-size:0.82rem;padding:6px 0">Sin emojis personalizados todavía 🐾</li>';
+        return;
+    }
+    lista.innerHTML = emojis.map(e => `
+        <li class="emoji-custom-item">
+            <span class="emoji-custom-icono">${e.emoji}</span>
+            <span class="emoji-custom-flecha">←</span>
+            <span class="emoji-custom-palabra">${e.palabra}</span>
+            <button class="btn-borrar-emoji" onclick="borrarEmojiCustom('${e.id}')">✕</button>
+        </li>
+    `).join('');
+}
+
 // ── ICONOS ────────────────────────────────────────────
 function obtenerIcono(nombre) {
     const n = nombre.toLowerCase();
+
+    // Primero revisar emojis personalizados del usuario
+    const emojisCustom = cargarEmojisCustom();
+    for (const ec of emojisCustom) {
+        if (n.includes(ec.palabra)) return ec.emoji;
+    }
 
     // EJERCICIO Y DEPORTE
     if (n.includes('gym') || n.includes('gimnasio') || n.includes('pesas') || n.includes('crossfit') || n.includes('entren')) return '💪';
@@ -352,7 +409,7 @@ function renderHorasVacias(hoy) {
         </div>`;
 }
 
-// ── SEMANA STRIP — 14 días en 2 filas ─────────────────
+// ── SEMANA STRIP ──────────────────────────────────────
 function renderSemanaStrip() {
     const hoy = new Date();
     const agendas = cargarAgendas();
@@ -466,7 +523,6 @@ function renderCalendario() {
 
 function seleccionarDiaCalendario(fechaKey, tieneAgenda) {
     document.getElementById('modal-calendario').classList.add('oculto');
-
     if (tieneAgenda) {
         const agenda = cargarAgendas().find(a => a.fechaKey === fechaKey);
         if (!agenda) return;
@@ -540,6 +596,13 @@ function actualizarDisplayFecha() {
 }
 
 // ── NAVEGACIÓN ────────────────────────────────────────
+function mostrarConfig() {
+    pantallaAnterior = 'pantalla-hoy';
+    document.querySelectorAll('.pantalla').forEach(p => p.classList.remove('activa'));
+    document.getElementById('pantalla-config').classList.add('activa');
+    renderEmojisCustom();
+}
+
 function mostrarEditor(fechaParam) {
     agendaEditandoId = null;
     fechaSeleccionada = fechaParam ? new Date(fechaParam + 'T12:00:00') : new Date();
