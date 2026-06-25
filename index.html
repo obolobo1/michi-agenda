@@ -10,8 +10,49 @@
 </head>
 <body>
 
+    <!-- PANTALLA: LOGIN -->
+    <div id="pantalla-login" class="pantalla activa">
+        <div class="login-container">
+            <div class="login-header">
+                <h1>🐱 Michi Agenda</h1>
+                <p>Tu agenda inteligente</p>
+            </div>
+
+            <div id="login-tabs" class="login-tabs">
+                <button class="tab-btn activo" onclick="mostrarTab('iniciar')">Iniciar sesión</button>
+                <button class="tab-btn" onclick="mostrarTab('registrar')">Registrarse</button>
+            </div>
+
+            <!-- INICIAR SESIÓN -->
+            <div id="tab-iniciar" class="login-form">
+                <input type="email" id="login-email" placeholder="Correo electrónico" class="input-login"/>
+                <input type="password" id="login-password" placeholder="Contraseña" class="input-login"/>
+                <button class="btn-login" onclick="handleLogin()">Entrar</button>
+                <div class="login-divider"><span>o</span></div>
+                <button class="btn-google" onclick="handleGoogle()">
+                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20"/> 
+                    Continuar con Google
+                </button>
+            </div>
+
+            <!-- REGISTRARSE -->
+            <div id="tab-registrar" class="login-form oculto">
+                <input type="email" id="reg-email" placeholder="Correo electrónico" class="input-login"/>
+                <input type="password" id="reg-password" placeholder="Contraseña (mínimo 6 caracteres)" class="input-login"/>
+                <button class="btn-login" onclick="handleRegistro()">Crear cuenta</button>
+                <div class="login-divider"><span>o</span></div>
+                <button class="btn-google" onclick="handleGoogle()">
+                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20"/> 
+                    Continuar con Google
+                </button>
+            </div>
+
+            <p id="login-error" class="login-error"></p>
+        </div>
+    </div>
+
     <!-- PANTALLA PRINCIPAL: HOY -->
-    <div id="pantalla-hoy" class="pantalla activa">
+    <div id="pantalla-hoy" class="pantalla">
         <header>
             <div class="header-top">
                 <h1>🐱 Michi Agenda</h1>
@@ -101,6 +142,18 @@
             <h2>⚙️ Configuración</h2>
         </header>
 
+        <!-- CUENTA -->
+        <div class="config-seccion">
+            <div class="config-seccion-titulo">👤 Cuenta</div>
+            <div class="config-info">
+                <div class="config-info-row">
+                    <span>Usuario</span>
+                    <span id="config-usuario">—</span>
+                </div>
+            </div>
+            <button class="btn-cerrar-sesion" onclick="handleCerrarSesion()">Cerrar sesión</button>
+        </div>
+
         <!-- EMOJIS PERSONALIZADOS -->
         <div class="config-seccion">
             <div class="config-seccion-titulo">🎨 Emojis personalizados</div>
@@ -140,15 +193,6 @@
             </div>
         </div>
 
-        <!-- CUENTA -->
-        <div class="config-seccion proximamente">
-            <div class="config-seccion-titulo">👤 Cuenta y sincronización <span class="badge-pronto">Próximamente</span></div>
-            <p class="config-desc">Guarda tus agendas en la nube y accede desde cualquier dispositivo.</p>
-            <div class="config-opciones-disabled">
-                <span>Iniciar sesión</span><span>Sincronizar</span><span>Exportar datos</span>
-            </div>
-        </div>
-
         <!-- ACERCA DE -->
         <div class="config-seccion">
             <div class="config-seccion-titulo">ℹ️ Acerca de</div>
@@ -157,7 +201,6 @@
                 <div class="config-info-row"><span>Desarrollado por</span><span>obolobo1</span></div>
             </div>
         </div>
-
     </div>
 
     <!-- MODAL: CALENDARIO MENSUAL -->
@@ -176,7 +219,8 @@
         </div>
     </div>
 
-    <script src="app.js"></script>
+    <script type="module" src="firebase.js"></script>
+    <script type="module" src="app.js"></script>
     <script>
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('/michi-agenda/sw.js')
