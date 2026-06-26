@@ -1,6 +1,6 @@
 // ── FIREBASE CONFIG ───────────────────────────────────
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import { getFirestore, doc, setDoc, getDoc, collection, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -40,6 +40,10 @@ export async function cerrarSesion() {
 
 export function observarUsuario(callback) {
     return onAuthStateChanged(auth, callback);
+}
+
+export async function recuperarContrasena(email) {
+    await sendPasswordResetEmail(auth, email);
 }
 
 // ── AGENDAS EN LA NUBE ────────────────────────────────

@@ -26,11 +26,15 @@
             <!-- INICIAR SESIÓN -->
             <div id="tab-iniciar" class="login-form">
                 <input type="email" id="login-email" placeholder="Correo electrónico" class="input-login"/>
-                <input type="password" id="login-password" placeholder="Contraseña" class="input-login"/>
+                <div class="password-wrapper">
+                    <input type="password" id="login-password" placeholder="Contraseña" class="input-login"/>
+                    <button class="btn-ojo" onclick="togglePassword('login-password', this)">👁️</button>
+                </div>
                 <button class="btn-login" onclick="handleLogin()">Entrar</button>
+                <button class="btn-olvide" onclick="mostrarRecuperar()">¿Olvidaste tu contraseña?</button>
                 <div class="login-divider"><span>o</span></div>
                 <button class="btn-google" onclick="handleGoogle()">
-                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20"/> 
+                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20"/>
                     Continuar con Google
                 </button>
             </div>
@@ -38,16 +42,30 @@
             <!-- REGISTRARSE -->
             <div id="tab-registrar" class="login-form oculto">
                 <input type="email" id="reg-email" placeholder="Correo electrónico" class="input-login"/>
-                <input type="password" id="reg-password" placeholder="Contraseña (mínimo 6 caracteres)" class="input-login"/>
+                <div class="password-wrapper">
+                    <input type="password" id="reg-password" placeholder="Contraseña (mínimo 6 caracteres)" class="input-login"/>
+                    <button class="btn-ojo" onclick="togglePassword('reg-password', this)">👁️</button>
+                </div>
                 <button class="btn-login" onclick="handleRegistro()">Crear cuenta</button>
                 <div class="login-divider"><span>o</span></div>
                 <button class="btn-google" onclick="handleGoogle()">
-                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20"/> 
+                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20"/>
                     Continuar con Google
                 </button>
             </div>
 
+            <!-- RECUPERAR CONTRASEÑA -->
+            <div id="tab-recuperar" class="login-form oculto">
+                <p style="color:#9ca3af;font-size:0.85rem;margin-bottom:12px;line-height:1.5">
+                    Ingresa tu correo y te enviaremos un enlace para restablecer tu contraseña.
+                </p>
+                <input type="email" id="recuperar-email" placeholder="Correo electrónico" class="input-login"/>
+                <button class="btn-login" onclick="handleRecuperar()">Enviar correo</button>
+                <button class="btn-olvide" onclick="mostrarTab('iniciar')">← Volver a iniciar sesión</button>
+            </div>
+
             <p id="login-error" class="login-error"></p>
+            <p id="login-exito" class="login-exito"></p>
         </div>
     </div>
 
@@ -142,7 +160,6 @@
             <h2>⚙️ Configuración</h2>
         </header>
 
-        <!-- CUENTA -->
         <div class="config-seccion">
             <div class="config-seccion-titulo">👤 Cuenta</div>
             <div class="config-info">
@@ -154,7 +171,6 @@
             <button class="btn-cerrar-sesion" onclick="handleCerrarSesion()">Cerrar sesión</button>
         </div>
 
-        <!-- EMOJIS PERSONALIZADOS -->
         <div class="config-seccion">
             <div class="config-seccion-titulo">🎨 Emojis personalizados</div>
             <p class="config-desc">Si la actividad contiene esta palabra, usará tu emoji.</p>
@@ -166,7 +182,6 @@
             <ul id="lista-emojis-custom" class="lista-emojis-custom"></ul>
         </div>
 
-        <!-- NOTIFICACIONES -->
         <div class="config-seccion proximamente">
             <div class="config-seccion-titulo">🔔 Notificaciones <span class="badge-pronto">Próximamente</span></div>
             <p class="config-desc">Elige cuántos minutos antes quieres que te avisemos.</p>
@@ -175,7 +190,6 @@
             </div>
         </div>
 
-        <!-- APARIENCIA -->
         <div class="config-seccion proximamente">
             <div class="config-seccion-titulo">🎨 Apariencia <span class="badge-pronto">Próximamente</span></div>
             <p class="config-desc">Personaliza los colores y el tema de la app.</p>
@@ -184,7 +198,6 @@
             </div>
         </div>
 
-        <!-- FORMATO -->
         <div class="config-seccion proximamente">
             <div class="config-seccion-titulo">🕐 Formato de hora <span class="badge-pronto">Próximamente</span></div>
             <p class="config-desc">Elige cómo se muestran las horas en tu agenda.</p>
@@ -193,7 +206,6 @@
             </div>
         </div>
 
-        <!-- ACERCA DE -->
         <div class="config-seccion">
             <div class="config-seccion-titulo">ℹ️ Acerca de</div>
             <div class="config-info">

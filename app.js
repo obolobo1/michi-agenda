@@ -1,7 +1,7 @@
 // ── IMPORTS FIREBASE ──────────────────────────────────
 import {
     registrarUsuario, iniciarSesion, iniciarSesionGoogle,
-    cerrarSesion, observarUsuario,
+    cerrarSesion, observarUsuario, recuperarContrasena,
     guardarAgendaNube, cargarAgendasNube, borrarAgendaNube,
     guardarPendientesNube, cargarPendientesNube,
     guardarEmojisNube, cargarEmojisNube
@@ -50,10 +50,46 @@ async function sincronizarDesdNube() {
 function mostrarTab(tab) {
     document.getElementById('tab-iniciar').classList.toggle('oculto', tab !== 'iniciar');
     document.getElementById('tab-registrar').classList.toggle('oculto', tab !== 'registrar');
+    document.getElementById('tab-recuperar').classList.add('oculto');
     document.querySelectorAll('.tab-btn').forEach((btn, i) => {
         btn.classList.toggle('activo', (i === 0 && tab === 'iniciar') || (i === 1 && tab === 'registrar'));
     });
     document.getElementById('login-error').textContent = '';
+    document.getElementById('login-exito').textContent = '';
+}
+
+function togglePassword(inputId, btn) {
+    const input = document.getElementById(inputId);
+    if (input.type === 'password') {
+        input.type = 'text';
+        btn.textContent = '🙈';
+    } else {
+        input.type = 'password';
+        btn.textContent = '👁️';
+    }
+}
+
+function mostrarRecuperar() {
+    document.getElementById('tab-iniciar').classList.add('oculto');
+    document.getElementById('tab-registrar').classList.add('oculto');
+    document.getElementById('tab-recuperar').classList.remove('oculto');
+    document.getElementById('login-error').textContent = '';
+    document.getElementById('login-exito').textContent = '';
+}
+
+async function handleRecuperar() {
+    const email = document.getElementById('recuperar-email').value.trim();
+    const errorEl = document.getElementById('login-error');
+    const exitoEl = document.getElementById('login-exito');
+    if (!email) { errorEl.textContent = 'Ingresa tu correo.'; return; }
+    try {
+        await recuperarContrasena(email);
+        errorEl.textContent = '';
+        exitoEl.textContent = '✅ Correo enviado. Revisa tu bandeja de entrada.';
+    } catch (e) {
+        exitoEl.textContent = '';
+        errorEl.textContent = 'No encontramos ese correo.';
+    }
 }
 
 async function handleLogin() {
@@ -171,7 +207,7 @@ function togglePendiente(id) {
 }
 
 function borrarPendiente(id) {
-    let pendientes = cargarPendientes().filter(p => p.id !== id);
+    const pendientes = cargarPendientes().filter(p => p.id !== id);
     guardarPendientes(pendientes);
     renderPendientes();
 }
@@ -670,12 +706,10 @@ function editarHoy() {
 function borrarHoy() {
     if (!agendaViendoId) return;
     if (!confirm('¿Borrar la agenda de hoy?')) return;
-    let agendas = cargarAgendas().filter(a => a.id !== agendaViendoId);
-    guardarAgendas(agendas);
-    if (usuarioActual) {
-        const agenda = JSON.parse(localStorage.getItem('michi-agendas') || '[]').find(a => a.id === agendaViendoId);
-        if (agenda) borrarAgendaNube(usuarioActual.uid, agenda.fechaKey).catch(() => {});
-    }
+    const agendas = cargarAgendas();
+    const agenda = agendas.find(a => a.id === agendaViendoId);
+    guardarAgendas(agendas.filter(a => a.id !== agendaViendoId));
+    if (usuarioActual && agenda) borrarAgendaNube(usuarioActual.uid, agenda.fechaKey).catch(() => {});
     mostrarHoy();
 }
 
@@ -714,7 +748,10 @@ function procesarAgenda() {
     let agendaGuardada;
     if (agendaEditandoId) {
         const idx = agendas.findIndex(a => a.id === agendaEditandoId);
-        if (idx !== -1) { agendas[idx].texto = texto; agendas[idx].nombre = nombre; agendas[idx].fechaKey = fechaKey; agendaGuardada = agendas[idx]; }
+        if (idx !== -1) {
+            agendas[idx].texto = texto; agendas[idx].nombre = nombre; agendas[idx].fechaKey = fechaKey;
+            agendaGuardada = agendas[idx];
+        }
         agendaViendoId = agendaEditandoId;
         agendaEditandoId = null;
     } else {
@@ -801,8 +838,10 @@ function renderDiario({ fijas, limpieza }) {
 // ── INIT ──────────────────────────────────────────────
 pedirPermisoNotificaciones();
 
-// Exponer funciones globalmente para los onclick del HTML
 window.mostrarTab = mostrarTab;
+window.togglePassword = togglePassword;
+window.mostrarRecuperar = mostrarRecuperar;
+window.handleRecuperar = handleRecuperar;
 window.handleLogin = handleLogin;
 window.handleRegistro = handleRegistro;
 window.handleGoogle = handleGoogle;

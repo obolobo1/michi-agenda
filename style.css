@@ -297,3 +297,25 @@ th { color: #9ca3af; font-size: 0.7rem; text-transform: uppercase; }
 
 /* OCULTO */
 .oculto { display: none; }
+
+/* OJITO Y RECUPERAR */
+.password-wrapper {
+    position: relative; width: 100%;
+}
+.password-wrapper .input-login {
+    width: 100%; padding-right: 44px;
+}
+.btn-ojo {
+    position: absolute; right: 12px; top: 50%;
+    transform: translateY(-50%); background: none;
+    border: none; cursor: pointer; font-size: 1rem; padding: 0;
+}
+.btn-olvide {
+    background: none; border: none; color: #9ca3af;
+    font-size: 0.82rem; cursor: pointer; text-align: center;
+    text-decoration: underline; padding: 4px 0;
+}
+.login-exito {
+    color: #34d399; font-size: 0.82rem;
+    text-align: center; margin-top: 8px; min-height: 20px;
+}
