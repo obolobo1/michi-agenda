@@ -17,13 +17,10 @@
                 <h1>🐱 Michi Agenda</h1>
                 <p>Tu agenda inteligente</p>
             </div>
-
             <div id="login-tabs" class="login-tabs">
                 <button class="tab-btn activo" onclick="mostrarTab('iniciar')">Iniciar sesión</button>
                 <button class="tab-btn" onclick="mostrarTab('registrar')">Registrarse</button>
             </div>
-
-            <!-- INICIAR SESIÓN -->
             <div id="tab-iniciar" class="login-form">
                 <input type="email" id="login-email" placeholder="Correo electrónico" class="input-login"/>
                 <div class="password-wrapper">
@@ -38,8 +35,6 @@
                     Continuar con Google
                 </button>
             </div>
-
-            <!-- REGISTRARSE -->
             <div id="tab-registrar" class="login-form oculto">
                 <input type="email" id="reg-email" placeholder="Correo electrónico" class="input-login"/>
                 <div class="password-wrapper">
@@ -53,8 +48,6 @@
                     Continuar con Google
                 </button>
             </div>
-
-            <!-- RECUPERAR CONTRASEÑA -->
             <div id="tab-recuperar" class="login-form oculto">
                 <p style="color:#9ca3af;font-size:0.85rem;margin-bottom:12px;line-height:1.5">
                     Ingresa tu correo y te enviaremos un enlace para restablecer tu contraseña.
@@ -63,7 +56,6 @@
                 <button class="btn-login" onclick="handleRecuperar()">Enviar correo</button>
                 <button class="btn-olvide" onclick="mostrarTab('iniciar')">← Volver a iniciar sesión</button>
             </div>
-
             <p id="login-error" class="login-error"></p>
             <p id="login-exito" class="login-exito"></p>
         </div>
@@ -78,7 +70,6 @@
             </div>
             <h2 id="titulo-hoy"></h2>
         </header>
-
         <div class="hoy-layout" style="margin-bottom:6px">
             <div style="display:flex;justify-content:space-between;align-items:center">
                 <span class="hoy-col-titulo">Actividades</span>
@@ -89,7 +80,6 @@
             </div>
             <span class="hoy-col-titulo">Pendientes</span>
         </div>
-
         <div class="hoy-layout">
             <div id="contenido-hoy"></div>
             <div class="pendientes-box">
@@ -100,13 +90,11 @@
                 <ul id="lista-pendientes" class="lista-pendientes"></ul>
             </div>
         </div>
-
         <div class="seccion-titulo" style="margin-top:20px">
             <span>Calendario</span>
         </div>
         <div class="semana-strip" id="semana-strip"></div>
         <button class="btn-ver-mes-grande" onclick="abrirCalendario()">📅 Ver mes completo</button>
-
         <button class="btn-flotante" onclick="mostrarEditor(null)">+</button>
     </div>
 
@@ -117,7 +105,9 @@
             <h2 id="titulo-editor"></h2>
         </header>
         <p class="instrucciones">
-            Formato: Actividad - Hora (Ej: GYM - 12:00). Las tareas de limpieza ponlas sin hora al final.
+            Formato: Actividad - Hora (Ej: GYM - 12:00)<br>
+            Recurrentes: GYM - 07:00 [lunes, miércoles, viernes]<br>
+            También: [todos los días] [fines de semana] [entre semana]
         </p>
         <div class="fecha-selector" onclick="toggleCalendario()">
             <span class="fecha-icono">📅</span>
@@ -146,6 +136,13 @@
             <button class="btn-back" onclick="volverAtras()">← Volver</button>
             <h2 id="titulo-dashboard"></h2>
         </header>
+
+        <!-- FLECHAS NAVEGACIÓN -->
+        <div class="nav-dias">
+            <button class="btn-dia-anterior" onclick="navegarDia(-1)">‹ Día anterior</button>
+            <button class="btn-dia-siguiente" onclick="navegarDia(1)">Día siguiente ›</button>
+        </div>
+
         <div class="acciones-dashboard">
             <button class="btn-accion btn-editar" onclick="editarAgendaActual()">✏️ Editar</button>
             <button class="btn-accion btn-borrar" onclick="borrarAgendaActual()">🗑️ Borrar</button>
@@ -159,7 +156,6 @@
             <button class="btn-back" onclick="volverAtras()">← Volver</button>
             <h2>⚙️ Configuración</h2>
         </header>
-
         <div class="config-seccion">
             <div class="config-seccion-titulo">👤 Cuenta</div>
             <div class="config-info">
@@ -170,7 +166,6 @@
             </div>
             <button class="btn-cerrar-sesion" onclick="handleCerrarSesion()">Cerrar sesión</button>
         </div>
-
         <div class="config-seccion">
             <div class="config-seccion-titulo">🎨 Emojis personalizados</div>
             <p class="config-desc">Si la actividad contiene esta palabra, usará tu emoji.</p>
@@ -181,7 +176,6 @@
             </div>
             <ul id="lista-emojis-custom" class="lista-emojis-custom"></ul>
         </div>
-
         <div class="config-seccion proximamente">
             <div class="config-seccion-titulo">🔔 Notificaciones <span class="badge-pronto">Próximamente</span></div>
             <p class="config-desc">Elige cuántos minutos antes quieres que te avisemos.</p>
@@ -189,7 +183,6 @@
                 <span>5 min</span><span>10 min</span><span>15 min</span><span>30 min</span>
             </div>
         </div>
-
         <div class="config-seccion proximamente">
             <div class="config-seccion-titulo">🎨 Apariencia <span class="badge-pronto">Próximamente</span></div>
             <p class="config-desc">Personaliza los colores y el tema de la app.</p>
@@ -197,7 +190,6 @@
                 <span>Oscuro</span><span>Claro</span><span>Personalizado</span>
             </div>
         </div>
-
         <div class="config-seccion proximamente">
             <div class="config-seccion-titulo">🕐 Formato de hora <span class="badge-pronto">Próximamente</span></div>
             <p class="config-desc">Elige cómo se muestran las horas en tu agenda.</p>
@@ -205,7 +197,6 @@
                 <span>24 horas</span><span>12 horas (AM/PM)</span>
             </div>
         </div>
-
         <div class="config-seccion">
             <div class="config-seccion-titulo">ℹ️ Acerca de</div>
             <div class="config-info">

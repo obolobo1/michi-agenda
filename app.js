@@ -15,6 +15,7 @@ let agendaEditandoId = null;
 let agendaViendoId = null;
 let pantallaAnterior = 'pantalla-hoy';
 let usuarioActual = null;
+let fechaDashboard = null;
 
 // ── AUTH ──────────────────────────────────────────────
 observarUsuario(async (user) => {
@@ -175,6 +176,78 @@ function programarNotificaciones(fijas, fechaKey) {
             window._notifTimers.push(timer);
         }
     });
+}
+
+// ── RECURRENTES ───────────────────────────────────────
+const DIAS_MAP = {
+    'lunes': 1, 'martes': 2, 'miércoles': 3, 'miercoles': 3,
+    'jueves': 4, 'viernes': 5, 'sábado': 6, 'sabado': 6, 'domingo': 0
+};
+
+function cargarRecurrentes() {
+    return JSON.parse(localStorage.getItem('michi-recurrentes') || '[]');
+}
+
+function guardarRecurrentes(recurrentes) {
+    localStorage.setItem('michi-recurrentes', JSON.stringify(recurrentes));
+}
+
+function parsearRecurrente(linea) {
+    const match = linea.match(/^(.*?)\[(.+?)\]\s*$/);
+    if (!match) return null;
+    const actividad = match[1].trim();
+    const diasStr = match[2].toLowerCase();
+    let diasAplica = [];
+
+    if (diasStr.includes('todos los días') || diasStr.includes('todos los dias') || diasStr.includes('diario')) {
+        diasAplica = [0, 1, 2, 3, 4, 5, 6];
+    } else if (diasStr.includes('entre semana') || diasStr.includes('días hábiles') || diasStr.includes('dias habiles')) {
+        diasAplica = [1, 2, 3, 4, 5];
+    } else if (diasStr.includes('fines de semana') || diasStr.includes('fin de semana')) {
+        diasAplica = [0, 6];
+    } else {
+        diasStr.split(',').forEach(d => {
+            const dia = d.trim();
+            if (DIAS_MAP[dia] !== undefined) diasAplica.push(DIAS_MAP[dia]);
+        });
+    }
+
+    return { actividad, diasAplica };
+}
+
+function obtenerActividadesRecurrentesParaDia(fecha) {
+    const recurrentes = cargarRecurrentes();
+    const diaSemana = fecha.getDay();
+    const resultado = [];
+
+    recurrentes.forEach(rec => {
+        if (rec.diasAplica.includes(diaSemana)) {
+            resultado.push(rec.actividad);
+        }
+    });
+
+    return resultado;
+}
+
+function obtenerTextoConRecurrentes(fecha) {
+    const fechaKey = formatearFechaKey(fecha);
+    const agendas = cargarAgendas();
+    const agendaExistente = agendas.find(a => a.fechaKey === fechaKey);
+
+    const recurrentes = obtenerActividadesRecurrentesParaDia(fecha);
+    if (recurrentes.length === 0) return agendaExistente ? agendaExistente.texto : null;
+
+    if (agendaExistente) {
+        const lineasExistentes = agendaExistente.texto.split('\n').map(l => l.trim().toLowerCase());
+        const nuevas = recurrentes.filter(r => {
+            const actBase = r.replace(/\s*-\s*\d{1,2}(:\d{2})?\s*$/, '').trim().toLowerCase();
+            return !lineasExistentes.some(l => l.includes(actBase));
+        });
+        if (nuevas.length === 0) return agendaExistente.texto;
+        return agendaExistente.texto + '\n' + nuevas.join('\n');
+    }
+
+    return recurrentes.join('\n');
 }
 
 // ── PENDIENTES ────────────────────────────────────────
@@ -397,6 +470,12 @@ function esMismaFecha(a, b) {
            a.getDate() === b.getDate();
 }
 
+function sumarDias(date, dias) {
+    const d = new Date(date);
+    d.setDate(d.getDate() + dias);
+    return d;
+}
+
 // ── STORAGE ───────────────────────────────────────────
 function cargarAgendas() {
     return JSON.parse(localStorage.getItem('michi-agendas') || '[]');
@@ -416,10 +495,13 @@ function mostrarHoy() {
     document.getElementById('titulo-hoy').textContent = formatearFechaDisplay(hoy);
     const accionesHoy = document.getElementById('acciones-hoy');
 
-    if (agendaHoy) {
-        agendaViendoId = agendaHoy.id;
-        accionesHoy.style.display = 'flex';
-        const { fijas } = parsearActividades(agendaHoy.texto);
+    const textoConRec = obtenerTextoConRecurrentes(hoy);
+
+    if (agendaHoy || textoConRec) {
+        agendaViendoId = agendaHoy ? agendaHoy.id : null;
+        accionesHoy.style.display = agendaHoy ? 'flex' : 'none';
+        const texto = textoConRec || agendaHoy.texto;
+        const { fijas } = parsearActividades(texto);
         document.getElementById('contenido-hoy').innerHTML = renderTimelineHoy(fijas, hoy);
         programarNotificaciones(fijas, fechaKey);
     } else {
@@ -463,7 +545,7 @@ function renderTimelineHoy(fijas, hoy) {
             </div>
             <div class="tl-content">
                 <div class="tl-hora">${act.hora} ${esProxima ? '<span class="tag-proxima">próxima</span>' : ''}</div>
-                <div class="tl-nombre">${act.actividad}</div>
+                <div class="tl-nombre">${act.actividad} ${act.esRecurrente ? '<span class="badge-recurrente">↻</span>' : ''}</div>
             </div>
         </div>`;
     }).join('');
@@ -508,17 +590,26 @@ function renderSemanaStrip() {
         dia.setDate(hoy.getDate() + i);
         const fechaKey = formatearFechaKey(dia);
         const agenda = agendas.find(a => a.fechaKey === fechaKey);
+        const tieneRec = obtenerActividadesRecurrentesParaDia(dia).length > 0;
+
         let emoji = '';
         if (agenda) {
             const primeraLinea = agenda.texto.split('\n').find(l => l.trim()) || '';
             const match = primeraLinea.match(/(.*?)[-–—]?\s*(\d{1,2}:\d{2}|\d{1,2})\s*$/);
             const primeraAct = match ? match[1].trim().replace(/[-–—]\s*$/, '') : primeraLinea;
             emoji = obtenerIcono(primeraAct);
+        } else if (tieneRec) {
+            const recs = obtenerActividadesRecurrentesParaDia(dia);
+            const match = recs[0].match(/(.*?)[-–—]?\s*(\d{1,2}:\d{2}|\d{1,2})\s*$/);
+            const primeraAct = match ? match[1].trim() : recs[0];
+            emoji = obtenerIcono(primeraAct);
         }
+
         let clases = 'dia-strip';
         if (i === 0) clases += ' hoy';
-        if (agenda) clases += ' tiene-agenda';
-        html += `<div class="${clases}" onclick="seleccionarDiaStrip('${fechaKey}', ${!!agenda})">
+        if (agenda || tieneRec) clases += ' tiene-agenda';
+
+        html += `<div class="${clases}" onclick="seleccionarDiaStrip('${fechaKey}', ${!!(agenda || tieneRec)})">
             <div class="dia-strip-nombre">${diasNombre[dia.getDay()]}</div>
             <div class="dia-strip-num">${dia.getDate()}</div>
             <div class="dia-strip-emoji">${emoji}</div>
@@ -528,17 +619,48 @@ function renderSemanaStrip() {
 }
 
 function seleccionarDiaStrip(fechaKey, tieneAgenda) {
-    if (tieneAgenda) {
-        const agenda = cargarAgendas().find(a => a.fechaKey === fechaKey);
-        if (!agenda) return;
-        agendaViendoId = agenda.id;
+    const fecha = new Date(fechaKey + 'T12:00:00');
+    const textoConRec = obtenerTextoConRecurrentes(fecha);
+    const agendas = cargarAgendas();
+    const agenda = agendas.find(a => a.fechaKey === fechaKey);
+
+    if (agenda || textoConRec) {
+        agendaViendoId = agenda ? agenda.id : null;
+        fechaDashboard = fecha;
         pantallaAnterior = 'pantalla-hoy';
         document.querySelectorAll('.pantalla').forEach(p => p.classList.remove('activa'));
         document.getElementById('pantalla-dashboard').classList.add('activa');
-        document.getElementById('titulo-dashboard').textContent = agenda.nombre;
-        document.getElementById('contenido-dashboard').innerHTML = renderDiario(parsearActividades(agenda.texto));
+        document.getElementById('titulo-dashboard').textContent = formatearFechaDisplay(fecha);
+        const texto = textoConRec || agenda.texto;
+        document.getElementById('contenido-dashboard').innerHTML = renderDiario(parsearActividades(texto));
     } else {
         mostrarEditor(fechaKey);
+    }
+}
+
+// ── NAVEGACIÓN DÍAS ───────────────────────────────────
+function navegarDia(delta) {
+    if (!fechaDashboard) return;
+    const nuevaFecha = sumarDias(fechaDashboard, delta);
+    const fechaKey = formatearFechaKey(nuevaFecha);
+    const agendas = cargarAgendas();
+    const agenda = agendas.find(a => a.fechaKey === fechaKey);
+    const textoConRec = obtenerTextoConRecurrentes(nuevaFecha);
+
+    fechaDashboard = nuevaFecha;
+    agendaViendoId = agenda ? agenda.id : null;
+    document.getElementById('titulo-dashboard').textContent = formatearFechaDisplay(nuevaFecha);
+
+    if (agenda || textoConRec) {
+        const texto = textoConRec || agenda.texto;
+        document.getElementById('contenido-dashboard').innerHTML = renderDiario(parsearActividades(texto));
+    } else {
+        document.getElementById('contenido-dashboard').innerHTML = `
+            <div style="text-align:center; padding: 40px 20px; color: #6b7280;">
+                <p style="font-size:2rem; margin-bottom:12px">📭</p>
+                <p>Sin agenda para este día</p>
+                <button class="btn-crear-hoy" style="margin-top:16px" onclick="mostrarEditor('${fechaKey}')">+ Crear agenda</button>
+            </div>`;
     }
 }
 
@@ -575,17 +697,23 @@ function renderCalendario() {
         const fecha = new Date(año, mes, d);
         const fechaKey = formatearFechaKey(fecha);
         const agenda = agendas.find(a => a.fechaKey === fechaKey);
+        const tieneRec = obtenerActividadesRecurrentesParaDia(fecha).length > 0;
         let clases = 'cal-dia';
         if (esMismaFecha(fecha, hoy)) clases += ' hoy';
-        if (agenda) clases += ' tiene-agenda';
+        if (agenda || tieneRec) clases += ' tiene-agenda';
         let emoji = '';
         if (agenda) {
             const primeraLinea = agenda.texto.split('\n').find(l => l.trim()) || '';
             const match = primeraLinea.match(/(.*?)[-–—]?\s*(\d{1,2}:\d{2}|\d{1,2})\s*$/);
             const primeraAct = match ? match[1].trim().replace(/[-–—]\s*$/, '') : primeraLinea;
             emoji = `<div class="cal-dia-emoji">${obtenerIcono(primeraAct)}</div>`;
+        } else if (tieneRec) {
+            const recs = obtenerActividadesRecurrentesParaDia(fecha);
+            const match = recs[0].match(/(.*?)[-–—]?\s*(\d{1,2}:\d{2}|\d{1,2})\s*$/);
+            const primeraAct = match ? match[1].trim() : recs[0];
+            emoji = `<div class="cal-dia-emoji">${obtenerIcono(primeraAct)}</div>`;
         }
-        html += `<div class="${clases}" onclick="seleccionarDiaCalendario('${fechaKey}', ${!!agenda})">
+        html += `<div class="${clases}" onclick="seleccionarDiaCalendario('${fechaKey}', ${!!(agenda || tieneRec)})">
             <div class="cal-dia-num">${d}</div>${emoji}</div>`;
     }
     document.getElementById('cal-grid').innerHTML = html;
@@ -593,15 +721,19 @@ function renderCalendario() {
 
 function seleccionarDiaCalendario(fechaKey, tieneAgenda) {
     document.getElementById('modal-calendario').classList.add('oculto');
-    if (tieneAgenda) {
-        const agenda = cargarAgendas().find(a => a.fechaKey === fechaKey);
-        if (!agenda) return;
-        agendaViendoId = agenda.id;
+    const fecha = new Date(fechaKey + 'T12:00:00');
+    const textoConRec = obtenerTextoConRecurrentes(fecha);
+    const agenda = cargarAgendas().find(a => a.fechaKey === fechaKey);
+
+    if (agenda || textoConRec) {
+        agendaViendoId = agenda ? agenda.id : null;
+        fechaDashboard = fecha;
         pantallaAnterior = 'pantalla-hoy';
         document.querySelectorAll('.pantalla').forEach(p => p.classList.remove('activa'));
         document.getElementById('pantalla-dashboard').classList.add('activa');
-        document.getElementById('titulo-dashboard').textContent = agenda.nombre;
-        document.getElementById('contenido-dashboard').innerHTML = renderDiario(parsearActividades(agenda.texto));
+        document.getElementById('titulo-dashboard').textContent = formatearFechaDisplay(fecha);
+        const texto = textoConRec || agenda.texto;
+        document.getElementById('contenido-dashboard').innerHTML = renderDiario(parsearActividades(texto));
     } else {
         mostrarEditor(fechaKey);
     }
@@ -714,17 +846,19 @@ function borrarHoy() {
 }
 
 function editarAgendaActual() {
-    if (!agendaViendoId) return;
-    const agenda = cargarAgendas().find(a => a.id === agendaViendoId);
-    if (!agenda) return;
-    agendaEditandoId = agendaViendoId;
-    fechaSeleccionada = new Date(agenda.fechaKey + 'T12:00:00');
+    if (!fechaDashboard) return;
+    const fechaKey = formatearFechaKey(fechaDashboard);
+    const agenda = cargarAgendas().find(a => a.fechaKey === fechaKey);
+    agendaEditandoId = agenda ? agenda.id : null;
+    agendaViendoId = agendaEditandoId;
+    fechaSeleccionada = new Date(fechaDashboard);
     mesActualMini = new Date(fechaSeleccionada);
     pantallaAnterior = 'pantalla-dashboard';
     document.querySelectorAll('.pantalla').forEach(p => p.classList.remove('activa'));
     document.getElementById('pantalla-editor').classList.add('activa');
     document.getElementById('titulo-editor').textContent = '✏️ Editar Agenda';
-    document.getElementById('input-actividades').value = agenda.texto;
+    const textoConRec = obtenerTextoConRecurrentes(fechaDashboard);
+    document.getElementById('input-actividades').value = agenda ? agenda.texto : (textoConRec || '');
     actualizarDisplayFecha();
 }
 
@@ -742,14 +876,49 @@ function borrarAgendaActual() {
 function procesarAgenda() {
     const texto = document.getElementById('input-actividades').value.trim();
     if (!texto) { alert('Por favor ingresa tus actividades.'); return; }
+
+    // Extraer recurrentes del texto
+    const lineas = texto.split('\n');
+    const recurrentesNuevas = [];
+    const lineasNormales = [];
+
+    lineas.forEach(linea => {
+        linea = linea.trim();
+        if (!linea) return;
+        const rec = parsearRecurrente(linea);
+        if (rec && rec.diasAplica.length > 0) {
+            recurrentesNuevas.push(rec);
+            // También guardar sin el [...] para este día
+            lineasNormales.push(linea.replace(/\[.+?\]/, '').trim());
+        } else {
+            lineasNormales.push(linea);
+        }
+    });
+
+    // Guardar recurrentes
+    if (recurrentesNuevas.length > 0) {
+        const recActuales = cargarRecurrentes();
+        recurrentesNuevas.forEach(nueva => {
+            const existente = recActuales.findIndex(r => r.actividad === nueva.actividad);
+            if (existente !== -1) {
+                recActuales[existente] = nueva;
+            } else {
+                recActuales.push(nueva);
+            }
+        });
+        guardarRecurrentes(recActuales);
+    }
+
+    const textoFinal = lineasNormales.join('\n');
     const fechaKey = formatearFechaKey(fechaSeleccionada);
     const nombre = formatearFechaDisplay(fechaSeleccionada);
     let agendas = cargarAgendas();
     let agendaGuardada;
+
     if (agendaEditandoId) {
         const idx = agendas.findIndex(a => a.id === agendaEditandoId);
         if (idx !== -1) {
-            agendas[idx].texto = texto; agendas[idx].nombre = nombre; agendas[idx].fechaKey = fechaKey;
+            agendas[idx].texto = textoFinal; agendas[idx].nombre = nombre; agendas[idx].fechaKey = fechaKey;
             agendaGuardada = agendas[idx];
         }
         agendaViendoId = agendaEditandoId;
@@ -757,16 +926,18 @@ function procesarAgenda() {
     } else {
         const existente = agendas.findIndex(a => a.fechaKey === fechaKey);
         if (existente !== -1) {
-            agendas[existente].texto = texto; agendas[existente].nombre = nombre;
+            agendas[existente].texto = textoFinal; agendas[existente].nombre = nombre;
             agendaViendoId = agendas[existente].id; agendaGuardada = agendas[existente];
         } else {
-            const nueva = { id: Date.now().toString(), nombre, texto, fechaKey };
+            const nueva = { id: Date.now().toString(), nombre, texto: textoFinal, fechaKey };
             agendas.unshift(nueva); agendaViendoId = nueva.id; agendaGuardada = nueva;
         }
     }
+
     agendas.sort((a, b) => b.fechaKey.localeCompare(a.fechaKey));
     guardarAgendas(agendas);
     if (usuarioActual && agendaGuardada) guardarAgendaNube(usuarioActual.uid, agendaGuardada).catch(() => {});
+
     document.querySelectorAll('.pantalla').forEach(p => p.classList.remove('activa'));
     document.getElementById('pantalla-hoy').classList.add('activa');
     mostrarHoy();
@@ -779,6 +950,9 @@ function parsearActividades(texto) {
     let fijas = [], limpieza = [];
     lineas.forEach(linea => {
         linea = linea.trim();
+        if (!linea) return;
+        // Quitar [...] si quedó algo
+        linea = linea.replace(/\[.+?\]/, '').trim();
         if (!linea) return;
         const esLimpieza = palabrasLimpieza.some(p => linea.toLowerCase().includes(p)) && !/\d/.test(linea);
         if (esLimpieza) {
@@ -868,3 +1042,4 @@ window.togglePendiente = togglePendiente;
 window.borrarPendiente = borrarPendiente;
 window.agregarEmojiPersonalizado = agregarEmojiPersonalizado;
 window.borrarEmojiCustom = borrarEmojiCustom;
+window.navegarDia = navegarDia;
