@@ -17,6 +17,77 @@ let pantallaAnterior = 'pantalla-hoy';
 let usuarioActual = null;
 let fechaDashboard = null;
 
+// ── ONBOARDING ────────────────────────────────────────
+const SLIDES = [
+    {
+        emoji: '🐱',
+        titulo: '¡Bienvenido a Michi Agenda!',
+        desc: 'Tu agenda inteligente que se adapta a tu rutina. Planea tu día, semana y mes en un solo lugar.',
+        ejemplo: null
+    },
+    {
+        emoji: '📅',
+        titulo: 'Escribe tus actividades',
+        desc: 'Cada actividad va en una línea. Primero la actividad, luego un guión y la hora.',
+        ejemplo: 'GYM - 07:00\nDesayuno - 09:00\nTrabajo - 10:00\nComer con mamá - 14:00'
+    },
+    {
+        emoji: '↻',
+        titulo: 'Actividades recurrentes',
+        desc: 'Agrega [días] al final para que la actividad aparezca automáticamente esos días.',
+        ejemplo: 'GYM - 07:00 [lunes, miércoles, viernes]\nMedicinas - 08:00 [todos los días]\nTrabajo - 09:00 [entre semana]'
+    },
+    {
+        emoji: '✅',
+        titulo: '¡Listo para empezar!',
+        desc: 'Toca el botón + para crear tu primera agenda. Tus datos se guardan en la nube y están disponibles en todos tus dispositivos.',
+        ejemplo: null
+    }
+];
+
+let slideActual = 0;
+
+function renderOnboarding() {
+    const slide = SLIDES[slideActual];
+    document.getElementById('onboarding-slide').innerHTML = `
+        <div class="onboarding-emoji">${slide.emoji}</div>
+        <div class="onboarding-titulo">${slide.titulo}</div>
+        <div class="onboarding-desc">${slide.desc}</div>
+        ${slide.ejemplo ? `<div class="onboarding-ejemplo">${slide.ejemplo}</div>` : ''}
+    `;
+    const dots = document.getElementById('onboarding-dots');
+    dots.innerHTML = SLIDES.map((_, i) =>
+        `<div class="onboarding-dot ${i === slideActual ? 'activo' : ''}"></div>`
+    ).join('');
+    const btnNext = document.getElementById('btn-onboarding-next');
+    btnNext.textContent = slideActual === SLIDES.length - 1 ? '¡Comenzar! 🐱' : 'Siguiente →';
+}
+
+function siguienteSlide() {
+    if (slideActual < SLIDES.length - 1) {
+        slideActual++;
+        renderOnboarding();
+    } else {
+        terminarOnboarding();
+    }
+}
+
+function terminarOnboarding() {
+    localStorage.setItem('michi-onboarding-visto', 'true');
+    document.querySelectorAll('.pantalla').forEach(p => p.classList.remove('activa'));
+    document.getElementById('pantalla-login').classList.add('activa');
+}
+
+function verificarOnboarding() {
+    const visto = localStorage.getItem('michi-onboarding-visto');
+    if (!visto) {
+        slideActual = 0;
+        renderOnboarding();
+        document.querySelectorAll('.pantalla').forEach(p => p.classList.remove('activa'));
+        document.getElementById('pantalla-onboarding').classList.add('activa');
+    }
+}
+
 // ── AUTH ──────────────────────────────────────────────
 observarUsuario(async (user) => {
     usuarioActual = user;
@@ -26,8 +97,15 @@ observarUsuario(async (user) => {
         await sincronizarDesdNube();
         mostrarHoy();
     } else {
+        const onboardingVisto = localStorage.getItem('michi-onboarding-visto');
         document.querySelectorAll('.pantalla').forEach(p => p.classList.remove('activa'));
-        document.getElementById('pantalla-login').classList.add('activa');
+        if (!onboardingVisto) {
+            slideActual = 0;
+            renderOnboarding();
+            document.getElementById('pantalla-onboarding').classList.add('activa');
+        } else {
+            document.getElementById('pantalla-login').classList.add('activa');
+        }
     }
 });
 
@@ -133,6 +211,11 @@ async function handleCerrarSesion() {
     localStorage.removeItem('michi-emojis-custom');
 }
 
+// ── AYUDA EN EDITOR ───────────────────────────────────
+function toggleAyuda() {
+    document.getElementById('panel-ayuda').classList.toggle('oculto');
+}
+
 // ── NOTIFICACIONES ────────────────────────────────────
 async function pedirPermisoNotificaciones() {
     if (!('Notification' in window)) return false;
@@ -184,6 +267,8 @@ const DIAS_MAP = {
     'jueves': 4, 'viernes': 5, 'sábado': 6, 'sabado': 6, 'domingo': 0
 };
 
+const DIAS_NOMBRES = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+
 function cargarRecurrentes() {
     return JSON.parse(localStorage.getItem('michi-recurrentes') || '[]');
 }
@@ -198,7 +283,6 @@ function parsearRecurrente(linea) {
     const actividad = match[1].trim();
     const diasStr = match[2].toLowerCase();
     let diasAplica = [];
-
     if (diasStr.includes('todos los días') || diasStr.includes('todos los dias') || diasStr.includes('diario')) {
         diasAplica = [0, 1, 2, 3, 4, 5, 6];
     } else if (diasStr.includes('entre semana') || diasStr.includes('días hábiles') || diasStr.includes('dias habiles')) {
@@ -211,32 +295,21 @@ function parsearRecurrente(linea) {
             if (DIAS_MAP[dia] !== undefined) diasAplica.push(DIAS_MAP[dia]);
         });
     }
-
     return { actividad, diasAplica };
 }
 
 function obtenerActividadesRecurrentesParaDia(fecha) {
     const recurrentes = cargarRecurrentes();
     const diaSemana = fecha.getDay();
-    const resultado = [];
-
-    recurrentes.forEach(rec => {
-        if (rec.diasAplica.includes(diaSemana)) {
-            resultado.push(rec.actividad);
-        }
-    });
-
-    return resultado;
+    return recurrentes.filter(rec => rec.diasAplica.includes(diaSemana)).map(rec => rec.actividad);
 }
 
 function obtenerTextoConRecurrentes(fecha) {
     const fechaKey = formatearFechaKey(fecha);
     const agendas = cargarAgendas();
     const agendaExistente = agendas.find(a => a.fechaKey === fechaKey);
-
     const recurrentes = obtenerActividadesRecurrentesParaDia(fecha);
     if (recurrentes.length === 0) return agendaExistente ? agendaExistente.texto : null;
-
     if (agendaExistente) {
         const lineasExistentes = agendaExistente.texto.split('\n').map(l => l.trim().toLowerCase());
         const nuevas = recurrentes.filter(r => {
@@ -246,8 +319,34 @@ function obtenerTextoConRecurrentes(fecha) {
         if (nuevas.length === 0) return agendaExistente.texto;
         return agendaExistente.texto + '\n' + nuevas.join('\n');
     }
-
     return recurrentes.join('\n');
+}
+
+function renderRecurrentesConfig() {
+    const recurrentes = cargarRecurrentes();
+    const lista = document.getElementById('lista-recurrentes-config');
+    if (!lista) return;
+    if (recurrentes.length === 0) {
+        lista.innerHTML = '<li style="color:#4b5563;font-style:italic;font-size:0.82rem;padding:6px 0">Sin actividades recurrentes todavía 🐾</li>';
+        return;
+    }
+    lista.innerHTML = recurrentes.map((r, idx) => {
+        const diasNombres = r.diasAplica.sort((a,b)=>a-b).map(d => DIAS_NOMBRES[d]).join(', ');
+        return `<li class="recurrente-item">
+            <div class="recurrente-info">
+                <div class="recurrente-actividad">${r.actividad}</div>
+                <div class="recurrente-dias">↻ ${diasNombres}</div>
+            </div>
+            <button class="btn-borrar-recurrente" onclick="borrarRecurrente(${idx})">✕</button>
+        </li>`;
+    }).join('');
+}
+
+function borrarRecurrente(idx) {
+    const recurrentes = cargarRecurrentes();
+    recurrentes.splice(idx, 1);
+    guardarRecurrentes(recurrentes);
+    renderRecurrentesConfig();
 }
 
 // ── PENDIENTES ────────────────────────────────────────
@@ -317,11 +416,8 @@ function agregarEmojiPersonalizado() {
     if (!palabra || !emoji) { alert('Escribe una palabra clave y un emoji.'); return; }
     const emojis = cargarEmojisCustom();
     const existente = emojis.findIndex(e => e.palabra === palabra);
-    if (existente !== -1) {
-        emojis[existente].emoji = emoji;
-    } else {
-        emojis.unshift({ id: Date.now().toString(), palabra, emoji });
-    }
+    if (existente !== -1) { emojis[existente].emoji = emoji; } 
+    else { emojis.unshift({ id: Date.now().toString(), palabra, emoji }); }
     guardarEmojisCustom(emojis);
     document.getElementById('input-palabra').value = '';
     document.getElementById('input-emoji').value = '';
@@ -329,8 +425,7 @@ function agregarEmojiPersonalizado() {
 }
 
 function borrarEmojiCustom(id) {
-    const emojis = cargarEmojisCustom().filter(e => e.id !== id);
-    guardarEmojisCustom(emojis);
+    guardarEmojisCustom(cargarEmojisCustom().filter(e => e.id !== id));
     renderEmojisCustom();
 }
 
@@ -356,9 +451,7 @@ function renderEmojisCustom() {
 function obtenerIcono(nombre) {
     const n = nombre.toLowerCase();
     const emojisCustom = cargarEmojisCustom();
-    for (const ec of emojisCustom) {
-        if (n.includes(ec.palabra)) return ec.emoji;
-    }
+    for (const ec of emojisCustom) { if (n.includes(ec.palabra)) return ec.emoji; }
     if (n.includes('gym') || n.includes('gimnasio') || n.includes('pesas') || n.includes('crossfit') || n.includes('entren')) return '💪';
     if (n.includes('correr') || n.includes('jogging') || n.includes('trotar') || n.includes('maratón')) return '🏃';
     if (n.includes('nadar') || n.includes('natación') || n.includes('alberca') || n.includes('piscina')) return '🏊';
@@ -491,12 +584,9 @@ function mostrarHoy() {
     const fechaKey = formatearFechaKey(hoy);
     const agendas = cargarAgendas();
     const agendaHoy = agendas.find(a => a.fechaKey === fechaKey);
-
     document.getElementById('titulo-hoy').textContent = formatearFechaDisplay(hoy);
     const accionesHoy = document.getElementById('acciones-hoy');
-
     const textoConRec = obtenerTextoConRecurrentes(hoy);
-
     if (agendaHoy || textoConRec) {
         agendaViendoId = agendaHoy ? agendaHoy.id : null;
         accionesHoy.style.display = agendaHoy ? 'flex' : 'none';
@@ -509,10 +599,8 @@ function mostrarHoy() {
         accionesHoy.style.display = 'none';
         document.getElementById('contenido-hoy').innerHTML = renderHorasVacias(hoy);
     }
-
     renderSemanaStrip();
     renderPendientes();
-
     if (usuarioActual) {
         const configUsuario = document.getElementById('config-usuario');
         if (configUsuario) configUsuario.textContent = usuarioActual.email || usuarioActual.displayName || '—';
@@ -545,7 +633,7 @@ function renderTimelineHoy(fijas, hoy) {
             </div>
             <div class="tl-content">
                 <div class="tl-hora">${act.hora} ${esProxima ? '<span class="tag-proxima">próxima</span>' : ''}</div>
-                <div class="tl-nombre">${act.actividad} ${act.esRecurrente ? '<span class="badge-recurrente">↻</span>' : ''}</div>
+                <div class="tl-nombre">${act.actividad}</div>
             </div>
         </div>`;
     }).join('');
@@ -591,7 +679,6 @@ function renderSemanaStrip() {
         const fechaKey = formatearFechaKey(dia);
         const agenda = agendas.find(a => a.fechaKey === fechaKey);
         const tieneRec = obtenerActividadesRecurrentesParaDia(dia).length > 0;
-
         let emoji = '';
         if (agenda) {
             const primeraLinea = agenda.texto.split('\n').find(l => l.trim()) || '';
@@ -604,11 +691,9 @@ function renderSemanaStrip() {
             const primeraAct = match ? match[1].trim() : recs[0];
             emoji = obtenerIcono(primeraAct);
         }
-
         let clases = 'dia-strip';
         if (i === 0) clases += ' hoy';
         if (agenda || tieneRec) clases += ' tiene-agenda';
-
         html += `<div class="${clases}" onclick="seleccionarDiaStrip('${fechaKey}', ${!!(agenda || tieneRec)})">
             <div class="dia-strip-nombre">${diasNombre[dia.getDay()]}</div>
             <div class="dia-strip-num">${dia.getDate()}</div>
@@ -621,9 +706,7 @@ function renderSemanaStrip() {
 function seleccionarDiaStrip(fechaKey, tieneAgenda) {
     const fecha = new Date(fechaKey + 'T12:00:00');
     const textoConRec = obtenerTextoConRecurrentes(fecha);
-    const agendas = cargarAgendas();
-    const agenda = agendas.find(a => a.fechaKey === fechaKey);
-
+    const agenda = cargarAgendas().find(a => a.fechaKey === fechaKey);
     if (agenda || textoConRec) {
         agendaViendoId = agenda ? agenda.id : null;
         fechaDashboard = fecha;
@@ -643,14 +726,11 @@ function navegarDia(delta) {
     if (!fechaDashboard) return;
     const nuevaFecha = sumarDias(fechaDashboard, delta);
     const fechaKey = formatearFechaKey(nuevaFecha);
-    const agendas = cargarAgendas();
-    const agenda = agendas.find(a => a.fechaKey === fechaKey);
+    const agenda = cargarAgendas().find(a => a.fechaKey === fechaKey);
     const textoConRec = obtenerTextoConRecurrentes(nuevaFecha);
-
     fechaDashboard = nuevaFecha;
     agendaViendoId = agenda ? agenda.id : null;
     document.getElementById('titulo-dashboard').textContent = formatearFechaDisplay(nuevaFecha);
-
     if (agenda || textoConRec) {
         const texto = textoConRec || agenda.texto;
         document.getElementById('contenido-dashboard').innerHTML = renderDiario(parsearActividades(texto));
@@ -724,7 +804,6 @@ function seleccionarDiaCalendario(fechaKey, tieneAgenda) {
     const fecha = new Date(fechaKey + 'T12:00:00');
     const textoConRec = obtenerTextoConRecurrentes(fecha);
     const agenda = cargarAgendas().find(a => a.fechaKey === fechaKey);
-
     if (agenda || textoConRec) {
         agendaViendoId = agenda ? agenda.id : null;
         fechaDashboard = fecha;
@@ -796,6 +875,7 @@ function mostrarConfig() {
     document.querySelectorAll('.pantalla').forEach(p => p.classList.remove('activa'));
     document.getElementById('pantalla-config').classList.add('activa');
     renderEmojisCustom();
+    renderRecurrentesConfig();
 }
 
 function mostrarEditor(fechaParam) {
@@ -810,6 +890,7 @@ function mostrarEditor(fechaParam) {
     document.getElementById('pantalla-editor').classList.add('activa');
     document.getElementById('titulo-editor').textContent = agenda ? '✏️ Editar Agenda' : '📅 Nueva Agenda';
     document.getElementById('input-actividades').value = agenda ? agenda.texto : '';
+    document.getElementById('panel-ayuda').classList.add('oculto');
     actualizarDisplayFecha();
 }
 
@@ -832,6 +913,7 @@ function editarHoy() {
     document.getElementById('pantalla-editor').classList.add('activa');
     document.getElementById('titulo-editor').textContent = '✏️ Editar Agenda';
     document.getElementById('input-actividades').value = agenda.texto;
+    document.getElementById('panel-ayuda').classList.add('oculto');
     actualizarDisplayFecha();
 }
 
@@ -859,6 +941,7 @@ function editarAgendaActual() {
     document.getElementById('titulo-editor').textContent = '✏️ Editar Agenda';
     const textoConRec = obtenerTextoConRecurrentes(fechaDashboard);
     document.getElementById('input-actividades').value = agenda ? agenda.texto : (textoConRec || '');
+    document.getElementById('panel-ayuda').classList.add('oculto');
     actualizarDisplayFecha();
 }
 
@@ -876,45 +959,34 @@ function borrarAgendaActual() {
 function procesarAgenda() {
     const texto = document.getElementById('input-actividades').value.trim();
     if (!texto) { alert('Por favor ingresa tus actividades.'); return; }
-
-    // Extraer recurrentes del texto
     const lineas = texto.split('\n');
     const recurrentesNuevas = [];
     const lineasNormales = [];
-
     lineas.forEach(linea => {
         linea = linea.trim();
         if (!linea) return;
         const rec = parsearRecurrente(linea);
         if (rec && rec.diasAplica.length > 0) {
             recurrentesNuevas.push(rec);
-            // También guardar sin el [...] para este día
             lineasNormales.push(linea.replace(/\[.+?\]/, '').trim());
         } else {
             lineasNormales.push(linea);
         }
     });
-
-    // Guardar recurrentes
     if (recurrentesNuevas.length > 0) {
         const recActuales = cargarRecurrentes();
         recurrentesNuevas.forEach(nueva => {
             const existente = recActuales.findIndex(r => r.actividad === nueva.actividad);
-            if (existente !== -1) {
-                recActuales[existente] = nueva;
-            } else {
-                recActuales.push(nueva);
-            }
+            if (existente !== -1) { recActuales[existente] = nueva; }
+            else { recActuales.push(nueva); }
         });
         guardarRecurrentes(recActuales);
     }
-
     const textoFinal = lineasNormales.join('\n');
     const fechaKey = formatearFechaKey(fechaSeleccionada);
     const nombre = formatearFechaDisplay(fechaSeleccionada);
     let agendas = cargarAgendas();
     let agendaGuardada;
-
     if (agendaEditandoId) {
         const idx = agendas.findIndex(a => a.id === agendaEditandoId);
         if (idx !== -1) {
@@ -933,11 +1005,9 @@ function procesarAgenda() {
             agendas.unshift(nueva); agendaViendoId = nueva.id; agendaGuardada = nueva;
         }
     }
-
     agendas.sort((a, b) => b.fechaKey.localeCompare(a.fechaKey));
     guardarAgendas(agendas);
     if (usuarioActual && agendaGuardada) guardarAgendaNube(usuarioActual.uid, agendaGuardada).catch(() => {});
-
     document.querySelectorAll('.pantalla').forEach(p => p.classList.remove('activa'));
     document.getElementById('pantalla-hoy').classList.add('activa');
     mostrarHoy();
@@ -949,10 +1019,7 @@ function parsearActividades(texto) {
     const palabrasLimpieza = ['barrer', 'trapear', 'lavar', 'ropa', 'limpieza'];
     let fijas = [], limpieza = [];
     lineas.forEach(linea => {
-        linea = linea.trim();
-        if (!linea) return;
-        // Quitar [...] si quedó algo
-        linea = linea.replace(/\[.+?\]/, '').trim();
+        linea = linea.trim().replace(/\[.+?\]/, '').trim();
         if (!linea) return;
         const esLimpieza = palabrasLimpieza.some(p => linea.toLowerCase().includes(p)) && !/\d/.test(linea);
         if (esLimpieza) {
@@ -1011,7 +1078,10 @@ function renderDiario({ fijas, limpieza }) {
 
 // ── INIT ──────────────────────────────────────────────
 pedirPermisoNotificaciones();
+verificarOnboarding();
 
+window.siguienteSlide = siguienteSlide;
+window.terminarOnboarding = terminarOnboarding;
 window.mostrarTab = mostrarTab;
 window.togglePassword = togglePassword;
 window.mostrarRecuperar = mostrarRecuperar;
@@ -1020,6 +1090,7 @@ window.handleLogin = handleLogin;
 window.handleRegistro = handleRegistro;
 window.handleGoogle = handleGoogle;
 window.handleCerrarSesion = handleCerrarSesion;
+window.toggleAyuda = toggleAyuda;
 window.mostrarHoy = mostrarHoy;
 window.mostrarEditor = mostrarEditor;
 window.mostrarConfig = mostrarConfig;
@@ -1043,3 +1114,4 @@ window.borrarPendiente = borrarPendiente;
 window.agregarEmojiPersonalizado = agregarEmojiPersonalizado;
 window.borrarEmojiCustom = borrarEmojiCustom;
 window.navegarDia = navegarDia;
+window.borrarRecurrente = borrarRecurrente;

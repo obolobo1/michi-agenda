@@ -10,8 +10,18 @@
 </head>
 <body>
 
+    <!-- PANTALLA: ONBOARDING -->
+    <div id="pantalla-onboarding" class="pantalla">
+        <div class="onboarding-container">
+            <div id="onboarding-slide" class="onboarding-slide"></div>
+            <div class="onboarding-dots" id="onboarding-dots"></div>
+            <button class="btn-onboarding-next" id="btn-onboarding-next" onclick="siguienteSlide()">Siguiente →</button>
+            <button class="btn-onboarding-skip" onclick="terminarOnboarding()">Saltar</button>
+        </div>
+    </div>
+
     <!-- PANTALLA: LOGIN -->
-    <div id="pantalla-login" class="pantalla activa">
+    <div id="pantalla-login" class="pantalla">
         <div class="login-container">
             <div class="login-header">
                 <h1>🐱 Michi Agenda</h1>
@@ -102,13 +112,45 @@
     <div id="pantalla-editor" class="pantalla">
         <header>
             <button class="btn-back" onclick="volverAtras()">← Volver</button>
-            <h2 id="titulo-editor"></h2>
+            <div style="display:flex;align-items:center;justify-content:center;gap:8px">
+                <h2 id="titulo-editor"></h2>
+                <button class="btn-ayuda" onclick="toggleAyuda()">?</button>
+            </div>
         </header>
-        <p class="instrucciones">
-            Formato: Actividad - Hora (Ej: GYM - 12:00)<br>
-            Recurrentes: GYM - 07:00 [lunes, miércoles, viernes]<br>
-            También: [todos los días] [fines de semana] [entre semana]
-        </p>
+
+        <!-- PANEL DE AYUDA -->
+        <div id="panel-ayuda" class="panel-ayuda oculto">
+            <div class="ayuda-titulo">📝 Cómo escribir tu agenda</div>
+            <div class="ayuda-item">
+                <div class="ayuda-label">Actividad normal:</div>
+                <div class="ayuda-ejemplo">GYM - 12:00</div>
+            </div>
+            <div class="ayuda-item">
+                <div class="ayuda-label">Sin hora:</div>
+                <div class="ayuda-ejemplo">Llamar al doctor</div>
+            </div>
+            <div class="ayuda-item">
+                <div class="ayuda-label">Recurrente días específicos:</div>
+                <div class="ayuda-ejemplo">GYM - 07:00 [lunes, miércoles, viernes]</div>
+            </div>
+            <div class="ayuda-item">
+                <div class="ayuda-label">Recurrente todos los días:</div>
+                <div class="ayuda-ejemplo">Medicinas - 08:00 [todos los días]</div>
+            </div>
+            <div class="ayuda-item">
+                <div class="ayuda-label">Recurrente entre semana:</div>
+                <div class="ayuda-ejemplo">Trabajo - 09:00 [entre semana]</div>
+            </div>
+            <div class="ayuda-item">
+                <div class="ayuda-label">Recurrente fines de semana:</div>
+                <div class="ayuda-ejemplo">Descansar - 10:00 [fines de semana]</div>
+            </div>
+            <div class="ayuda-item">
+                <div class="ayuda-label">Tareas del hogar (sin hora):</div>
+                <div class="ayuda-ejemplo">barrer / trapear / lavar ropa</div>
+            </div>
+        </div>
+
         <div class="fecha-selector" onclick="toggleCalendario()">
             <span class="fecha-icono">📅</span>
             <span id="fecha-display"></span>
@@ -126,7 +168,7 @@
             </div>
             <div id="mini-cal-grid"></div>
         </div>
-        <textarea id="input-actividades" placeholder="Escribe tus actividades aquí..."></textarea>
+        <textarea id="input-actividades" placeholder="Escribe tus actividades aquí...&#10;Ej: GYM - 12:00&#10;Ej: GYM - 07:00 [lunes, miércoles, viernes]"></textarea>
         <button class="btn-generar" onclick="procesarAgenda()">🚀 Guardar Agenda</button>
     </div>
 
@@ -136,13 +178,10 @@
             <button class="btn-back" onclick="volverAtras()">← Volver</button>
             <h2 id="titulo-dashboard"></h2>
         </header>
-
-        <!-- FLECHAS NAVEGACIÓN -->
         <div class="nav-dias">
             <button class="btn-dia-anterior" onclick="navegarDia(-1)">‹ Día anterior</button>
             <button class="btn-dia-siguiente" onclick="navegarDia(1)">Día siguiente ›</button>
         </div>
-
         <div class="acciones-dashboard">
             <button class="btn-accion btn-editar" onclick="editarAgendaActual()">✏️ Editar</button>
             <button class="btn-accion btn-borrar" onclick="borrarAgendaActual()">🗑️ Borrar</button>
@@ -156,6 +195,7 @@
             <button class="btn-back" onclick="volverAtras()">← Volver</button>
             <h2>⚙️ Configuración</h2>
         </header>
+
         <div class="config-seccion">
             <div class="config-seccion-titulo">👤 Cuenta</div>
             <div class="config-info">
@@ -166,6 +206,7 @@
             </div>
             <button class="btn-cerrar-sesion" onclick="handleCerrarSesion()">Cerrar sesión</button>
         </div>
+
         <div class="config-seccion">
             <div class="config-seccion-titulo">🎨 Emojis personalizados</div>
             <p class="config-desc">Si la actividad contiene esta palabra, usará tu emoji.</p>
@@ -176,6 +217,14 @@
             </div>
             <ul id="lista-emojis-custom" class="lista-emojis-custom"></ul>
         </div>
+
+        <!-- RECURRENTES EN CONFIGURACIÓN -->
+        <div class="config-seccion">
+            <div class="config-seccion-titulo">↻ Actividades recurrentes</div>
+            <p class="config-desc">Actividades que se repiten automáticamente en tu agenda.</p>
+            <ul id="lista-recurrentes-config" class="lista-emojis-custom"></ul>
+        </div>
+
         <div class="config-seccion proximamente">
             <div class="config-seccion-titulo">🔔 Notificaciones <span class="badge-pronto">Próximamente</span></div>
             <p class="config-desc">Elige cuántos minutos antes quieres que te avisemos.</p>
@@ -183,6 +232,7 @@
                 <span>5 min</span><span>10 min</span><span>15 min</span><span>30 min</span>
             </div>
         </div>
+
         <div class="config-seccion proximamente">
             <div class="config-seccion-titulo">🎨 Apariencia <span class="badge-pronto">Próximamente</span></div>
             <p class="config-desc">Personaliza los colores y el tema de la app.</p>
@@ -190,6 +240,7 @@
                 <span>Oscuro</span><span>Claro</span><span>Personalizado</span>
             </div>
         </div>
+
         <div class="config-seccion proximamente">
             <div class="config-seccion-titulo">🕐 Formato de hora <span class="badge-pronto">Próximamente</span></div>
             <p class="config-desc">Elige cómo se muestran las horas en tu agenda.</p>
@@ -197,6 +248,7 @@
                 <span>24 horas</span><span>12 horas (AM/PM)</span>
             </div>
         </div>
+
         <div class="config-seccion">
             <div class="config-seccion-titulo">ℹ️ Acerca de</div>
             <div class="config-info">
