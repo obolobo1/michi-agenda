@@ -4,7 +4,8 @@ import {
     cerrarSesion, observarUsuario, recuperarContrasena,
     guardarAgendaNube, cargarAgendasNube, borrarAgendaNube,
     guardarPendientesNube, cargarPendientesNube,
-    guardarEmojisNube, cargarEmojisNube
+    guardarEmojisNube, cargarEmojisNube,
+    guardarRecurrentesNube, cargarRecurrentesNube
 } from './firebase.js';
 
 // ── ESTADO GLOBAL ─────────────────────────────────────
@@ -28,14 +29,14 @@ const SLIDES = [
     {
         emoji: '📅',
         titulo: 'Escribe tus actividades',
-        desc: 'Cada actividad va en una línea. Primero la actividad, luego un guión y la hora.',
-        ejemplo: 'GYM - 07:00\nDesayuno - 09:00\nTrabajo - 10:00\nComer con mamá - 14:00'
+        desc: 'Cada actividad va en una línea. Escribe la actividad y la hora separadas por un espacio.',
+        ejemplo: 'GYM 07:00\nDesayuno 09:00\nTrabajo 10:00\nComer con mamá 14:00'
     },
     {
         emoji: '↻',
         titulo: 'Actividades recurrentes',
         desc: 'Agrega [días] al final para que la actividad aparezca automáticamente esos días.',
-        ejemplo: 'GYM - 07:00 [lunes, miércoles, viernes]\nMedicinas - 08:00 [todos los días]\nTrabajo - 09:00 [entre semana]'
+        ejemplo: 'GYM 07:00 [lunes, miércoles, viernes]\nMedicinas 08:00 [todos los días]\nTrabajo 09:00 [entre semana]'
     },
     {
         emoji: '✅',
@@ -112,14 +113,16 @@ observarUsuario(async (user) => {
 async function sincronizarDesdNube() {
     if (!usuarioActual) return;
     try {
-        const [agendas, pendientes, emojis] = await Promise.all([
+        const [agendas, pendientes, emojis, recurrentes] = await Promise.all([
             cargarAgendasNube(usuarioActual.uid),
             cargarPendientesNube(usuarioActual.uid),
-            cargarEmojisNube(usuarioActual.uid)
+            cargarEmojisNube(usuarioActual.uid),
+            cargarRecurrentesNube(usuarioActual.uid)
         ]);
         localStorage.setItem('michi-agendas', JSON.stringify(agendas));
         localStorage.setItem('michi-pendientes', JSON.stringify(pendientes));
         localStorage.setItem('michi-emojis-custom', JSON.stringify(emojis));
+        localStorage.setItem('michi-recurrentes', JSON.stringify(recurrentes));
     } catch (e) {
         console.log('Sin conexión, usando datos locales');
     }
@@ -209,6 +212,7 @@ async function handleCerrarSesion() {
     localStorage.removeItem('michi-agendas');
     localStorage.removeItem('michi-pendientes');
     localStorage.removeItem('michi-emojis-custom');
+    localStorage.removeItem('michi-recurrentes');
 }
 
 // ── AYUDA EN EDITOR ───────────────────────────────────
@@ -275,6 +279,7 @@ function cargarRecurrentes() {
 
 function guardarRecurrentes(recurrentes) {
     localStorage.setItem('michi-recurrentes', JSON.stringify(recurrentes));
+    if (usuarioActual) guardarRecurrentesNube(usuarioActual.uid, recurrentes).catch(() => {});
 }
 
 function parsearRecurrente(linea) {
@@ -313,7 +318,7 @@ function obtenerTextoConRecurrentes(fecha) {
     if (agendaExistente) {
         const lineasExistentes = agendaExistente.texto.split('\n').map(l => l.trim().toLowerCase());
         const nuevas = recurrentes.filter(r => {
-            const actBase = r.replace(/\s*-\s*\d{1,2}(:\d{2})?\s*$/, '').trim().toLowerCase();
+            const actBase = r.replace(/\s*\d{1,2}(:\d{2})?\s*$/, '').trim().toLowerCase();
             return !lineasExistentes.some(l => l.includes(actBase));
         });
         if (nuevas.length === 0) return agendaExistente.texto;
@@ -332,9 +337,10 @@ function renderRecurrentesConfig() {
     }
     lista.innerHTML = recurrentes.map((r, idx) => {
         const diasNombres = r.diasAplica.sort((a,b)=>a-b).map(d => DIAS_NOMBRES[d]).join(', ');
+        const icono = obtenerIcono(r.actividad);
         return `<li class="recurrente-item">
             <div class="recurrente-info">
-                <div class="recurrente-actividad">${r.actividad}</div>
+                <div class="recurrente-actividad">${icono} ${r.actividad}</div>
                 <div class="recurrente-dias">↻ ${diasNombres}</div>
             </div>
             <button class="btn-borrar-recurrente" onclick="borrarRecurrente(${idx})">✕</button>
@@ -416,7 +422,7 @@ function agregarEmojiPersonalizado() {
     if (!palabra || !emoji) { alert('Escribe una palabra clave y un emoji.'); return; }
     const emojis = cargarEmojisCustom();
     const existente = emojis.findIndex(e => e.palabra === palabra);
-    if (existente !== -1) { emojis[existente].emoji = emoji; } 
+    if (existente !== -1) { emojis[existente].emoji = emoji; }
     else { emojis.unshift({ id: Date.now().toString(), palabra, emoji }); }
     guardarEmojisCustom(emojis);
     document.getElementById('input-palabra').value = '';
@@ -682,14 +688,11 @@ function renderSemanaStrip() {
         let emoji = '';
         if (agenda) {
             const primeraLinea = agenda.texto.split('\n').find(l => l.trim()) || '';
-            const match = primeraLinea.match(/(.*?)[-–—]?\s*(\d{1,2}:\d{2}|\d{1,2})\s*$/);
-            const primeraAct = match ? match[1].trim().replace(/[-–—]\s*$/, '') : primeraLinea;
+            const primeraAct = extraerActividad(primeraLinea);
             emoji = obtenerIcono(primeraAct);
         } else if (tieneRec) {
             const recs = obtenerActividadesRecurrentesParaDia(dia);
-            const match = recs[0].match(/(.*?)[-–—]?\s*(\d{1,2}:\d{2}|\d{1,2})\s*$/);
-            const primeraAct = match ? match[1].trim() : recs[0];
-            emoji = obtenerIcono(primeraAct);
+            emoji = obtenerIcono(extraerActividad(recs[0]));
         }
         let clases = 'dia-strip';
         if (i === 0) clases += ' hoy';
@@ -784,14 +787,10 @@ function renderCalendario() {
         let emoji = '';
         if (agenda) {
             const primeraLinea = agenda.texto.split('\n').find(l => l.trim()) || '';
-            const match = primeraLinea.match(/(.*?)[-–—]?\s*(\d{1,2}:\d{2}|\d{1,2})\s*$/);
-            const primeraAct = match ? match[1].trim().replace(/[-–—]\s*$/, '') : primeraLinea;
-            emoji = `<div class="cal-dia-emoji">${obtenerIcono(primeraAct)}</div>`;
+            emoji = `<div class="cal-dia-emoji">${obtenerIcono(extraerActividad(primeraLinea))}</div>`;
         } else if (tieneRec) {
             const recs = obtenerActividadesRecurrentesParaDia(fecha);
-            const match = recs[0].match(/(.*?)[-–—]?\s*(\d{1,2}:\d{2}|\d{1,2})\s*$/);
-            const primeraAct = match ? match[1].trim() : recs[0];
-            emoji = `<div class="cal-dia-emoji">${obtenerIcono(primeraAct)}</div>`;
+            emoji = `<div class="cal-dia-emoji">${obtenerIcono(extraerActividad(recs[0]))}</div>`;
         }
         html += `<div class="${clases}" onclick="seleccionarDiaCalendario('${fechaKey}', ${!!(agenda || tieneRec)})">
             <div class="cal-dia-num">${d}</div>${emoji}</div>`;
@@ -1014,6 +1013,14 @@ function procesarAgenda() {
 }
 
 // ── PARSEAR Y RENDER ──────────────────────────────────
+function extraerActividad(linea) {
+    // Quitar [...] si existe
+    linea = linea.replace(/\[.+?\]/, '').trim();
+    // Intentar extraer solo el nombre sin la hora
+    const match = linea.match(/^(.*?)\s+\d{1,2}(:\d{2})?\s*$/);
+    return match ? match[1].trim() : linea;
+}
+
 function parsearActividades(texto) {
     const lineas = texto.split('\n');
     const palabrasLimpieza = ['barrer', 'trapear', 'lavar', 'ropa', 'limpieza'];
@@ -1025,11 +1032,13 @@ function parsearActividades(texto) {
         if (esLimpieza) {
             limpieza.push(linea);
         } else {
-            const match = linea.match(/(.*?)[-–—]?\s*(\d{1,2}:\d{2}|\d{1,2})\s*$/);
+            // Acepta: "GYM 12:00", "GYM - 12:00", "GYM 12", "GYM - 12"
+            const match = linea.match(/^(.*?)\s*[-–—]?\s*(\d{1,2}:\d{2}|\d{1,2})\s*$/);
             if (match) {
                 let hora = match[2].trim();
                 if (!hora.includes(':')) hora = hora + ':00';
-                fijas.push({ actividad: match[1].trim().replace(/[-–—]\s*$/, ''), hora });
+                const actividad = match[1].trim().replace(/[-–—]\s*$/, '');
+                fijas.push({ actividad, hora });
             } else {
                 fijas.push({ actividad: linea, hora: '--:--' });
             }

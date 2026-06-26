@@ -79,3 +79,13 @@ export async function cargarEmojisNube(userId) {
     const snap = await getDoc(doc(db, 'usuarios', userId, 'datos', 'emojis'));
     return snap.exists() ? snap.data().lista : [];
 }
+
+// ── RECURRENTES EN LA NUBE ────────────────────────────
+export async function guardarRecurrentesNube(userId, recurrentes) {
+    await setDoc(doc(db, 'usuarios', userId, 'datos', 'recurrentes'), { lista: recurrentes });
+}
+
+export async function cargarRecurrentesNube(userId) {
+    const snap = await getDoc(doc(db, 'usuarios', userId, 'datos', 'recurrentes'));
+    return snap.exists() ? snap.data().lista : [];
+}
