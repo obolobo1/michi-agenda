@@ -89,3 +89,12 @@ export async function cargarRecurrentesNube(userId) {
     const snap = await getDoc(doc(db, 'usuarios', userId, 'datos', 'recurrentes'));
     return snap.exists() ? snap.data().lista : [];
 }
+// ── CHECKS EN LA NUBE ─────────────────────────────────
+export async function guardarChecksNube(userId, checks) {
+    await setDoc(doc(db, 'usuarios', userId, 'datos', 'checks'), { data: checks });
+}
+
+export async function cargarChecksNube(userId) {
+    const snap = await getDoc(doc(db, 'usuarios', userId, 'datos', 'checks'));
+    return snap.exists() ? snap.data().data : {};
+}

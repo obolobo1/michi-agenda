@@ -6,6 +6,7 @@ import {
     guardarPendientesNube, cargarPendientesNube,
     guardarEmojisNube, cargarEmojisNube,
     guardarRecurrentesNube, cargarRecurrentesNube
+    guardarChecksNube, cargarChecksNube
 } from './firebase.js';
 
 // ── ESTADO GLOBAL ─────────────────────────────────────
@@ -113,21 +114,22 @@ observarUsuario(async (user) => {
 async function sincronizarDesdNube() {
     if (!usuarioActual) return;
     try {
-        const [agendas, pendientes, emojis, recurrentes] = await Promise.all([
+        const [agendas, pendientes, emojis, recurrentes, checks] = await Promise.all([
             cargarAgendasNube(usuarioActual.uid),
             cargarPendientesNube(usuarioActual.uid),
             cargarEmojisNube(usuarioActual.uid),
-            cargarRecurrentesNube(usuarioActual.uid)
+            cargarRecurrentesNube(usuarioActual.uid),
+            cargarChecksNube(usuarioActual.uid)
         ]);
         localStorage.setItem('michi-agendas', JSON.stringify(agendas));
         localStorage.setItem('michi-pendientes', JSON.stringify(pendientes));
         localStorage.setItem('michi-emojis-custom', JSON.stringify(emojis));
         localStorage.setItem('michi-recurrentes', JSON.stringify(recurrentes));
+        localStorage.setItem('michi-checks', JSON.stringify(checks));
     } catch (e) {
         console.log('Sin conexión, usando datos locales');
     }
 }
-
 // ── LOGIN HANDLERS ────────────────────────────────────
 function mostrarTab(tab) {
     document.getElementById('tab-iniciar').classList.toggle('oculto', tab !== 'iniciar');
@@ -213,8 +215,8 @@ async function handleCerrarSesion() {
     localStorage.removeItem('michi-pendientes');
     localStorage.removeItem('michi-emojis-custom');
     localStorage.removeItem('michi-recurrentes');
+    localStorage.removeItem('michi-checks');
 }
-
 // ── AYUDA EN EDITOR ───────────────────────────────────
 function toggleAyuda() {
     document.getElementById('panel-ayuda').classList.toggle('oculto');
@@ -365,8 +367,8 @@ function guardarChecks(fechaKey, checks) {
     const todos = JSON.parse(localStorage.getItem('michi-checks') || '{}');
     todos[fechaKey] = checks;
     localStorage.setItem('michi-checks', JSON.stringify(todos));
+    if (usuarioActual) guardarChecksNube(usuarioActual.uid, todos).catch(() => {});
 }
-
 function esDiaActivo(fechaKey) {
     const hoy = formatearFechaKey(new Date());
     return fechaKey === hoy;
@@ -638,18 +640,15 @@ function mostrarHoy() {
     const agendas = cargarAgendas();
     const agendaHoy = agendas.find(a => a.fechaKey === fechaKey);
     document.getElementById('titulo-hoy').textContent = formatearFechaDisplay(hoy);
-    const accionesHoy = document.getElementById('acciones-hoy');
     const textoConRec = obtenerTextoConRecurrentes(hoy);
     if (agendaHoy || textoConRec) {
         agendaViendoId = agendaHoy ? agendaHoy.id : null;
-        accionesHoy.style.display = agendaHoy ? 'flex' : 'none';
         const texto = textoConRec || agendaHoy.texto;
         const { fijas } = parsearActividades(texto);
         document.getElementById('contenido-hoy').innerHTML = renderTimelineHoy(fijas, hoy, fechaKey);
         programarNotificaciones(fijas, fechaKey);
     } else {
         agendaViendoId = null;
-        accionesHoy.style.display = 'none';
         document.getElementById('contenido-hoy').innerHTML = renderHorasVacias(hoy);
     }
     renderSemanaStrip();
@@ -1215,3 +1214,4 @@ window.borrarEmojiCustom = borrarEmojiCustom;
 window.navegarDia = navegarDia;
 window.borrarRecurrente = borrarRecurrente;
 window.toggleCheck = toggleCheck;
+
