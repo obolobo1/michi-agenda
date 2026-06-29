@@ -355,6 +355,53 @@ function borrarRecurrente(idx) {
     renderRecurrentesConfig();
 }
 
+// ── CHECKS DE ACTIVIDADES ─────────────────────────────
+function cargarChecks(fechaKey) {
+    const todos = JSON.parse(localStorage.getItem('michi-checks') || '{}');
+    return todos[fechaKey] || {};
+}
+
+function guardarChecks(fechaKey, checks) {
+    const todos = JSON.parse(localStorage.getItem('michi-checks') || '{}');
+    todos[fechaKey] = checks;
+    localStorage.setItem('michi-checks', JSON.stringify(todos));
+}
+
+function esDiaActivo(fechaKey) {
+    const hoy = formatearFechaKey(new Date());
+    return fechaKey === hoy;
+}
+
+function toggleCheck(fechaKey, checkKey) {
+    if (!esDiaActivo(fechaKey)) return;
+    const checks = cargarChecks(fechaKey);
+    checks[checkKey] = !checks[checkKey];
+    guardarChecks(fechaKey, checks);
+    // Refrescar donde corresponda
+    mostrarHoy();
+    if (document.getElementById('pantalla-dashboard').classList.contains('activa') && fechaDashboard) {
+        const agenda = cargarAgendas().find(a => a.fechaKey === fechaKey);
+        const textoConRec = obtenerTextoConRecurrentes(new Date(fechaKey + 'T12:00:00'));
+        const texto = textoConRec || (agenda ? agenda.texto : '');
+        document.getElementById('contenido-dashboard').innerHTML = renderDiario(parsearActividades(texto), fechaKey);
+    }
+}
+
+function calcularPorcentaje(fijas, fechaKey) {
+    if (!fijas || fijas.length === 0) return 0;
+    const checks = cargarChecks(fechaKey);
+    const completadas = fijas.filter(act => checks[act.actividad + act.hora]).length;
+    return Math.round((completadas / fijas.length) * 100);
+}
+
+function mensajeMichi(porcentaje) {
+    if (porcentaje === 0) return null;
+    if (porcentaje <= 20) return '¡Cada día es una nueva oportunidad, humano! 🐾';
+    if (porcentaje <= 50) return '¡Sigue así humano, estás cada vez más cerca! 💪';
+    if (porcentaje <= 80) return '¡Casi lo logras humano! Estoy muy orgulloso 😸';
+    return '¡Eres increíble humano! Mereces un premio 🎩';
+}
+
 // ── PENDIENTES ────────────────────────────────────────
 function cargarPendientes() {
     return JSON.parse(localStorage.getItem('michi-pendientes') || '[]');
@@ -598,7 +645,7 @@ function mostrarHoy() {
         accionesHoy.style.display = agendaHoy ? 'flex' : 'none';
         const texto = textoConRec || agendaHoy.texto;
         const { fijas } = parsearActividades(texto);
-        document.getElementById('contenido-hoy').innerHTML = renderTimelineHoy(fijas, hoy);
+        document.getElementById('contenido-hoy').innerHTML = renderTimelineHoy(fijas, hoy, fechaKey);
         programarNotificaciones(fijas, fechaKey);
     } else {
         agendaViendoId = null;
@@ -613,7 +660,7 @@ function mostrarHoy() {
     }
 }
 
-function renderTimelineHoy(fijas, hoy) {
+function renderTimelineHoy(fijas, hoy, fechaKey) {
     const ahoraH = hoy.getHours();
     const ahoraM = hoy.getMinutes();
     let proximaIdx = -1;
@@ -625,25 +672,45 @@ function renderTimelineHoy(fijas, hoy) {
     if (proximaIdx > 1) inicio = proximaIdx - 1;
     if (inicio + 4 > fijas.length) inicio = Math.max(0, fijas.length - 4);
     const visibles = fijas.slice(inicio, inicio + 4);
+    const checks = cargarChecks(fechaKey);
+    const activo = esDiaActivo(fechaKey);
     let items = visibles.map((act, idx) => {
         const realIdx = inicio + idx;
         const icono = obtenerIcono(act.actividad);
         const clase = obtenerClase(icono, realIdx);
         const esProxima = realIdx === proximaIdx;
         const esUltimo = idx === visibles.length - 1;
+        const checkKey = act.actividad + act.hora;
+        const completada = checks[checkKey];
         return `
-        <div class="timeline-item ${esProxima ? 'proxima' : ''}">
+        <div class="timeline-item ${esProxima ? 'proxima' : ''} ${completada ? 'completada' : ''}">
             <div class="timeline-left">
-                <div class="tl-circle ${clase}">${icono}</div>
+                <div class="tl-circle ${clase} ${completada ? 'tl-circle-done' : ''}">${completada ? '✅' : icono}</div>
                 ${!esUltimo ? '<div class="tl-line"></div>' : ''}
             </div>
             <div class="tl-content">
-                <div class="tl-hora">${act.hora} ${esProxima ? '<span class="tag-proxima">próxima</span>' : ''}</div>
-                <div class="tl-nombre">${act.actividad}</div>
+                <div class="tl-hora">${act.hora} ${esProxima && !completada ? '<span class="tag-proxima">próxima</span>' : ''}</div>
+                <div class="tl-nombre ${completada ? 'tl-nombre-done' : ''}">${act.actividad}</div>
             </div>
+            ${activo ? `<button class="btn-check ${completada ? 'checked' : ''}" onclick="toggleCheck('${fechaKey}', '${checkKey}')">${completada ? '✓' : '○'}</button>` : ''}
         </div>`;
     }).join('');
-    return `<div class="timeline-hoy">${items}</div>`;
+
+    const porcentaje = calcularPorcentaje(fijas, fechaKey);
+    const mensaje = mensajeMichi(porcentaje);
+    const barraHTML = fijas.length > 0 ? `
+        <div class="progreso-box">
+            <div class="progreso-header">
+                <span class="progreso-label">Progreso del día</span>
+                <span class="progreso-pct">${porcentaje}%</span>
+            </div>
+            <div class="progreso-barra">
+                <div class="progreso-fill" style="width:${porcentaje}%"></div>
+            </div>
+            ${mensaje ? `<div class="progreso-mensaje">🐱 ${mensaje}</div>` : ''}
+        </div>` : '';
+
+    return `<div class="timeline-hoy">${items}</div>${barraHTML}`;
 }
 
 function renderHorasVacias(hoy) {
@@ -688,8 +755,7 @@ function renderSemanaStrip() {
         let emoji = '';
         if (agenda) {
             const primeraLinea = agenda.texto.split('\n').find(l => l.trim()) || '';
-            const primeraAct = extraerActividad(primeraLinea);
-            emoji = obtenerIcono(primeraAct);
+            emoji = obtenerIcono(extraerActividad(primeraLinea));
         } else if (tieneRec) {
             const recs = obtenerActividadesRecurrentesParaDia(dia);
             emoji = obtenerIcono(extraerActividad(recs[0]));
@@ -718,7 +784,7 @@ function seleccionarDiaStrip(fechaKey, tieneAgenda) {
         document.getElementById('pantalla-dashboard').classList.add('activa');
         document.getElementById('titulo-dashboard').textContent = formatearFechaDisplay(fecha);
         const texto = textoConRec || agenda.texto;
-        document.getElementById('contenido-dashboard').innerHTML = renderDiario(parsearActividades(texto));
+        document.getElementById('contenido-dashboard').innerHTML = renderDiario(parsearActividades(texto), fechaKey);
     } else {
         mostrarEditor(fechaKey);
     }
@@ -736,7 +802,7 @@ function navegarDia(delta) {
     document.getElementById('titulo-dashboard').textContent = formatearFechaDisplay(nuevaFecha);
     if (agenda || textoConRec) {
         const texto = textoConRec || agenda.texto;
-        document.getElementById('contenido-dashboard').innerHTML = renderDiario(parsearActividades(texto));
+        document.getElementById('contenido-dashboard').innerHTML = renderDiario(parsearActividades(texto), fechaKey);
     } else {
         document.getElementById('contenido-dashboard').innerHTML = `
             <div style="text-align:center; padding: 40px 20px; color: #6b7280;">
@@ -811,7 +877,7 @@ function seleccionarDiaCalendario(fechaKey, tieneAgenda) {
         document.getElementById('pantalla-dashboard').classList.add('activa');
         document.getElementById('titulo-dashboard').textContent = formatearFechaDisplay(fecha);
         const texto = textoConRec || agenda.texto;
-        document.getElementById('contenido-dashboard').innerHTML = renderDiario(parsearActividades(texto));
+        document.getElementById('contenido-dashboard').innerHTML = renderDiario(parsearActividades(texto), fechaKey);
     } else {
         mostrarEditor(fechaKey);
     }
@@ -1014,9 +1080,7 @@ function procesarAgenda() {
 
 // ── PARSEAR Y RENDER ──────────────────────────────────
 function extraerActividad(linea) {
-    // Quitar [...] si existe
     linea = linea.replace(/\[.+?\]/, '').trim();
-    // Intentar extraer solo el nombre sin la hora
     const match = linea.match(/^(.*?)\s+\d{1,2}(:\d{2})?\s*$/);
     return match ? match[1].trim() : linea;
 }
@@ -1032,7 +1096,6 @@ function parsearActividades(texto) {
         if (esLimpieza) {
             limpieza.push(linea);
         } else {
-            // Acepta: "GYM 12:00", "GYM - 12:00", "GYM 12", "GYM - 12"
             const match = linea.match(/^(.*?)\s*[-–—]?\s*(\d{1,2}:\d{2}|\d{1,2})\s*$/);
             if (match) {
                 let hora = match[2].trim();
@@ -1052,29 +1115,56 @@ function parsearActividades(texto) {
     return { fijas, limpieza };
 }
 
-function renderDiario({ fijas, limpieza }) {
+function renderDiario({ fijas, limpieza }, fechaKey) {
+    const checks = cargarChecks(fechaKey);
+    const activo = esDiaActivo(fechaKey);
+
+    const porcentaje = calcularPorcentaje(fijas, fechaKey);
+    const mensaje = mensajeMichi(porcentaje);
+
     let timelineItems = fijas.map((act, idx) => {
         const icono = obtenerIcono(act.actividad);
         const clase = obtenerClase(icono, idx);
         const esUltimo = idx === fijas.length - 1;
+        const checkKey = act.actividad + act.hora;
+        const completada = checks[checkKey];
         return `
-        <div class="timeline-item">
+        <div class="timeline-item ${completada ? 'completada' : ''}">
             <div class="timeline-left">
-                <div class="tl-circle ${clase}">${icono}</div>
+                <div class="tl-circle ${clase} ${completada ? 'tl-circle-done' : ''}">${completada ? '✅' : icono}</div>
                 ${!esUltimo ? '<div class="tl-line"></div>' : ''}
             </div>
             <div class="tl-content">
                 <div class="tl-hora">${act.hora}</div>
-                <div class="tl-nombre">${act.actividad}</div>
+                <div class="tl-nombre ${completada ? 'tl-nombre-done' : ''}">${act.actividad}</div>
             </div>
+            ${activo ? `<button class="btn-check ${completada ? 'checked' : ''}" onclick="toggleCheck('${fechaKey}', '${checkKey}')">${completada ? '✓' : '○'}</button>` : ''}
         </div>`;
     }).join('');
+
     let filas = fijas.map(act => {
         const icono = obtenerIcono(act.actividad);
-        return `<tr><td class="time-cell">${act.hora}</td><td>${icono} ${act.actividad}</td></tr>`;
+        const checkKey = act.actividad + act.hora;
+        const completada = checks[checkKey];
+        return `<tr class="${completada ? 'fila-done' : ''}"><td class="time-cell">${act.hora}</td><td>${completada ? '✅' : icono} <span class="${completada ? 'tl-nombre-done' : ''}">${act.actividad}</span></td></tr>`;
     }).join('');
+
     let limpiezaHTML = limpieza.map(t => `<li>✨ ${t}</li>`).join('');
+
+    const barraHTML = fijas.length > 0 ? `
+        <div class="progreso-box">
+            <div class="progreso-header">
+                <span class="progreso-label">Progreso del día</span>
+                <span class="progreso-pct">${porcentaje}%</span>
+            </div>
+            <div class="progreso-barra">
+                <div class="progreso-fill" style="width:${porcentaje}%"></div>
+            </div>
+            ${mensaje ? `<div class="progreso-mensaje">🐱 ${mensaje}</div>` : ''}
+        </div>` : '';
+
     return `
+        ${barraHTML}
         <div class="dashboard-diario">
             <div class="panel"><h3>Línea de Tiempo</h3><div class="timeline-vertical">${timelineItems}</div></div>
             <div class="panel"><h3>Actividades</h3>
@@ -1124,3 +1214,4 @@ window.agregarEmojiPersonalizado = agregarEmojiPersonalizado;
 window.borrarEmojiCustom = borrarEmojiCustom;
 window.navegarDia = navegarDia;
 window.borrarRecurrente = borrarRecurrente;
+window.toggleCheck = toggleCheck;
