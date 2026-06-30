@@ -73,7 +73,7 @@
         <header>
             <div class="header-top">
                 <h1>🐱 Michi Agenda</h1>
-                <div class="badge-wallet" id="badge-wallet"></div>
+                <button class="badge-wallet" id="badge-wallet" onclick="mostrarWallet()"></button>
                 <button class="btn-config" onclick="mostrarConfig()">⚙️</button>
             </div>
             <h2 id="titulo-hoy"></h2>
@@ -184,16 +184,65 @@
         </div>
         <div id="contenido-dashboard"></div>
     </div>
+    <!-- PANTALLA: MI WALLET -->
+    <div id="pantalla-wallet" class="pantalla">
+        <header>
+            <button class="btn-back" onclick="volverAtras()">← Volver</button>
+            <h2>🐾 Mi Wallet</h2>
+        </header>
+
+        <div class="wallet-saldo-grande">
+            <div class="wallet-saldo-item">
+                <span class="wallet-saldo-emoji">🐾</span>
+                <span class="wallet-saldo-num" id="wallet-saldo-patitas">0</span>
+                <span class="wallet-saldo-label">Patitas</span>
+            </div>
+            <div class="wallet-saldo-item">
+                <span class="wallet-saldo-emoji">🧶</span>
+                <span class="wallet-saldo-num" id="wallet-saldo-bolas">0</span>
+                <span class="wallet-saldo-label">Bolas de pelo</span>
+            </div>
+        </div>
+
+        <div class="wallet-nivel-box">
+            <div class="wallet-nivel-header">
+                <span class="wallet-nivel-titulo">Nivel <span id="wallet-nivel-num">1</span></span>
+                <span class="wallet-nivel-xp" id="wallet-nivel-xp">0 / 100 XP</span>
+            </div>
+            <div class="wallet-nivel-barra">
+                <div class="wallet-nivel-fill" id="wallet-nivel-fill" style="width:0%"></div>
+            </div>
+        </div>
+
+        <div class="wallet-racha-row">
+            <div class="wallet-racha-card">
+                <span class="wallet-racha-emoji">🔥</span>
+                <span class="wallet-racha-num" id="wallet-racha-actual">0</span>
+                <span class="wallet-racha-label">Racha actual</span>
+            </div>
+            <div class="wallet-racha-card">
+                <span class="wallet-racha-emoji">🏆</span>
+                <span class="wallet-racha-num" id="wallet-racha-maxima">0</span>
+                <span class="wallet-racha-label">Racha máxima</span>
+            </div>
+            <div class="wallet-racha-card">
+                <span class="wallet-racha-emoji">🧊</span>
+                <span class="wallet-racha-num" id="wallet-freezes">0</span>
+                <span class="wallet-racha-label">Michi Freeze</span>
+            </div>
+        </div>
+
+        <div class="seccion-titulo" style="margin-top:20px">
+            <span>🏆 Logros</span>
+        </div>
+        <div id="lista-logros" class="lista-logros"></div>
+    </div>
     <!-- PANTALLA: CONFIGURACIÓN -->
     <div id="pantalla-config" class="pantalla">
         <header>
             <button class="btn-back" onclick="volverAtras()">← Volver</button>
             <h2>⚙️ Configuración</h2>
         </header>
-        <div class="config-seccion">
-            <div class="config-seccion-titulo">🐾 Mi Wallet</div>
-            <div class="config-info" id="wallet-config-info"></div>
-        </div>
         <div class="config-seccion">
             <div class="config-seccion-titulo">👤 Cuenta</div>
             <div class="config-info">

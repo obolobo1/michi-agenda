@@ -109,3 +109,13 @@ export async function cargarWalletNube(userId) {
     const snap = await getDoc(doc(db, 'usuarios', userId, 'datos', 'wallet'));
     return snap.exists() ? snap.data() : null;
 }
+
+// ── LOGROS EN LA NUBE ──────────────────────────────────
+export async function guardarLogrosNube(userId, logros) {
+    await setDoc(doc(db, 'usuarios', userId, 'datos', 'logros'), { lista: logros });
+}
+
+export async function cargarLogrosNube(userId) {
+    const snap = await getDoc(doc(db, 'usuarios', userId, 'datos', 'logros'));
+    return snap.exists() ? snap.data().lista : [];
+}

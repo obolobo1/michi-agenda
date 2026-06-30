@@ -7,10 +7,9 @@ import {
     guardarEmojisNube, cargarEmojisNube,
     guardarRecurrentesNube, cargarRecurrentesNube,
     guardarChecksNube, cargarChecksNube,
-    guardarWalletNube, cargarWalletNube
+    guardarWalletNube, cargarWalletNube,
+    guardarLogrosNube, cargarLogrosNube
 } from './firebase.js';
-
-console.log('✅ app.js cargado correctamente');
 
 // ── ESTADO GLOBAL ─────────────────────────────────────
 let fechaSeleccionada = new Date();
@@ -44,8 +43,8 @@ const SLIDES = [
     },
     {
         emoji: '🐾',
-        titulo: '¡Gana patitas!',
-        desc: 'Usa la app cada día, completa tus actividades y junta patitas para tu futuro michi compañero.',
+        titulo: '¡Gana patitas y sube de nivel!',
+        desc: 'Usa la app cada día, completa tus actividades y junta patitas y experiencia para tu futuro michi compañero.',
         ejemplo: null
     },
     {
@@ -101,13 +100,11 @@ function verificarOnboarding() {
 
 // ── AUTH ──────────────────────────────────────────────
 observarUsuario(async (user) => {
-    console.log('🔑 observarUsuario disparado, user:', user ? user.email : 'null');
     usuarioActual = user;
     if (user) {
         document.querySelectorAll('.pantalla').forEach(p => p.classList.remove('activa'));
         document.getElementById('pantalla-hoy').classList.add('activa');
         await sincronizarDesdNube();
-        console.log('🐾 Llamando a procesarLoginDiario...');
         procesarLoginDiario();
         mostrarHoy();
     } else {
@@ -126,25 +123,24 @@ observarUsuario(async (user) => {
 async function sincronizarDesdNube() {
     if (!usuarioActual) return;
     try {
-        const [agendas, pendientes, emojis, recurrentes, checks, wallet] = await Promise.all([
+        const [agendas, pendientes, emojis, recurrentes, checks, wallet, logros] = await Promise.all([
             cargarAgendasNube(usuarioActual.uid),
             cargarPendientesNube(usuarioActual.uid),
             cargarEmojisNube(usuarioActual.uid),
             cargarRecurrentesNube(usuarioActual.uid),
             cargarChecksNube(usuarioActual.uid),
-            cargarWalletNube(usuarioActual.uid)
+            cargarWalletNube(usuarioActual.uid),
+            cargarLogrosNube(usuarioActual.uid)
         ]);
         localStorage.setItem('michi-agendas', JSON.stringify(agendas));
         localStorage.setItem('michi-pendientes', JSON.stringify(pendientes));
         localStorage.setItem('michi-emojis-custom', JSON.stringify(emojis));
         localStorage.setItem('michi-recurrentes', JSON.stringify(recurrentes));
         localStorage.setItem('michi-checks', JSON.stringify(checks));
-        console.log('☁️ Wallet recibido de Firebase:', wallet);
-        if (wallet) {
-            localStorage.setItem('michi-wallet', JSON.stringify(wallet));
-        }
+        if (wallet) localStorage.setItem('michi-wallet', JSON.stringify(wallet));
+        localStorage.setItem('michi-logros', JSON.stringify(logros || []));
     } catch (e) {
-        console.log('⚠️ Error en sincronización (puede ser normal si es la primera vez):', e);
+        console.log('Sin conexión, usando datos locales');
     }
 }
 
@@ -235,6 +231,7 @@ async function handleCerrarSesion() {
     localStorage.removeItem('michi-recurrentes');
     localStorage.removeItem('michi-checks');
     localStorage.removeItem('michi-wallet');
+    localStorage.removeItem('michi-logros');
 }
 
 // ── AYUDA EN EDITOR ───────────────────────────────────
@@ -242,30 +239,192 @@ function toggleAyuda() {
     document.getElementById('panel-ayuda').classList.toggle('oculto');
 }
 
-// ── WALLET — PATITAS Y BOLAS DE PELO ──────────────────
+// ── SISTEMA DE NIVELES ────────────────────────────────
+function xpParaNivel(nivel) {
+    return Math.round(100 * Math.pow(1.4, nivel - 1));
+}
+
+function calcularNivelDesdeXP(xpTotal) {
+    let nivel = 1;
+    let xpAcumulada = 0;
+    while (true) {
+        const xpNecesaria = xpParaNivel(nivel);
+        if (xpAcumulada + xpNecesaria > xpTotal) break;
+        xpAcumulada += xpNecesaria;
+        nivel++;
+    }
+    const xpEnNivelActual = xpTotal - xpAcumulada;
+    const xpNecesariaNivelActual = xpParaNivel(nivel);
+    return { nivel, xpEnNivelActual, xpNecesariaNivelActual };
+}
+
+// ── LOGROS — DEFINICIÓN ───────────────────────────────
+const LOGROS_DEFINICION = [
+    { id: 'primera_agenda', nombre: 'Primera agenda creada', emoji: '🎉', categoria: 'inicio',
+      condicion: (s) => s.agendasCreadas >= 1, patitas: 0, xp: 0 },
+    { id: 'primera_actividad', nombre: 'Primera actividad completada', emoji: '✅', categoria: 'inicio',
+      condicion: (s) => s.actividadesCompletadas >= 1, patitas: 5, xp: 10 },
+    { id: 'primer_dia_completo', nombre: 'Primer día 100% completado', emoji: '💯', categoria: 'inicio',
+      condicion: (s) => s.diasCompletados >= 1, patitas: 10, xp: 20 },
+    { id: 'primer_emoji', nombre: 'Primer emoji personalizado', emoji: '🎨', categoria: 'inicio',
+      condicion: (s) => s.emojisCreados >= 1, patitas: 5, xp: 10 },
+
+    { id: 'racha_3', nombre: 'Racha de 3 días', emoji: '🔥', categoria: 'constancia',
+      condicion: (s) => s.rachaMaxima >= 3, patitas: 15, xp: 30 },
+    { id: 'racha_7', nombre: 'Racha de 7 días', emoji: '🔥', categoria: 'constancia',
+      condicion: (s) => s.rachaMaxima >= 7, patitas: 30, xp: 60 },
+    { id: 'racha_30', nombre: 'Racha de 30 días', emoji: '🔥', categoria: 'constancia',
+      condicion: (s) => s.rachaMaxima >= 30, patitas: 80, xp: 150 },
+    { id: 'racha_90', nombre: 'Racha de 90 días', emoji: '🔥', categoria: 'constancia',
+      condicion: (s) => s.rachaMaxima >= 90, patitas: 150, xp: 300 },
+    { id: 'racha_365', nombre: 'Racha de 365 días', emoji: '🏆', categoria: 'constancia',
+      condicion: (s) => s.rachaMaxima >= 365, patitas: 500, xp: 1000 },
+
+    { id: 'act_50', nombre: '50 actividades completadas', emoji: '✅', categoria: 'volumen',
+      condicion: (s) => s.actividadesCompletadas >= 50, patitas: 30, xp: 60 },
+    { id: 'act_200', nombre: '200 actividades completadas', emoji: '✅', categoria: 'volumen',
+      condicion: (s) => s.actividadesCompletadas >= 200, patitas: 80, xp: 150 },
+    { id: 'act_500', nombre: '500 actividades completadas', emoji: '✅', categoria: 'volumen',
+      condicion: (s) => s.actividadesCompletadas >= 500, patitas: 150, xp: 300 },
+    { id: 'dias_10', nombre: '10 días 100% completados', emoji: '💯', categoria: 'volumen',
+      condicion: (s) => s.diasCompletados >= 10, patitas: 40, xp: 80 },
+    { id: 'dias_30', nombre: '30 días 100% completados', emoji: '💯', categoria: 'volumen',
+      condicion: (s) => s.diasCompletados >= 30, patitas: 100, xp: 200 },
+
+    { id: 'agenda_recurrente', nombre: 'Crear una agenda recurrente', emoji: '↻', categoria: 'comportamiento',
+      condicion: (s) => s.recurrentesCreadas >= 1, patitas: 10, xp: 20 },
+    { id: 'emojis_5', nombre: 'Personalizar 5 emojis distintos', emoji: '🎨', categoria: 'comportamiento',
+      condicion: (s) => s.emojisCreados >= 5, patitas: 15, xp: 30 },
+
+    { id: 'mes_1', nombre: '1 mes usando la app', emoji: '🗓️', categoria: 'antiguedad',
+      condicion: (s) => s.diasAntiguedad >= 30, patitas: 50, xp: 100 },
+    { id: 'mes_6', nombre: '6 meses usando la app', emoji: '🗓️', categoria: 'antiguedad',
+      condicion: (s) => s.diasAntiguedad >= 180, patitas: 150, xp: 300 },
+    { id: 'anio_1', nombre: '1 año usando la app', emoji: '🗓️', categoria: 'antiguedad',
+      condicion: (s) => s.diasAntiguedad >= 365, patitas: 400, xp: 800 }
+];
+
+function cargarLogrosDesbloqueados() {
+    return JSON.parse(localStorage.getItem('michi-logros') || '[]');
+}
+
+function guardarLogrosDesbloqueados(logros) {
+    localStorage.setItem('michi-logros', JSON.stringify(logros));
+    if (usuarioActual) guardarLogrosNube(usuarioActual.uid, logros).catch(() => {});
+}
+
+function obtenerEstadisticas() {
+    const wallet = cargarWallet();
+    const agendas = cargarAgendas();
+    const emojis = cargarEmojisCustom();
+    const recurrentes = cargarRecurrentes();
+    const todosChecks = JSON.parse(localStorage.getItem('michi-checks') || '{}');
+
+    let actividadesCompletadas = 0;
+    let diasCompletados = 0;
+
+    Object.keys(todosChecks).forEach(fechaKey => {
+        const checks = todosChecks[fechaKey];
+        const valores = Object.values(checks);
+        const completadasEnDia = valores.filter(v => v === true).length;
+        actividadesCompletadas += completadasEnDia;
+        const agenda = agendas.find(a => a.fechaKey === fechaKey);
+        if (agenda) {
+            const { fijas } = parsearActividades(agenda.texto);
+            if (fijas.length > 0 && completadasEnDia === fijas.length) diasCompletados++;
+        }
+    });
+
+    return {
+        agendasCreadas: agendas.length,
+        actividadesCompletadas,
+        diasCompletados,
+        emojisCreados: emojis.length,
+        recurrentesCreadas: recurrentes.length,
+        rachaMaxima: wallet.rachaMaxima || 0,
+        diasAntiguedad: diasDesdeRegistro(wallet)
+    };
+}
+
+function revisarLogrosNuevos() {
+    const stats = obtenerEstadisticas();
+    const desbloqueados = cargarLogrosDesbloqueados();
+    let wallet = cargarWallet();
+    let huboNuevos = false;
+
+    LOGROS_DEFINICION.forEach(logro => {
+        if (desbloqueados.includes(logro.id)) return;
+        if (logro.condicion(stats)) {
+            desbloqueados.push(logro.id);
+            huboNuevos = true;
+            if (logro.patitas > 0) wallet.patitas += logro.patitas;
+            if (logro.xp > 0) wallet.xp = (wallet.xp || 0) + logro.xp;
+            mostrarToastPatitas(logro.patitas, `🏆 Logro: ${logro.nombre}`);
+        }
+    });
+
+    if (huboNuevos) {
+        guardarLogrosDesbloqueados(desbloqueados);
+        guardarWallet(wallet);
+        renderBadgeWallet();
+    }
+}
+
+const NOMBRES_CATEGORIA = {
+    inicio: '🌱 Inicio',
+    constancia: '🔥 Constancia',
+    volumen: '📊 Volumen',
+    comportamiento: '🎯 Comportamiento',
+    antiguedad: '🗓️ Antigüedad'
+};
+
+function renderListaLogros() {
+    const desbloqueados = cargarLogrosDesbloqueados();
+    const cont = document.getElementById('lista-logros');
+    if (!cont) return;
+
+    const ordenados = [...LOGROS_DEFINICION].sort((a, b) => {
+        const aDesb = desbloqueados.includes(a.id);
+        const bDesb = desbloqueados.includes(b.id);
+        if (aDesb === bDesb) return 0;
+        return aDesb ? -1 : 1;
+    });
+
+    cont.innerHTML = ordenados.map(logro => {
+        const desb = desbloqueados.includes(logro.id);
+        return `<div class="logro-item ${desb ? 'desbloqueado' : 'bloqueado'}">
+            <span class="logro-emoji">${desb ? logro.emoji : '🔒'}</span>
+            <div class="logro-info">
+                <div class="logro-nombre">${logro.nombre}</div>
+                <div class="logro-recompensa">${logro.patitas > 0 ? `🐾 +${logro.patitas} ` : ''}${logro.xp > 0 ? `⭐ +${logro.xp} XP` : ''}</div>
+            </div>
+            ${desb ? '<span class="logro-check">✅</span>' : ''}
+        </div>`;
+    }).join('');
+}
+
+// ── WALLET — PATITAS, BOLAS DE PELO, XP, FREEZE ───────
 function cargarWallet() {
     const guardado = localStorage.getItem('michi-wallet');
-    if (guardado) {
-        console.log('🐾 Wallet cargado desde localStorage:', JSON.parse(guardado));
-        return JSON.parse(guardado);
-    }
-    console.log('🐾 No había wallet, creando uno nuevo');
-    const nuevo = {
+    if (guardado) return JSON.parse(guardado);
+    return {
         patitas: 0,
         bolasDePelo: 0,
+        xp: 0,
         ultimoLogin: null,
         rachaActual: 0,
         rachaMaxima: 0,
         fechaRegistro: formatearFechaKey(new Date()),
-        diaCompletadoHoy: false
+        diaCompletadoHoy: false,
+        michiFreezes: 0,
+        ultimoFreezeOtorgado: null,
+        primeraAgendaCreada: false
     };
-    return nuevo;
 }
 
 function guardarWallet(wallet) {
-    console.log('💾 Guardando wallet:', wallet);
     localStorage.setItem('michi-wallet', JSON.stringify(wallet));
-    if (usuarioActual) guardarWalletNube(usuarioActual.uid, wallet).catch((e) => console.log('Error guardando wallet en nube:', e));
+    if (usuarioActual) guardarWalletNube(usuarioActual.uid, wallet).catch(() => {});
 }
 
 function diasDesdeRegistro(wallet) {
@@ -280,15 +439,17 @@ function enLunaDeMiel(wallet) {
     return diasDesdeRegistro(wallet) < 7;
 }
 
-function otorgarPatitas(wallet, cantidad, motivo) {
+function otorgarPatitas(wallet, cantidad, motivo, xpExtra) {
     wallet.patitas += cantidad;
+    if (xpExtra) wallet.xp = (wallet.xp || 0) + xpExtra;
     mostrarToastPatitas(cantidad, motivo);
 }
 
 function mostrarToastPatitas(cantidad, motivo) {
     const toast = document.createElement('div');
     toast.className = 'toast-patitas';
-    toast.innerHTML = `🐾 +${cantidad} patitas<br><span class="toast-motivo">${motivo}</span>`;
+    const textoCantidad = cantidad > 0 ? `🐾 +${cantidad} patitas<br>` : '';
+    toast.innerHTML = `${textoCantidad}<span class="toast-motivo">${motivo}</span>`;
     document.body.appendChild(toast);
     setTimeout(() => toast.classList.add('mostrar'), 50);
     setTimeout(() => {
@@ -297,17 +458,28 @@ function mostrarToastPatitas(cantidad, motivo) {
     }, 2800);
 }
 
+function revisarMichiFreeze(wallet) {
+    const dias = diasDesdeRegistro(wallet);
+    const bloquesDe15 = Math.floor(dias / 15);
+    const freezesYaOtorgados = wallet.ultimoFreezeOtorgado || 0;
+    if (bloquesDe15 > freezesYaOtorgados) {
+        const nuevos = bloquesDe15 - freezesYaOtorgados;
+        wallet.michiFreezes += nuevos;
+        wallet.ultimoFreezeOtorgado = bloquesDe15;
+        mostrarToastPatitas(0, `🧊 ¡Ganaste ${nuevos} Michi Freeze!`);
+    }
+}
+
 function procesarLoginDiario() {
-    console.log('🐱 procesarLoginDiario() EJECUTÁNDOSE');
     let wallet = cargarWallet();
     const hoyKey = formatearFechaKey(new Date());
 
-    if (!wallet.fechaRegistro) {
-        wallet.fechaRegistro = hoyKey;
-    }
+    if (!wallet.fechaRegistro) wallet.fechaRegistro = hoyKey;
+    if (wallet.xp === undefined) wallet.xp = 0;
+    if (wallet.michiFreezes === undefined) wallet.michiFreezes = 0;
+    if (wallet.ultimoFreezeOtorgado === undefined) wallet.ultimoFreezeOtorgado = 0;
 
     if (wallet.ultimoLogin === hoyKey) {
-        console.log('🐱 Ya se procesó el login de hoy');
         guardarWallet(wallet);
         renderBadgeWallet();
         return;
@@ -315,8 +487,12 @@ function procesarLoginDiario() {
 
     const lunaDeMiel = enLunaDeMiel(wallet);
     const ayer = formatearFechaKey(sumarDias(new Date(), -1));
+    const seRompioRacha = wallet.ultimoLogin !== null && wallet.ultimoLogin !== ayer;
 
-    if (wallet.ultimoLogin === ayer) {
+    if (seRompioRacha && wallet.michiFreezes > 0) {
+        wallet.michiFreezes -= 1;
+        mostrarToastPatitas(0, '🧊 Tu michi protegió tu racha con un Michi Freeze');
+    } else if (wallet.ultimoLogin === ayer) {
         wallet.rachaActual += 1;
     } else if (wallet.ultimoLogin === null) {
         wallet.rachaActual = 1;
@@ -324,54 +500,74 @@ function procesarLoginDiario() {
         wallet.rachaActual = 1;
     }
 
-    if (wallet.rachaActual > wallet.rachaMaxima) {
-        wallet.rachaMaxima = wallet.rachaActual;
-    }
+    if (wallet.rachaActual > wallet.rachaMaxima) wallet.rachaMaxima = wallet.rachaActual;
 
     if (wallet.ultimoLogin === null) {
-        otorgarPatitas(wallet, 50, '¡Bienvenida de tu michi! 🐱');
+        otorgarPatitas(wallet, 50, '¡Bienvenida de tu michi! 🐱', 50);
     } else {
         const patitasLogin = lunaDeMiel ? 20 : 10;
-        otorgarPatitas(wallet, patitasLogin, 'Por entrar hoy');
+        otorgarPatitas(wallet, patitasLogin, 'Por entrar hoy', 15);
     }
 
-    if (wallet.rachaActual === 7) {
-        otorgarPatitas(wallet, 50, '¡7 días seguidos!');
-    } else if (wallet.rachaActual === 30) {
-        otorgarPatitas(wallet, 100, '¡30 días seguidos! Increíble');
-    } else if (wallet.rachaActual > 30 && wallet.rachaActual % 30 === 0) {
-        otorgarPatitas(wallet, 80, `¡${wallet.rachaActual} días seguidos!`);
-    }
+    if (wallet.rachaActual === 7) otorgarPatitas(wallet, 50, '¡7 días seguidos!', 100);
+    else if (wallet.rachaActual === 30) otorgarPatitas(wallet, 100, '¡30 días seguidos! Increíble', 250);
+    else if (wallet.rachaActual > 30 && wallet.rachaActual % 30 === 0) otorgarPatitas(wallet, 80, `¡${wallet.rachaActual} días seguidos!`, 200);
+
+    revisarMichiFreeze(wallet);
 
     wallet.ultimoLogin = hoyKey;
     wallet.diaCompletadoHoy = false;
     guardarWallet(wallet);
     renderBadgeWallet();
-    console.log('🐱 procesarLoginDiario() TERMINADO. Wallet final:', wallet);
+    revisarLogrosNuevos();
 }
 
 function otorgarBonusDiaCompleto(fechaKey) {
     if (!esDiaActivo(fechaKey)) return;
     let wallet = cargarWallet();
     if (wallet.diaCompletadoHoy) return;
-
     const lunaDeMiel = enLunaDeMiel(wallet);
     const patitasBonus = lunaDeMiel ? 20 : 10;
     wallet.diaCompletadoHoy = true;
-    otorgarPatitas(wallet, patitasBonus, '¡Día 100% completado!');
+    otorgarPatitas(wallet, patitasBonus, '¡Día 100% completado!', 25);
     guardarWallet(wallet);
     renderBadgeWallet();
+    revisarLogrosNuevos();
 }
 
 function renderBadgeWallet() {
     const wallet = cargarWallet();
     const badge = document.getElementById('badge-wallet');
-    console.log('🎨 renderBadgeWallet, elemento encontrado:', !!badge, 'wallet:', wallet);
     if (!badge) return;
     badge.innerHTML = `
         <span class="badge-item">🐾 ${wallet.patitas}</span>
         <span class="badge-item">🧶 ${wallet.bolasDePelo}</span>
     `;
+}
+
+function mostrarWallet() {
+    pantallaAnterior = 'pantalla-hoy';
+    document.querySelectorAll('.pantalla').forEach(p => p.classList.remove('activa'));
+    document.getElementById('pantalla-wallet').classList.add('activa');
+    renderPantallaWallet();
+}
+
+function renderPantallaWallet() {
+    const wallet = cargarWallet();
+    document.getElementById('wallet-saldo-patitas').textContent = wallet.patitas;
+    document.getElementById('wallet-saldo-bolas').textContent = wallet.bolasDePelo;
+
+    const { nivel, xpEnNivelActual, xpNecesariaNivelActual } = calcularNivelDesdeXP(wallet.xp || 0);
+    document.getElementById('wallet-nivel-num').textContent = nivel;
+    document.getElementById('wallet-nivel-xp').textContent = `${xpEnNivelActual} / ${xpNecesariaNivelActual} XP`;
+    const pct = Math.min(100, Math.round((xpEnNivelActual / xpNecesariaNivelActual) * 100));
+    document.getElementById('wallet-nivel-fill').style.width = pct + '%';
+
+    document.getElementById('wallet-racha-actual').textContent = wallet.rachaActual;
+    document.getElementById('wallet-racha-maxima').textContent = wallet.rachaMaxima;
+    document.getElementById('wallet-freezes').textContent = wallet.michiFreezes || 0;
+
+    renderListaLogros();
 }
 
 // ── NOTIFICACIONES ────────────────────────────────────
@@ -541,6 +737,7 @@ function toggleCheck(fechaKey, checkKey) {
         if (pct === 100) otorgarBonusDiaCompleto(fechaKey);
     }
 
+    revisarLogrosNuevos();
     mostrarHoy();
     if (document.getElementById('pantalla-dashboard').classList.contains('activa') && fechaDashboard) {
         if (texto) document.getElementById('contenido-dashboard').innerHTML = renderDiario(parsearActividades(texto), fechaKey);
@@ -635,6 +832,7 @@ function agregarEmojiPersonalizado() {
     document.getElementById('input-palabra').value = '';
     document.getElementById('input-emoji').value = '';
     renderEmojisCustom();
+    revisarLogrosNuevos();
 }
 
 function borrarEmojiCustom(id) {
@@ -1094,26 +1292,11 @@ function actualizarDisplayFecha() {
 
 // ── NAVEGACIÓN ────────────────────────────────────────
 function mostrarConfig() {
-    console.log('⚙️ mostrarConfig() ejecutándose');
     pantallaAnterior = 'pantalla-hoy';
     document.querySelectorAll('.pantalla').forEach(p => p.classList.remove('activa'));
     document.getElementById('pantalla-config').classList.add('activa');
     renderEmojisCustom();
     renderRecurrentesConfig();
-    renderWalletConfig();
-}
-
-function renderWalletConfig() {
-    const wallet = cargarWallet();
-    const cont = document.getElementById('wallet-config-info');
-    console.log('🐾 renderWalletConfig, elemento encontrado:', !!cont, 'wallet:', wallet);
-    if (!cont) return;
-    cont.innerHTML = `
-        <div class="config-info-row"><span>🐾 Patitas</span><span>${wallet.patitas}</span></div>
-        <div class="config-info-row"><span>🧶 Bolas de pelo</span><span>${wallet.bolasDePelo}</span></div>
-        <div class="config-info-row"><span>🔥 Racha actual</span><span>${wallet.rachaActual} días</span></div>
-        <div class="config-info-row"><span>🏆 Racha máxima</span><span>${wallet.rachaMaxima} días</span></div>
-    `;
 }
 
 function mostrarEditor(fechaParam) {
@@ -1251,9 +1434,10 @@ function procesarAgenda() {
     if (!wallet.primeraAgendaCreada) {
         wallet.primeraAgendaCreada = true;
         const lunaDeMiel = enLunaDeMiel(wallet);
-        otorgarPatitas(wallet, lunaDeMiel ? 30 : 15, '¡Primera agenda creada!');
+        otorgarPatitas(wallet, lunaDeMiel ? 30 : 15, '¡Primera agenda creada!', 30);
         guardarWallet(wallet);
     }
+    revisarLogrosNuevos();
 
     document.querySelectorAll('.pantalla').forEach(p => p.classList.remove('activa'));
     document.getElementById('pantalla-hoy').classList.add('activa');
@@ -1377,6 +1561,7 @@ window.toggleAyuda = toggleAyuda;
 window.mostrarHoy = mostrarHoy;
 window.mostrarEditor = mostrarEditor;
 window.mostrarConfig = mostrarConfig;
+window.mostrarWallet = mostrarWallet;
 window.volverAtras = volverAtras;
 window.editarHoy = editarHoy;
 window.borrarHoy = borrarHoy;
