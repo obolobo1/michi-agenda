@@ -5,7 +5,7 @@ import {
     guardarAgendaNube, cargarAgendasNube, borrarAgendaNube,
     guardarPendientesNube, cargarPendientesNube,
     guardarEmojisNube, cargarEmojisNube,
-    guardarRecurrentesNube, cargarRecurrentesNube
+    guardarRecurrentesNube, cargarRecurrentesNube,
     guardarChecksNube, cargarChecksNube
 } from './firebase.js';
 
@@ -130,6 +130,7 @@ async function sincronizarDesdNube() {
         console.log('Sin conexión, usando datos locales');
     }
 }
+
 // ── LOGIN HANDLERS ────────────────────────────────────
 function mostrarTab(tab) {
     document.getElementById('tab-iniciar').classList.toggle('oculto', tab !== 'iniciar');
@@ -217,6 +218,7 @@ async function handleCerrarSesion() {
     localStorage.removeItem('michi-recurrentes');
     localStorage.removeItem('michi-checks');
 }
+
 // ── AYUDA EN EDITOR ───────────────────────────────────
 function toggleAyuda() {
     document.getElementById('panel-ayuda').classList.toggle('oculto');
@@ -369,9 +371,9 @@ function guardarChecks(fechaKey, checks) {
     localStorage.setItem('michi-checks', JSON.stringify(todos));
     if (usuarioActual) guardarChecksNube(usuarioActual.uid, todos).catch(() => {});
 }
+
 function esDiaActivo(fechaKey) {
-    const hoy = formatearFechaKey(new Date());
-    return fechaKey === hoy;
+    return fechaKey === formatearFechaKey(new Date());
 }
 
 function toggleCheck(fechaKey, checkKey) {
@@ -379,13 +381,12 @@ function toggleCheck(fechaKey, checkKey) {
     const checks = cargarChecks(fechaKey);
     checks[checkKey] = !checks[checkKey];
     guardarChecks(fechaKey, checks);
-    // Refrescar donde corresponda
     mostrarHoy();
     if (document.getElementById('pantalla-dashboard').classList.contains('activa') && fechaDashboard) {
         const agenda = cargarAgendas().find(a => a.fechaKey === fechaKey);
         const textoConRec = obtenerTextoConRecurrentes(new Date(fechaKey + 'T12:00:00'));
         const texto = textoConRec || (agenda ? agenda.texto : '');
-        document.getElementById('contenido-dashboard').innerHTML = renderDiario(parsearActividades(texto), fechaKey);
+        if (texto) document.getElementById('contenido-dashboard').innerHTML = renderDiario(parsearActividades(texto), fechaKey);
     }
 }
 
@@ -401,7 +402,7 @@ function mensajeMichi(porcentaje) {
     if (porcentaje <= 20) return '¡Cada día es una nueva oportunidad, humano! 🐾';
     if (porcentaje <= 50) return '¡Sigue así humano, estás cada vez más cerca! 💪';
     if (porcentaje <= 80) return '¡Casi lo logras humano! Estoy muy orgulloso 😸';
-    return '¡Eres increíble humano! Mereces un premio 🎩';
+    return '¡Eres increíble humano! Mereces un premio 🎉';
 }
 
 // ── PENDIENTES ────────────────────────────────────────
@@ -682,7 +683,7 @@ function renderTimelineHoy(fijas, hoy, fechaKey) {
         const checkKey = act.actividad + act.hora;
         const completada = checks[checkKey];
         return `
-        <div class="timeline-item ${esProxima ? 'proxima' : ''} ${completada ? 'completada' : ''}">
+        <div class="timeline-item ${esProxima && !completada ? 'proxima' : ''} ${completada ? 'completada' : ''}">
             <div class="timeline-left">
                 <div class="tl-circle ${clase} ${completada ? 'tl-circle-done' : ''}">${completada ? '✅' : icono}</div>
                 ${!esUltimo ? '<div class="tl-line"></div>' : ''}
@@ -1117,7 +1118,6 @@ function parsearActividades(texto) {
 function renderDiario({ fijas, limpieza }, fechaKey) {
     const checks = cargarChecks(fechaKey);
     const activo = esDiaActivo(fechaKey);
-
     const porcentaje = calcularPorcentaje(fijas, fechaKey);
     const mensaje = mensajeMichi(porcentaje);
 
@@ -1145,7 +1145,10 @@ function renderDiario({ fijas, limpieza }, fechaKey) {
         const icono = obtenerIcono(act.actividad);
         const checkKey = act.actividad + act.hora;
         const completada = checks[checkKey];
-        return `<tr class="${completada ? 'fila-done' : ''}"><td class="time-cell">${act.hora}</td><td>${completada ? '✅' : icono} <span class="${completada ? 'tl-nombre-done' : ''}">${act.actividad}</span></td></tr>`;
+        return `<tr class="${completada ? 'fila-done' : ''}">
+            <td class="time-cell">${act.hora}</td>
+            <td>${completada ? '✅' : icono} <span class="${completada ? 'tl-nombre-done' : ''}">${act.actividad}</span></td>
+        </tr>`;
     }).join('');
 
     let limpiezaHTML = limpieza.map(t => `<li>✨ ${t}</li>`).join('');
@@ -1214,4 +1217,3 @@ window.borrarEmojiCustom = borrarEmojiCustom;
 window.navegarDia = navegarDia;
 window.borrarRecurrente = borrarRecurrente;
 window.toggleCheck = toggleCheck;
-
