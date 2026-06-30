@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+    <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -76,7 +76,8 @@
         <header>
             <div class="header-top">
                 <h1>🐱 Michi Agenda</h1>
-                <button class="btn-config" onclick="mostrarConfig()">⚙️</button>
+                <div class="badge-wallet" id="badge-wallet"></div>
+               <button class="btn-config" onclick="mostrarConfig()">⚙️</button>
             </div>
             <h2 id="titulo-hoy"></h2>
         </header>
@@ -199,6 +200,11 @@
             <button class="btn-back" onclick="volverAtras()">← Volver</button>
             <h2>⚙️ Configuración</h2>
         </header>
+
+<div class="config-seccion">
+            <div class="config-seccion-titulo">🐾 Mi Wallet</div>
+            <div class="config-info" id="wallet-config-info"></div>
+        </div>
         <div class="config-seccion">
             <div class="config-seccion-titulo">👤 Cuenta</div>
             <div class="config-info">
@@ -281,3 +287,4 @@
     </script>
 </body>
 </html>
+

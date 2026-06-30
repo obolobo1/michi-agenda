@@ -89,6 +89,7 @@ export async function cargarRecurrentesNube(userId) {
     const snap = await getDoc(doc(db, 'usuarios', userId, 'datos', 'recurrentes'));
     return snap.exists() ? snap.data().lista : [];
 }
+
 // ── CHECKS EN LA NUBE ─────────────────────────────────
 export async function guardarChecksNube(userId, checks) {
     await setDoc(doc(db, 'usuarios', userId, 'datos', 'checks'), { data: checks });
@@ -97,4 +98,14 @@ export async function guardarChecksNube(userId, checks) {
 export async function cargarChecksNube(userId) {
     const snap = await getDoc(doc(db, 'usuarios', userId, 'datos', 'checks'));
     return snap.exists() ? snap.data().data : {};
+}
+
+// ── WALLET EN LA NUBE ─────────────────────────────────
+export async function guardarWalletNube(userId, wallet) {
+    await setDoc(doc(db, 'usuarios', userId, 'datos', 'wallet'), wallet);
+}
+
+export async function cargarWalletNube(userId) {
+    const snap = await getDoc(doc(db, 'usuarios', userId, 'datos', 'wallet'));
+    return snap.exists() ? snap.data() : null;
 }
