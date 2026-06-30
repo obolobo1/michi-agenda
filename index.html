@@ -1,4 +1,4 @@
-    <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -9,7 +9,6 @@
     <link rel="manifest" href="manifest.json">
 </head>
 <body>
-
     <!-- PANTALLA: ONBOARDING -->
     <div id="pantalla-onboarding" class="pantalla">
         <div class="onboarding-container">
@@ -19,7 +18,6 @@
             <button class="btn-onboarding-skip" onclick="terminarOnboarding()">Saltar</button>
         </div>
     </div>
-
     <!-- PANTALLA: LOGIN -->
     <div id="pantalla-login" class="pantalla">
         <div class="login-container">
@@ -70,32 +68,28 @@
             <p id="login-exito" class="login-exito"></p>
         </div>
     </div>
-
     <!-- PANTALLA PRINCIPAL: HOY -->
     <div id="pantalla-hoy" class="pantalla">
         <header>
             <div class="header-top">
                 <h1>🐱 Michi Agenda</h1>
                 <div class="badge-wallet" id="badge-wallet"></div>
-               <button class="btn-config" onclick="mostrarConfig()">⚙️</button>
+                <button class="btn-config" onclick="mostrarConfig()">⚙️</button>
             </div>
             <h2 id="titulo-hoy"></h2>
         </header>
-
         <!-- ACTIVIDADES -->
         <div class="seccion-titulo">
             <span>Actividades</span>
         </div>
         <div id="contenido-hoy"></div>
-
         <!-- CALENDARIO -->
         <div class="seccion-titulo" style="margin-top:20px">
             <span>Calendario</span>
         </div>
         <div class="semana-strip" id="semana-strip"></div>
         <button class="btn-ver-mes-grande" onclick="abrirCalendario()">📅 Ver mes completo</button>
-
-        <!-- PENDIENTES — debajo del calendario -->
+        <!-- PENDIENTES -->
         <div class="pendientes-box" style="margin-top:16px">
             <div class="pendientes-header">
                 <span class="pendientes-titulo">📋 Pendientes</span>
@@ -106,10 +100,8 @@
             </div>
             <ul id="lista-pendientes" class="lista-pendientes"></ul>
         </div>
-
         <button class="btn-flotante" onclick="mostrarEditor(null)">+</button>
     </div>
-
     <!-- PANTALLA: EDITOR -->
     <div id="pantalla-editor" class="pantalla">
         <header>
@@ -174,7 +166,6 @@
         <textarea id="input-actividades" placeholder="Escribe tus actividades aquí...&#10;Ej: GYM 12:00&#10;Ej: GYM 07:00 [lunes, miércoles, viernes]"></textarea>
         <button class="btn-generar" onclick="procesarAgenda()">🚀 Guardar Agenda</button>
     </div>
-
     <!-- PANTALLA: DASHBOARD DÍA -->
     <div id="pantalla-dashboard" class="pantalla">
         <header>
@@ -193,15 +184,13 @@
         </div>
         <div id="contenido-dashboard"></div>
     </div>
-
     <!-- PANTALLA: CONFIGURACIÓN -->
     <div id="pantalla-config" class="pantalla">
         <header>
             <button class="btn-back" onclick="volverAtras()">← Volver</button>
             <h2>⚙️ Configuración</h2>
         </header>
-
-<div class="config-seccion">
+        <div class="config-seccion">
             <div class="config-seccion-titulo">🐾 Mi Wallet</div>
             <div class="config-info" id="wallet-config-info"></div>
         </div>
@@ -259,7 +248,6 @@
             </div>
         </div>
     </div>
-
     <!-- MODAL: CALENDARIO MENSUAL -->
     <div id="modal-calendario" class="modal-overlay oculto" onclick="cerrarCalendario(event)">
         <div class="modal-contenido">
@@ -275,7 +263,6 @@
             <div id="cal-grid" class="cal-grid"></div>
         </div>
     </div>
-
     <script type="module" src="firebase.js"></script>
     <script type="module" src="app.js"></script>
     <script>
@@ -287,4 +274,3 @@
     </script>
 </body>
 </html>
-

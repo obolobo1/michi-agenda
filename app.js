@@ -6,8 +6,11 @@ import {
     guardarPendientesNube, cargarPendientesNube,
     guardarEmojisNube, cargarEmojisNube,
     guardarRecurrentesNube, cargarRecurrentesNube,
-    guardarChecksNube, cargarChecksNube
+    guardarChecksNube, cargarChecksNube,
+    guardarWalletNube, cargarWalletNube
 } from './firebase.js';
+
+console.log('✅ app.js cargado correctamente');
 
 // ── ESTADO GLOBAL ─────────────────────────────────────
 let fechaSeleccionada = new Date();
@@ -38,6 +41,12 @@ const SLIDES = [
         titulo: 'Actividades recurrentes',
         desc: 'Agrega [días] al final para que la actividad aparezca automáticamente esos días.',
         ejemplo: 'GYM 07:00 [lunes, miércoles, viernes]\nMedicinas 08:00 [todos los días]\nTrabajo 09:00 [entre semana]'
+    },
+    {
+        emoji: '🐾',
+        titulo: '¡Gana patitas!',
+        desc: 'Usa la app cada día, completa tus actividades y junta patitas para tu futuro michi compañero.',
+        ejemplo: null
     },
     {
         emoji: '✅',
@@ -92,11 +101,14 @@ function verificarOnboarding() {
 
 // ── AUTH ──────────────────────────────────────────────
 observarUsuario(async (user) => {
+    console.log('🔑 observarUsuario disparado, user:', user ? user.email : 'null');
     usuarioActual = user;
     if (user) {
         document.querySelectorAll('.pantalla').forEach(p => p.classList.remove('activa'));
         document.getElementById('pantalla-hoy').classList.add('activa');
         await sincronizarDesdNube();
+        console.log('🐾 Llamando a procesarLoginDiario...');
+        procesarLoginDiario();
         mostrarHoy();
     } else {
         const onboardingVisto = localStorage.getItem('michi-onboarding-visto');
@@ -114,20 +126,25 @@ observarUsuario(async (user) => {
 async function sincronizarDesdNube() {
     if (!usuarioActual) return;
     try {
-        const [agendas, pendientes, emojis, recurrentes, checks] = await Promise.all([
+        const [agendas, pendientes, emojis, recurrentes, checks, wallet] = await Promise.all([
             cargarAgendasNube(usuarioActual.uid),
             cargarPendientesNube(usuarioActual.uid),
             cargarEmojisNube(usuarioActual.uid),
             cargarRecurrentesNube(usuarioActual.uid),
-            cargarChecksNube(usuarioActual.uid)
+            cargarChecksNube(usuarioActual.uid),
+            cargarWalletNube(usuarioActual.uid)
         ]);
         localStorage.setItem('michi-agendas', JSON.stringify(agendas));
         localStorage.setItem('michi-pendientes', JSON.stringify(pendientes));
         localStorage.setItem('michi-emojis-custom', JSON.stringify(emojis));
         localStorage.setItem('michi-recurrentes', JSON.stringify(recurrentes));
         localStorage.setItem('michi-checks', JSON.stringify(checks));
+        console.log('☁️ Wallet recibido de Firebase:', wallet);
+        if (wallet) {
+            localStorage.setItem('michi-wallet', JSON.stringify(wallet));
+        }
     } catch (e) {
-        console.log('Sin conexión, usando datos locales');
+        console.log('⚠️ Error en sincronización (puede ser normal si es la primera vez):', e);
     }
 }
 
@@ -217,11 +234,144 @@ async function handleCerrarSesion() {
     localStorage.removeItem('michi-emojis-custom');
     localStorage.removeItem('michi-recurrentes');
     localStorage.removeItem('michi-checks');
+    localStorage.removeItem('michi-wallet');
 }
 
 // ── AYUDA EN EDITOR ───────────────────────────────────
 function toggleAyuda() {
     document.getElementById('panel-ayuda').classList.toggle('oculto');
+}
+
+// ── WALLET — PATITAS Y BOLAS DE PELO ──────────────────
+function cargarWallet() {
+    const guardado = localStorage.getItem('michi-wallet');
+    if (guardado) {
+        console.log('🐾 Wallet cargado desde localStorage:', JSON.parse(guardado));
+        return JSON.parse(guardado);
+    }
+    console.log('🐾 No había wallet, creando uno nuevo');
+    const nuevo = {
+        patitas: 0,
+        bolasDePelo: 0,
+        ultimoLogin: null,
+        rachaActual: 0,
+        rachaMaxima: 0,
+        fechaRegistro: formatearFechaKey(new Date()),
+        diaCompletadoHoy: false
+    };
+    return nuevo;
+}
+
+function guardarWallet(wallet) {
+    console.log('💾 Guardando wallet:', wallet);
+    localStorage.setItem('michi-wallet', JSON.stringify(wallet));
+    if (usuarioActual) guardarWalletNube(usuarioActual.uid, wallet).catch((e) => console.log('Error guardando wallet en nube:', e));
+}
+
+function diasDesdeRegistro(wallet) {
+    if (!wallet.fechaRegistro) return 999;
+    const inicio = new Date(wallet.fechaRegistro + 'T00:00:00');
+    const hoy = new Date(formatearFechaKey(new Date()) + 'T00:00:00');
+    const diffMs = hoy.getTime() - inicio.getTime();
+    return Math.floor(diffMs / (1000 * 60 * 60 * 24));
+}
+
+function enLunaDeMiel(wallet) {
+    return diasDesdeRegistro(wallet) < 7;
+}
+
+function otorgarPatitas(wallet, cantidad, motivo) {
+    wallet.patitas += cantidad;
+    mostrarToastPatitas(cantidad, motivo);
+}
+
+function mostrarToastPatitas(cantidad, motivo) {
+    const toast = document.createElement('div');
+    toast.className = 'toast-patitas';
+    toast.innerHTML = `🐾 +${cantidad} patitas<br><span class="toast-motivo">${motivo}</span>`;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.classList.add('mostrar'), 50);
+    setTimeout(() => {
+        toast.classList.remove('mostrar');
+        setTimeout(() => toast.remove(), 400);
+    }, 2800);
+}
+
+function procesarLoginDiario() {
+    console.log('🐱 procesarLoginDiario() EJECUTÁNDOSE');
+    let wallet = cargarWallet();
+    const hoyKey = formatearFechaKey(new Date());
+
+    if (!wallet.fechaRegistro) {
+        wallet.fechaRegistro = hoyKey;
+    }
+
+    if (wallet.ultimoLogin === hoyKey) {
+        console.log('🐱 Ya se procesó el login de hoy');
+        guardarWallet(wallet);
+        renderBadgeWallet();
+        return;
+    }
+
+    const lunaDeMiel = enLunaDeMiel(wallet);
+    const ayer = formatearFechaKey(sumarDias(new Date(), -1));
+
+    if (wallet.ultimoLogin === ayer) {
+        wallet.rachaActual += 1;
+    } else if (wallet.ultimoLogin === null) {
+        wallet.rachaActual = 1;
+    } else {
+        wallet.rachaActual = 1;
+    }
+
+    if (wallet.rachaActual > wallet.rachaMaxima) {
+        wallet.rachaMaxima = wallet.rachaActual;
+    }
+
+    if (wallet.ultimoLogin === null) {
+        otorgarPatitas(wallet, 50, '¡Bienvenida de tu michi! 🐱');
+    } else {
+        const patitasLogin = lunaDeMiel ? 20 : 10;
+        otorgarPatitas(wallet, patitasLogin, 'Por entrar hoy');
+    }
+
+    if (wallet.rachaActual === 7) {
+        otorgarPatitas(wallet, 50, '¡7 días seguidos!');
+    } else if (wallet.rachaActual === 30) {
+        otorgarPatitas(wallet, 100, '¡30 días seguidos! Increíble');
+    } else if (wallet.rachaActual > 30 && wallet.rachaActual % 30 === 0) {
+        otorgarPatitas(wallet, 80, `¡${wallet.rachaActual} días seguidos!`);
+    }
+
+    wallet.ultimoLogin = hoyKey;
+    wallet.diaCompletadoHoy = false;
+    guardarWallet(wallet);
+    renderBadgeWallet();
+    console.log('🐱 procesarLoginDiario() TERMINADO. Wallet final:', wallet);
+}
+
+function otorgarBonusDiaCompleto(fechaKey) {
+    if (!esDiaActivo(fechaKey)) return;
+    let wallet = cargarWallet();
+    if (wallet.diaCompletadoHoy) return;
+
+    const lunaDeMiel = enLunaDeMiel(wallet);
+    const patitasBonus = lunaDeMiel ? 20 : 10;
+    wallet.diaCompletadoHoy = true;
+    otorgarPatitas(wallet, patitasBonus, '¡Día 100% completado!');
+    guardarWallet(wallet);
+    renderBadgeWallet();
+}
+
+function renderBadgeWallet() {
+    const wallet = cargarWallet();
+    const badge = document.getElementById('badge-wallet');
+    console.log('🎨 renderBadgeWallet, elemento encontrado:', !!badge, 'wallet:', wallet);
+    if (!badge) return;
+    badge.innerHTML = `
+        <span class="badge-item">🐾 ${wallet.patitas}</span>
+        <span class="badge-item">🧶 ${wallet.bolasDePelo}</span>
+    `;
 }
 
 // ── NOTIFICACIONES ────────────────────────────────────
@@ -381,11 +531,18 @@ function toggleCheck(fechaKey, checkKey) {
     const checks = cargarChecks(fechaKey);
     checks[checkKey] = !checks[checkKey];
     guardarChecks(fechaKey, checks);
+
+    const agenda = cargarAgendas().find(a => a.fechaKey === fechaKey);
+    const textoConRec = obtenerTextoConRecurrentes(new Date(fechaKey + 'T12:00:00'));
+    const texto = textoConRec || (agenda ? agenda.texto : '');
+    if (texto) {
+        const { fijas } = parsearActividades(texto);
+        const pct = calcularPorcentaje(fijas, fechaKey);
+        if (pct === 100) otorgarBonusDiaCompleto(fechaKey);
+    }
+
     mostrarHoy();
     if (document.getElementById('pantalla-dashboard').classList.contains('activa') && fechaDashboard) {
-        const agenda = cargarAgendas().find(a => a.fechaKey === fechaKey);
-        const textoConRec = obtenerTextoConRecurrentes(new Date(fechaKey + 'T12:00:00'));
-        const texto = textoConRec || (agenda ? agenda.texto : '');
         if (texto) document.getElementById('contenido-dashboard').innerHTML = renderDiario(parsearActividades(texto), fechaKey);
     }
 }
@@ -654,6 +811,7 @@ function mostrarHoy() {
     }
     renderSemanaStrip();
     renderPendientes();
+    renderBadgeWallet();
     if (usuarioActual) {
         const configUsuario = document.getElementById('config-usuario');
         if (configUsuario) configUsuario.textContent = usuarioActual.email || usuarioActual.displayName || '—';
@@ -936,11 +1094,26 @@ function actualizarDisplayFecha() {
 
 // ── NAVEGACIÓN ────────────────────────────────────────
 function mostrarConfig() {
+    console.log('⚙️ mostrarConfig() ejecutándose');
     pantallaAnterior = 'pantalla-hoy';
     document.querySelectorAll('.pantalla').forEach(p => p.classList.remove('activa'));
     document.getElementById('pantalla-config').classList.add('activa');
     renderEmojisCustom();
     renderRecurrentesConfig();
+    renderWalletConfig();
+}
+
+function renderWalletConfig() {
+    const wallet = cargarWallet();
+    const cont = document.getElementById('wallet-config-info');
+    console.log('🐾 renderWalletConfig, elemento encontrado:', !!cont, 'wallet:', wallet);
+    if (!cont) return;
+    cont.innerHTML = `
+        <div class="config-info-row"><span>🐾 Patitas</span><span>${wallet.patitas}</span></div>
+        <div class="config-info-row"><span>🧶 Bolas de pelo</span><span>${wallet.bolasDePelo}</span></div>
+        <div class="config-info-row"><span>🔥 Racha actual</span><span>${wallet.rachaActual} días</span></div>
+        <div class="config-info-row"><span>🏆 Racha máxima</span><span>${wallet.rachaMaxima} días</span></div>
+    `;
 }
 
 function mostrarEditor(fechaParam) {
@@ -1073,6 +1246,15 @@ function procesarAgenda() {
     agendas.sort((a, b) => b.fechaKey.localeCompare(a.fechaKey));
     guardarAgendas(agendas);
     if (usuarioActual && agendaGuardada) guardarAgendaNube(usuarioActual.uid, agendaGuardada).catch(() => {});
+
+    let wallet = cargarWallet();
+    if (!wallet.primeraAgendaCreada) {
+        wallet.primeraAgendaCreada = true;
+        const lunaDeMiel = enLunaDeMiel(wallet);
+        otorgarPatitas(wallet, lunaDeMiel ? 30 : 15, '¡Primera agenda creada!');
+        guardarWallet(wallet);
+    }
+
     document.querySelectorAll('.pantalla').forEach(p => p.classList.remove('activa'));
     document.getElementById('pantalla-hoy').classList.add('activa');
     mostrarHoy();
