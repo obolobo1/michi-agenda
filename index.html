@@ -18,6 +18,7 @@
             <button class="btn-onboarding-skip" onclick="terminarOnboarding()">Saltar</button>
         </div>
     </div>
+
     <!-- PANTALLA: LOGIN -->
     <div id="pantalla-login" class="pantalla">
         <div class="login-container">
@@ -68,6 +69,7 @@
             <p id="login-exito" class="login-exito"></p>
         </div>
     </div>
+
     <!-- PANTALLA PRINCIPAL: HOY -->
     <div id="pantalla-hoy" class="pantalla">
         <header>
@@ -78,17 +80,38 @@
             </div>
             <h2 id="titulo-hoy"></h2>
         </header>
-        <!-- ACTIVIDADES -->
+
+        <!-- LAYOUT PRINCIPAL: ACTIVIDADES + MICHI -->
         <div class="seccion-titulo">
             <span>Actividades</span>
         </div>
-        <div id="contenido-hoy"></div>
+        <div class="hoy-main-layout">
+            <!-- Columna izquierda: timeline -->
+            <div class="hoy-timeline-col" id="contenido-hoy"></div>
+            <!-- Columna derecha: michi compañero -->
+            <div class="michi-col">
+                <div class="michi-caja" id="michi-caja" onclick="tocarMichi()">
+                    <img id="michi-img" src="" alt="michi" class="michi-img"/>
+                    <div id="michi-ojos" class="michi-ojos oculto">👀</div>
+                    <div id="michi-patita" class="michi-patita oculto">🐾</div>
+                </div>
+                <div id="michi-mensaje" class="michi-mensaje"></div>
+                <button id="btn-adoptar" class="btn-adoptar oculto" onclick="adoptarMichi()">
+                    Abrir la caja 🐾 100
+                </button>
+            </div>
+        </div>
+
+        <!-- BARRA DE PROGRESO -->
+        <div id="contenido-progreso"></div>
+
         <!-- CALENDARIO -->
         <div class="seccion-titulo" style="margin-top:20px">
             <span>Calendario</span>
         </div>
         <div class="semana-strip" id="semana-strip"></div>
         <button class="btn-ver-mes-grande" onclick="abrirCalendario()">📅 Ver mes completo</button>
+
         <!-- PENDIENTES -->
         <div class="pendientes-box" style="margin-top:16px">
             <div class="pendientes-header">
@@ -100,8 +123,10 @@
             </div>
             <ul id="lista-pendientes" class="lista-pendientes"></ul>
         </div>
+
         <button class="btn-flotante" onclick="mostrarEditor(null)">+</button>
     </div>
+
     <!-- PANTALLA: EDITOR -->
     <div id="pantalla-editor" class="pantalla">
         <header>
@@ -166,6 +191,7 @@
         <textarea id="input-actividades" placeholder="Escribe tus actividades aquí...&#10;Ej: GYM 12:00&#10;Ej: GYM 07:00 [lunes, miércoles, viernes]"></textarea>
         <button class="btn-generar" onclick="procesarAgenda()">🚀 Guardar Agenda</button>
     </div>
+
     <!-- PANTALLA: DASHBOARD DÍA -->
     <div id="pantalla-dashboard" class="pantalla">
         <header>
@@ -184,13 +210,13 @@
         </div>
         <div id="contenido-dashboard"></div>
     </div>
+
     <!-- PANTALLA: MI WALLET -->
     <div id="pantalla-wallet" class="pantalla">
         <header>
             <button class="btn-back" onclick="volverAtras()">← Volver</button>
             <h2>🐾 Mi Wallet</h2>
         </header>
-
         <div class="wallet-saldo-grande">
             <div class="wallet-saldo-item">
                 <span class="wallet-saldo-emoji">🐾</span>
@@ -203,7 +229,6 @@
                 <span class="wallet-saldo-label">Bolas de pelo</span>
             </div>
         </div>
-
         <div class="wallet-nivel-box">
             <div class="wallet-nivel-header">
                 <span class="wallet-nivel-titulo">Nivel <span id="wallet-nivel-num">1</span></span>
@@ -213,7 +238,6 @@
                 <div class="wallet-nivel-fill" id="wallet-nivel-fill" style="width:0%"></div>
             </div>
         </div>
-
         <div class="wallet-racha-row">
             <div class="wallet-racha-card">
                 <span class="wallet-racha-emoji">🔥</span>
@@ -231,12 +255,12 @@
                 <span class="wallet-racha-label">Michi Freeze</span>
             </div>
         </div>
-
         <div class="seccion-titulo" style="margin-top:20px">
             <span>🏆 Logros</span>
         </div>
         <div id="lista-logros" class="lista-logros"></div>
     </div>
+
     <!-- PANTALLA: CONFIGURACIÓN -->
     <div id="pantalla-config" class="pantalla">
         <header>
@@ -297,6 +321,7 @@
             </div>
         </div>
     </div>
+
     <!-- MODAL: CALENDARIO MENSUAL -->
     <div id="modal-calendario" class="modal-overlay oculto" onclick="cerrarCalendario(event)">
         <div class="modal-contenido">
@@ -312,6 +337,7 @@
             <div id="cal-grid" class="cal-grid"></div>
         </div>
     </div>
+
     <script type="module" src="firebase.js"></script>
     <script type="module" src="app.js"></script>
     <script>

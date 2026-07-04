@@ -21,6 +21,118 @@ let pantallaAnterior = 'pantalla-hoy';
 let usuarioActual = null;
 let fechaDashboard = null;
 
+// ── MICHI COMPAÑERO ───────────────────────────────────
+const MICHIS_DISPONIBLES = [
+    { id: 'naranjoso', nombre: 'Naranjoso', img: 'michis/naranjoso.png' },
+    { id: 'negro',     nombre: 'Negro',     img: 'michis/negro.png'     },
+    { id: 'blanco',    nombre: 'Blanco',    img: 'michis/blanco.png'    },
+    { id: 'gris',      nombre: 'Gris',      img: 'michis/gris.png'      },
+    { id: 'calica',    nombre: 'Calica',    img: 'michis/calica.png'    }
+];
+
+const IMG_TRANSPORTADORA = 'michis/transportadora.png';
+const COSTO_ADOPCION = 100;
+const NIVEL_ADOPCION = 2;
+
+function cargarMichi() {
+    const guardado = localStorage.getItem('michi-companero');
+    return guardado ? JSON.parse(guardado) : null;
+}
+
+function guardarMichi(michi) {
+    localStorage.setItem('michi-companero', JSON.stringify(michi));
+}
+
+function renderMichiHome() {
+    const michi = cargarMichi();
+    const wallet = cargarWallet();
+    const { nivel } = calcularNivelDesdeXP(wallet.xp || 0);
+    const img = document.getElementById('michi-img');
+    const mensaje = document.getElementById('michi-mensaje');
+    const btnAdoptar = document.getElementById('btn-adoptar');
+
+    if (michi) {
+        // Ya tiene michi — mostrar imagen del gato
+        img.src = michi.img;
+        img.style.display = 'block';
+        mensaje.textContent = `${michi.nombre} te acompaña 🐾`;
+        btnAdoptar.classList.add('oculto');
+    } else {
+        // Sin michi — mostrar transportadora
+        img.src = IMG_TRANSPORTADORA;
+        img.style.display = 'block';
+
+        if (nivel >= NIVEL_ADOPCION && wallet.patitas >= COSTO_ADOPCION) {
+            mensaje.textContent = '¡Ya puedes abrir la caja! 🐾';
+            btnAdoptar.classList.remove('oculto');
+        } else if (nivel >= NIVEL_ADOPCION) {
+            mensaje.textContent = `Necesitas ${COSTO_ADOPCION} 🐾 para abrir la caja`;
+            btnAdoptar.classList.add('oculto');
+        } else {
+            mensaje.textContent = 'Aún no te tiene confianza... sigue usando la app 🐾';
+            btnAdoptar.classList.add('oculto');
+        }
+    }
+}
+
+function tocarMichi() {
+    const michi = cargarMichi();
+    const caja = document.getElementById('michi-caja');
+
+    if (michi) {
+        // Ya tiene michi — pequeña animación de reacción
+        caja.classList.add('sacudiendo');
+        setTimeout(() => caja.classList.remove('sacudiendo'), 600);
+        return;
+    }
+
+    // Sin michi — animación aleatoria de la transportadora
+    const ojos = document.getElementById('michi-ojos');
+    const patita = document.getElementById('michi-patita');
+    const random = Math.floor(Math.random() * 3);
+
+    if (random === 0) {
+        ojos.classList.remove('oculto');
+        setTimeout(() => ojos.classList.add('oculto'), 900);
+    } else if (random === 1) {
+        patita.classList.remove('oculto');
+        setTimeout(() => patita.classList.add('oculto'), 900);
+    } else {
+        caja.classList.add('sacudiendo');
+        setTimeout(() => caja.classList.remove('sacudiendo'), 600);
+    }
+}
+
+function adoptarMichi() {
+    const wallet = cargarWallet();
+    const { nivel } = calcularNivelDesdeXP(wallet.xp || 0);
+
+    if (nivel < NIVEL_ADOPCION || wallet.patitas < COSTO_ADOPCION) return;
+
+    // Descontar patitas
+    wallet.patitas -= COSTO_ADOPCION;
+    guardarWallet(wallet);
+
+    // Elegir michi aleatorio
+    const idx = Math.floor(Math.random() * MICHIS_DISPONIBLES.length);
+    const michiElegido = MICHIS_DISPONIBLES[idx];
+    guardarMichi(michiElegido);
+
+    // Animación de revelación
+    const img = document.getElementById('michi-img');
+    const mensaje = document.getElementById('michi-mensaje');
+    const btnAdoptar = document.getElementById('btn-adoptar');
+
+    img.classList.add('michi-aparece');
+    img.src = michiElegido.img;
+    mensaje.textContent = `¡${michiElegido.nombre} es tu nuevo compañero! 🎉`;
+    btnAdoptar.classList.add('oculto');
+
+    // Confeti con toasts
+    mostrarToastPatitas(0, `🎉 ¡Adoptaste a ${michiElegido.nombre}!`);
+    renderBadgeWallet();
+}
+
 // ── ONBOARDING ────────────────────────────────────────
 const SLIDES = [
     {
@@ -44,7 +156,7 @@ const SLIDES = [
     {
         emoji: '🐾',
         titulo: '¡Gana patitas y sube de nivel!',
-        desc: 'Usa la app cada día, completa tus actividades y junta patitas y experiencia para tu futuro michi compañero.',
+        desc: 'Usa la app cada día, completa tus actividades y junta patitas para tu futuro michi compañero.',
         ejemplo: null
     },
     {
@@ -232,6 +344,7 @@ async function handleCerrarSesion() {
     localStorage.removeItem('michi-checks');
     localStorage.removeItem('michi-wallet');
     localStorage.removeItem('michi-logros');
+    localStorage.removeItem('michi-companero');
 }
 
 // ── AYUDA EN EDITOR ───────────────────────────────────
@@ -258,7 +371,7 @@ function calcularNivelDesdeXP(xpTotal) {
     return { nivel, xpEnNivelActual, xpNecesariaNivelActual };
 }
 
-// ── LOGROS — DEFINICIÓN ───────────────────────────────
+// ── LOGROS ────────────────────────────────────────────
 const LOGROS_DEFINICION = [
     { id: 'primera_agenda', nombre: 'Primera agenda creada', emoji: '🎉', categoria: 'inicio',
       condicion: (s) => s.agendasCreadas >= 1, patitas: 0, xp: 0 },
@@ -268,7 +381,6 @@ const LOGROS_DEFINICION = [
       condicion: (s) => s.diasCompletados >= 1, patitas: 10, xp: 20 },
     { id: 'primer_emoji', nombre: 'Primer emoji personalizado', emoji: '🎨', categoria: 'inicio',
       condicion: (s) => s.emojisCreados >= 1, patitas: 5, xp: 10 },
-
     { id: 'racha_3', nombre: 'Racha de 3 días', emoji: '🔥', categoria: 'constancia',
       condicion: (s) => s.rachaMaxima >= 3, patitas: 15, xp: 30 },
     { id: 'racha_7', nombre: 'Racha de 7 días', emoji: '🔥', categoria: 'constancia',
@@ -279,7 +391,6 @@ const LOGROS_DEFINICION = [
       condicion: (s) => s.rachaMaxima >= 90, patitas: 150, xp: 300 },
     { id: 'racha_365', nombre: 'Racha de 365 días', emoji: '🏆', categoria: 'constancia',
       condicion: (s) => s.rachaMaxima >= 365, patitas: 500, xp: 1000 },
-
     { id: 'act_50', nombre: '50 actividades completadas', emoji: '✅', categoria: 'volumen',
       condicion: (s) => s.actividadesCompletadas >= 50, patitas: 30, xp: 60 },
     { id: 'act_200', nombre: '200 actividades completadas', emoji: '✅', categoria: 'volumen',
@@ -290,12 +401,10 @@ const LOGROS_DEFINICION = [
       condicion: (s) => s.diasCompletados >= 10, patitas: 40, xp: 80 },
     { id: 'dias_30', nombre: '30 días 100% completados', emoji: '💯', categoria: 'volumen',
       condicion: (s) => s.diasCompletados >= 30, patitas: 100, xp: 200 },
-
     { id: 'agenda_recurrente', nombre: 'Crear una agenda recurrente', emoji: '↻', categoria: 'comportamiento',
       condicion: (s) => s.recurrentesCreadas >= 1, patitas: 10, xp: 20 },
     { id: 'emojis_5', nombre: 'Personalizar 5 emojis distintos', emoji: '🎨', categoria: 'comportamiento',
       condicion: (s) => s.emojisCreados >= 5, patitas: 15, xp: 30 },
-
     { id: 'mes_1', nombre: '1 mes usando la app', emoji: '🗓️', categoria: 'antiguedad',
       condicion: (s) => s.diasAntiguedad >= 30, patitas: 50, xp: 100 },
     { id: 'mes_6', nombre: '6 meses usando la app', emoji: '🗓️', categoria: 'antiguedad',
@@ -319,22 +428,18 @@ function obtenerEstadisticas() {
     const emojis = cargarEmojisCustom();
     const recurrentes = cargarRecurrentes();
     const todosChecks = JSON.parse(localStorage.getItem('michi-checks') || '{}');
-
     let actividadesCompletadas = 0;
     let diasCompletados = 0;
-
     Object.keys(todosChecks).forEach(fechaKey => {
         const checks = todosChecks[fechaKey];
-        const valores = Object.values(checks);
-        const completadasEnDia = valores.filter(v => v === true).length;
+        const completadasEnDia = Object.values(checks).filter(v => v === true).length;
         actividadesCompletadas += completadasEnDia;
         const agenda = agendas.find(a => a.fechaKey === fechaKey);
         if (agenda) {
             const { fijas } = parsearActividades(agenda.texto);
-            if (fijas.length > 0 && completadasEnDia === fijas.length) diasCompletados++;
+            if (fijas.length > 0 && completadasEnDia >= fijas.length) diasCompletados++;
         }
     });
-
     return {
         agendasCreadas: agendas.length,
         actividadesCompletadas,
@@ -351,7 +456,6 @@ function revisarLogrosNuevos() {
     const desbloqueados = cargarLogrosDesbloqueados();
     let wallet = cargarWallet();
     let huboNuevos = false;
-
     LOGROS_DEFINICION.forEach(logro => {
         if (desbloqueados.includes(logro.id)) return;
         if (logro.condicion(stats)) {
@@ -362,7 +466,6 @@ function revisarLogrosNuevos() {
             mostrarToastPatitas(logro.patitas, `🏆 Logro: ${logro.nombre}`);
         }
     });
-
     if (huboNuevos) {
         guardarLogrosDesbloqueados(desbloqueados);
         guardarWallet(wallet);
@@ -370,26 +473,16 @@ function revisarLogrosNuevos() {
     }
 }
 
-const NOMBRES_CATEGORIA = {
-    inicio: '🌱 Inicio',
-    constancia: '🔥 Constancia',
-    volumen: '📊 Volumen',
-    comportamiento: '🎯 Comportamiento',
-    antiguedad: '🗓️ Antigüedad'
-};
-
 function renderListaLogros() {
     const desbloqueados = cargarLogrosDesbloqueados();
     const cont = document.getElementById('lista-logros');
     if (!cont) return;
-
     const ordenados = [...LOGROS_DEFINICION].sort((a, b) => {
         const aDesb = desbloqueados.includes(a.id);
         const bDesb = desbloqueados.includes(b.id);
         if (aDesb === bDesb) return 0;
         return aDesb ? -1 : 1;
     });
-
     cont.innerHTML = ordenados.map(logro => {
         const desb = desbloqueados.includes(logro.id);
         return `<div class="logro-item ${desb ? 'desbloqueado' : 'bloqueado'}">
@@ -403,22 +496,16 @@ function renderListaLogros() {
     }).join('');
 }
 
-// ── WALLET — PATITAS, BOLAS DE PELO, XP, FREEZE ───────
+// ── WALLET ────────────────────────────────────────────
 function cargarWallet() {
     const guardado = localStorage.getItem('michi-wallet');
     if (guardado) return JSON.parse(guardado);
     return {
-        patitas: 0,
-        bolasDePelo: 0,
-        xp: 0,
-        ultimoLogin: null,
-        rachaActual: 0,
-        rachaMaxima: 0,
+        patitas: 0, bolasDePelo: 0, xp: 0,
+        ultimoLogin: null, rachaActual: 0, rachaMaxima: 0,
         fechaRegistro: formatearFechaKey(new Date()),
-        diaCompletadoHoy: false,
-        michiFreezes: 0,
-        ultimoFreezeOtorgado: null,
-        primeraAgendaCreada: false
+        diaCompletadoHoy: false, michiFreezes: 0,
+        ultimoFreezeOtorgado: 0, primeraAgendaCreada: false
     };
 }
 
@@ -431,8 +518,7 @@ function diasDesdeRegistro(wallet) {
     if (!wallet.fechaRegistro) return 999;
     const inicio = new Date(wallet.fechaRegistro + 'T00:00:00');
     const hoy = new Date(formatearFechaKey(new Date()) + 'T00:00:00');
-    const diffMs = hoy.getTime() - inicio.getTime();
-    return Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    return Math.floor((hoy - inicio) / (1000 * 60 * 60 * 24));
 }
 
 function enLunaDeMiel(wallet) {
@@ -452,10 +538,7 @@ function mostrarToastPatitas(cantidad, motivo) {
     toast.innerHTML = `${textoCantidad}<span class="toast-motivo">${motivo}</span>`;
     document.body.appendChild(toast);
     setTimeout(() => toast.classList.add('mostrar'), 50);
-    setTimeout(() => {
-        toast.classList.remove('mostrar');
-        setTimeout(() => toast.remove(), 400);
-    }, 2800);
+    setTimeout(() => { toast.classList.remove('mostrar'); setTimeout(() => toast.remove(), 400); }, 2800);
 }
 
 function revisarMichiFreeze(wallet) {
@@ -473,7 +556,6 @@ function revisarMichiFreeze(wallet) {
 function procesarLoginDiario() {
     let wallet = cargarWallet();
     const hoyKey = formatearFechaKey(new Date());
-
     if (!wallet.fechaRegistro) wallet.fechaRegistro = hoyKey;
     if (wallet.xp === undefined) wallet.xp = 0;
     if (wallet.michiFreezes === undefined) wallet.michiFreezes = 0;
@@ -505,16 +587,14 @@ function procesarLoginDiario() {
     if (wallet.ultimoLogin === null) {
         otorgarPatitas(wallet, 50, '¡Bienvenida de tu michi! 🐱', 50);
     } else {
-        const patitasLogin = lunaDeMiel ? 20 : 10;
-        otorgarPatitas(wallet, patitasLogin, 'Por entrar hoy', 15);
+        otorgarPatitas(wallet, lunaDeMiel ? 20 : 10, 'Por entrar hoy', 15);
     }
 
     if (wallet.rachaActual === 7) otorgarPatitas(wallet, 50, '¡7 días seguidos!', 100);
-    else if (wallet.rachaActual === 30) otorgarPatitas(wallet, 100, '¡30 días seguidos! Increíble', 250);
+    else if (wallet.rachaActual === 30) otorgarPatitas(wallet, 100, '¡30 días seguidos!', 250);
     else if (wallet.rachaActual > 30 && wallet.rachaActual % 30 === 0) otorgarPatitas(wallet, 80, `¡${wallet.rachaActual} días seguidos!`, 200);
 
     revisarMichiFreeze(wallet);
-
     wallet.ultimoLogin = hoyKey;
     wallet.diaCompletadoHoy = false;
     guardarWallet(wallet);
@@ -527,9 +607,8 @@ function otorgarBonusDiaCompleto(fechaKey) {
     let wallet = cargarWallet();
     if (wallet.diaCompletadoHoy) return;
     const lunaDeMiel = enLunaDeMiel(wallet);
-    const patitasBonus = lunaDeMiel ? 20 : 10;
     wallet.diaCompletadoHoy = true;
-    otorgarPatitas(wallet, patitasBonus, '¡Día 100% completado!', 25);
+    otorgarPatitas(wallet, lunaDeMiel ? 20 : 10, '¡Día 100% completado!', 25);
     guardarWallet(wallet);
     renderBadgeWallet();
     revisarLogrosNuevos();
@@ -556,17 +635,14 @@ function renderPantallaWallet() {
     const wallet = cargarWallet();
     document.getElementById('wallet-saldo-patitas').textContent = wallet.patitas;
     document.getElementById('wallet-saldo-bolas').textContent = wallet.bolasDePelo;
-
     const { nivel, xpEnNivelActual, xpNecesariaNivelActual } = calcularNivelDesdeXP(wallet.xp || 0);
     document.getElementById('wallet-nivel-num').textContent = nivel;
     document.getElementById('wallet-nivel-xp').textContent = `${xpEnNivelActual} / ${xpNecesariaNivelActual} XP`;
     const pct = Math.min(100, Math.round((xpEnNivelActual / xpNecesariaNivelActual) * 100));
     document.getElementById('wallet-nivel-fill').style.width = pct + '%';
-
     document.getElementById('wallet-racha-actual').textContent = wallet.rachaActual;
     document.getElementById('wallet-racha-maxima').textContent = wallet.rachaMaxima;
     document.getElementById('wallet-freezes').textContent = wallet.michiFreezes || 0;
-
     renderListaLogros();
 }
 
@@ -591,26 +667,17 @@ function programarNotificaciones(fijas, fechaKey) {
         if (h === 99) return;
         const horaActividad = new Date();
         horaActividad.setHours(h, m, 0, 0);
-        const horaAviso = new Date(horaActividad.getTime() - 15 * 60 * 1000);
-        const msHastaAviso = horaAviso.getTime() - ahora.getTime();
-        if (msHastaAviso > 0) {
-            const timer = setTimeout(() => {
-                new Notification('🐱 Michi Agenda', {
-                    body: `En 15 min: ${obtenerIcono(act.actividad)} ${act.actividad} a las ${act.hora}`,
-                    icon: '/michi-agenda/Icono agenda.png'
-                });
-            }, msHastaAviso);
-            window._notifTimers.push(timer);
-        }
+        const msHastaAviso = horaActividad.getTime() - 15 * 60 * 1000 - ahora.getTime();
         const msHastaHora = horaActividad.getTime() - ahora.getTime();
+        if (msHastaAviso > 0) {
+            window._notifTimers.push(setTimeout(() => {
+                new Notification('🐱 Michi Agenda', { body: `En 15 min: ${obtenerIcono(act.actividad)} ${act.actividad}`, icon: '/michi-agenda/Icono agenda.png' });
+            }, msHastaAviso));
+        }
         if (msHastaHora > 0) {
-            const timer = setTimeout(() => {
-                new Notification('🐱 Michi Agenda', {
-                    body: `¡Ahora! ${obtenerIcono(act.actividad)} ${act.actividad}`,
-                    icon: '/michi-agenda/Icono agenda.png'
-                });
-            }, msHastaHora);
-            window._notifTimers.push(timer);
+            window._notifTimers.push(setTimeout(() => {
+                new Notification('🐱 Michi Agenda', { body: `¡Ahora! ${obtenerIcono(act.actividad)} ${act.actividad}`, icon: '/michi-agenda/Icono agenda.png' });
+            }, msHastaHora));
         }
     });
 }
@@ -620,7 +687,6 @@ const DIAS_MAP = {
     'lunes': 1, 'martes': 2, 'miércoles': 3, 'miercoles': 3,
     'jueves': 4, 'viernes': 5, 'sábado': 6, 'sabado': 6, 'domingo': 0
 };
-
 const DIAS_NOMBRES = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
 
 function cargarRecurrentes() {
@@ -639,11 +705,11 @@ function parsearRecurrente(linea) {
     const diasStr = match[2].toLowerCase();
     let diasAplica = [];
     if (diasStr.includes('todos los días') || diasStr.includes('todos los dias') || diasStr.includes('diario')) {
-        diasAplica = [0, 1, 2, 3, 4, 5, 6];
-    } else if (diasStr.includes('entre semana') || diasStr.includes('días hábiles') || diasStr.includes('dias habiles')) {
-        diasAplica = [1, 2, 3, 4, 5];
+        diasAplica = [0,1,2,3,4,5,6];
+    } else if (diasStr.includes('entre semana') || diasStr.includes('dias habiles') || diasStr.includes('días hábiles')) {
+        diasAplica = [1,2,3,4,5];
     } else if (diasStr.includes('fines de semana') || diasStr.includes('fin de semana')) {
-        diasAplica = [0, 6];
+        diasAplica = [0,6];
     } else {
         diasStr.split(',').forEach(d => {
             const dia = d.trim();
@@ -655,8 +721,7 @@ function parsearRecurrente(linea) {
 
 function obtenerActividadesRecurrentesParaDia(fecha) {
     const recurrentes = cargarRecurrentes();
-    const diaSemana = fecha.getDay();
-    return recurrentes.filter(rec => rec.diasAplica.includes(diaSemana)).map(rec => rec.actividad);
+    return recurrentes.filter(r => r.diasAplica.includes(fecha.getDay())).map(r => r.actividad);
 }
 
 function obtenerTextoConRecurrentes(fecha) {
@@ -687,10 +752,9 @@ function renderRecurrentesConfig() {
     }
     lista.innerHTML = recurrentes.map((r, idx) => {
         const diasNombres = r.diasAplica.sort((a,b)=>a-b).map(d => DIAS_NOMBRES[d]).join(', ');
-        const icono = obtenerIcono(r.actividad);
         return `<li class="recurrente-item">
             <div class="recurrente-info">
-                <div class="recurrente-actividad">${icono} ${r.actividad}</div>
+                <div class="recurrente-actividad">${obtenerIcono(r.actividad)} ${r.actividad}</div>
                 <div class="recurrente-dias">↻ ${diasNombres}</div>
             </div>
             <button class="btn-borrar-recurrente" onclick="borrarRecurrente(${idx})">✕</button>
@@ -705,7 +769,7 @@ function borrarRecurrente(idx) {
     renderRecurrentesConfig();
 }
 
-// ── CHECKS DE ACTIVIDADES ─────────────────────────────
+// ── CHECKS ────────────────────────────────────────────
 function cargarChecks(fechaKey) {
     const todos = JSON.parse(localStorage.getItem('michi-checks') || '{}');
     return todos[fechaKey] || {};
@@ -727,16 +791,13 @@ function toggleCheck(fechaKey, checkKey) {
     const checks = cargarChecks(fechaKey);
     checks[checkKey] = !checks[checkKey];
     guardarChecks(fechaKey, checks);
-
     const agenda = cargarAgendas().find(a => a.fechaKey === fechaKey);
     const textoConRec = obtenerTextoConRecurrentes(new Date(fechaKey + 'T12:00:00'));
     const texto = textoConRec || (agenda ? agenda.texto : '');
     if (texto) {
         const { fijas } = parsearActividades(texto);
-        const pct = calcularPorcentaje(fijas, fechaKey);
-        if (pct === 100) otorgarBonusDiaCompleto(fechaKey);
+        if (calcularPorcentaje(fijas, fechaKey) === 100) otorgarBonusDiaCompleto(fechaKey);
     }
-
     revisarLogrosNuevos();
     mostrarHoy();
     if (document.getElementById('pantalla-dashboard').classList.contains('activa') && fechaDashboard) {
@@ -789,8 +850,7 @@ function togglePendiente(id) {
 }
 
 function borrarPendiente(id) {
-    const pendientes = cargarPendientes().filter(p => p.id !== id);
-    guardarPendientes(pendientes);
+    guardarPendientes(cargarPendientes().filter(p => p.id !== id));
     renderPendientes();
 }
 
@@ -810,7 +870,7 @@ function renderPendientes() {
     `).join('');
 }
 
-// ── EMOJIS PERSONALIZADOS ─────────────────────────────
+// ── EMOJIS ────────────────────────────────────────────
 function cargarEmojisCustom() {
     return JSON.parse(localStorage.getItem('michi-emojis-custom') || '[]');
 }
@@ -949,8 +1009,7 @@ function obtenerIcono(nombre) {
 function obtenerClase(icono, idx) {
     if (icono === '💪') return 'verde';
     if (icono === '🍽️') return 'rojo';
-    const clases = ['azul', 'morado', 'rosa'];
-    return clases[idx % clases.length];
+    return ['azul', 'morado', 'rosa'][idx % 3];
 }
 
 function parsearHora(horaStr) {
@@ -969,9 +1028,7 @@ function formatearFechaDisplay(date) {
 }
 
 function esMismaFecha(a, b) {
-    return a.getFullYear() === b.getFullYear() &&
-           a.getMonth() === b.getMonth() &&
-           a.getDate() === b.getDate();
+    return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 }
 
 function sumarDias(date, dias) {
@@ -997,19 +1054,37 @@ function mostrarHoy() {
     const agendaHoy = agendas.find(a => a.fechaKey === fechaKey);
     document.getElementById('titulo-hoy').textContent = formatearFechaDisplay(hoy);
     const textoConRec = obtenerTextoConRecurrentes(hoy);
+
     if (agendaHoy || textoConRec) {
         agendaViendoId = agendaHoy ? agendaHoy.id : null;
         const texto = textoConRec || agendaHoy.texto;
         const { fijas } = parsearActividades(texto);
         document.getElementById('contenido-hoy').innerHTML = renderTimelineHoy(fijas, hoy, fechaKey);
+        const porcentaje = calcularPorcentaje(fijas, fechaKey);
+        const mensaje = mensajeMichi(porcentaje);
+        document.getElementById('contenido-progreso').innerHTML = fijas.length > 0 ? `
+            <div class="progreso-box">
+                <div class="progreso-header">
+                    <span class="progreso-label">Progreso del día</span>
+                    <span class="progreso-pct">${porcentaje}%</span>
+                </div>
+                <div class="progreso-barra">
+                    <div class="progreso-fill" style="width:${porcentaje}%"></div>
+                </div>
+                ${mensaje ? `<div class="progreso-mensaje">🐱 ${mensaje}</div>` : ''}
+            </div>` : '';
         programarNotificaciones(fijas, fechaKey);
     } else {
         agendaViendoId = null;
         document.getElementById('contenido-hoy').innerHTML = renderHorasVacias(hoy);
+        document.getElementById('contenido-progreso').innerHTML = '';
     }
+
+    renderMichiHome();
     renderSemanaStrip();
     renderPendientes();
     renderBadgeWallet();
+
     if (usuarioActual) {
         const configUsuario = document.getElementById('config-usuario');
         if (configUsuario) configUsuario.textContent = usuarioActual.email || usuarioActual.displayName || '—';
@@ -1030,7 +1105,7 @@ function renderTimelineHoy(fijas, hoy, fechaKey) {
     const visibles = fijas.slice(inicio, inicio + 4);
     const checks = cargarChecks(fechaKey);
     const activo = esDiaActivo(fechaKey);
-    let items = visibles.map((act, idx) => {
+    return `<div class="timeline-hoy">${visibles.map((act, idx) => {
         const realIdx = inicio + idx;
         const icono = obtenerIcono(act.actividad);
         const clase = obtenerClase(icono, realIdx);
@@ -1050,23 +1125,7 @@ function renderTimelineHoy(fijas, hoy, fechaKey) {
             </div>
             ${activo ? `<button class="btn-check ${completada ? 'checked' : ''}" onclick="toggleCheck('${fechaKey}', '${checkKey}')">${completada ? '✓' : '○'}</button>` : ''}
         </div>`;
-    }).join('');
-
-    const porcentaje = calcularPorcentaje(fijas, fechaKey);
-    const mensaje = mensajeMichi(porcentaje);
-    const barraHTML = fijas.length > 0 ? `
-        <div class="progreso-box">
-            <div class="progreso-header">
-                <span class="progreso-label">Progreso del día</span>
-                <span class="progreso-pct">${porcentaje}%</span>
-            </div>
-            <div class="progreso-barra">
-                <div class="progreso-fill" style="width:${porcentaje}%"></div>
-            </div>
-            ${mensaje ? `<div class="progreso-mensaje">🐱 ${mensaje}</div>` : ''}
-        </div>` : '';
-
-    return `<div class="timeline-hoy">${items}</div>${barraHTML}`;
+    }).join('')}</div>`;
 }
 
 function renderHorasVacias(hoy) {
@@ -1089,8 +1148,7 @@ function renderHorasVacias(hoy) {
             </div>
         </div>`;
     }
-    return `
-        <div class="timeline-hoy">${items}</div>
+    return `<div class="timeline-hoy">${items}</div>
         <div style="text-align:center; margin-top: 16px;">
             <button class="btn-crear-hoy" onclick="mostrarEditor(null)">+ Crear agenda de hoy</button>
         </div>`;
@@ -1113,12 +1171,9 @@ function renderSemanaStrip() {
             const primeraLinea = agenda.texto.split('\n').find(l => l.trim()) || '';
             emoji = obtenerIcono(extraerActividad(primeraLinea));
         } else if (tieneRec) {
-            const recs = obtenerActividadesRecurrentesParaDia(dia);
-            emoji = obtenerIcono(extraerActividad(recs[0]));
+            emoji = obtenerIcono(extraerActividad(obtenerActividadesRecurrentesParaDia(dia)[0]));
         }
-        let clases = 'dia-strip';
-        if (i === 0) clases += ' hoy';
-        if (agenda || tieneRec) clases += ' tiene-agenda';
+        let clases = 'dia-strip' + (i === 0 ? ' hoy' : '') + (agenda || tieneRec ? ' tiene-agenda' : '');
         html += `<div class="${clases}" onclick="seleccionarDiaStrip('${fechaKey}', ${!!(agenda || tieneRec)})">
             <div class="dia-strip-nombre">${diasNombre[dia.getDay()]}</div>
             <div class="dia-strip-num">${dia.getDate()}</div>
@@ -1139,8 +1194,7 @@ function seleccionarDiaStrip(fechaKey, tieneAgenda) {
         document.querySelectorAll('.pantalla').forEach(p => p.classList.remove('activa'));
         document.getElementById('pantalla-dashboard').classList.add('activa');
         document.getElementById('titulo-dashboard').textContent = formatearFechaDisplay(fecha);
-        const texto = textoConRec || agenda.texto;
-        document.getElementById('contenido-dashboard').innerHTML = renderDiario(parsearActividades(texto), fechaKey);
+        document.getElementById('contenido-dashboard').innerHTML = renderDiario(parsearActividades(textoConRec || agenda.texto), fechaKey);
     } else {
         mostrarEditor(fechaKey);
     }
@@ -1157,8 +1211,7 @@ function navegarDia(delta) {
     agendaViendoId = agenda ? agenda.id : null;
     document.getElementById('titulo-dashboard').textContent = formatearFechaDisplay(nuevaFecha);
     if (agenda || textoConRec) {
-        const texto = textoConRec || agenda.texto;
-        document.getElementById('contenido-dashboard').innerHTML = renderDiario(parsearActividades(texto), fechaKey);
+        document.getElementById('contenido-dashboard').innerHTML = renderDiario(parsearActividades(textoConRec || agenda.texto), fechaKey);
     } else {
         document.getElementById('contenido-dashboard').innerHTML = `
             <div style="text-align:center; padding: 40px 20px; color: #6b7280;">
@@ -1169,7 +1222,7 @@ function navegarDia(delta) {
     }
 }
 
-// ── CALENDARIO MENSUAL ────────────────────────────────
+// ── CALENDARIO ────────────────────────────────────────
 function abrirCalendario() {
     mesActualCal = new Date();
     renderCalendario();
@@ -1177,9 +1230,7 @@ function abrirCalendario() {
 }
 
 function cerrarCalendario(event) {
-    if (event.target.id === 'modal-calendario') {
-        document.getElementById('modal-calendario').classList.add('oculto');
-    }
+    if (event.target.id === 'modal-calendario') document.getElementById('modal-calendario').classList.add('oculto');
 }
 
 function cambiarMes(delta) {
@@ -1192,8 +1243,7 @@ function renderCalendario() {
     const año = mesActualCal.getFullYear();
     const mes = mesActualCal.getMonth();
     const agendas = cargarAgendas();
-    document.getElementById('titulo-mes').textContent =
-        mesActualCal.toLocaleDateString('es-MX', { month: 'long', year: 'numeric' });
+    document.getElementById('titulo-mes').textContent = mesActualCal.toLocaleDateString('es-MX', { month: 'long', year: 'numeric' });
     const primerDia = new Date(año, mes, 1).getDay();
     const diasEnMes = new Date(año, mes + 1, 0).getDate();
     let html = '';
@@ -1203,19 +1253,14 @@ function renderCalendario() {
         const fechaKey = formatearFechaKey(fecha);
         const agenda = agendas.find(a => a.fechaKey === fechaKey);
         const tieneRec = obtenerActividadesRecurrentesParaDia(fecha).length > 0;
-        let clases = 'cal-dia';
-        if (esMismaFecha(fecha, hoy)) clases += ' hoy';
-        if (agenda || tieneRec) clases += ' tiene-agenda';
+        let clases = 'cal-dia' + (esMismaFecha(fecha, hoy) ? ' hoy' : '') + (agenda || tieneRec ? ' tiene-agenda' : '');
         let emoji = '';
         if (agenda) {
-            const primeraLinea = agenda.texto.split('\n').find(l => l.trim()) || '';
-            emoji = `<div class="cal-dia-emoji">${obtenerIcono(extraerActividad(primeraLinea))}</div>`;
+            emoji = `<div class="cal-dia-emoji">${obtenerIcono(extraerActividad(agenda.texto.split('\n').find(l => l.trim()) || ''))}</div>`;
         } else if (tieneRec) {
-            const recs = obtenerActividadesRecurrentesParaDia(fecha);
-            emoji = `<div class="cal-dia-emoji">${obtenerIcono(extraerActividad(recs[0]))}</div>`;
+            emoji = `<div class="cal-dia-emoji">${obtenerIcono(extraerActividad(obtenerActividadesRecurrentesParaDia(fecha)[0]))}</div>`;
         }
-        html += `<div class="${clases}" onclick="seleccionarDiaCalendario('${fechaKey}', ${!!(agenda || tieneRec)})">
-            <div class="cal-dia-num">${d}</div>${emoji}</div>`;
+        html += `<div class="${clases}" onclick="seleccionarDiaCalendario('${fechaKey}', ${!!(agenda || tieneRec)})"><div class="cal-dia-num">${d}</div>${emoji}</div>`;
     }
     document.getElementById('cal-grid').innerHTML = html;
 }
@@ -1232,21 +1277,17 @@ function seleccionarDiaCalendario(fechaKey, tieneAgenda) {
         document.querySelectorAll('.pantalla').forEach(p => p.classList.remove('activa'));
         document.getElementById('pantalla-dashboard').classList.add('activa');
         document.getElementById('titulo-dashboard').textContent = formatearFechaDisplay(fecha);
-        const texto = textoConRec || agenda.texto;
-        document.getElementById('contenido-dashboard').innerHTML = renderDiario(parsearActividades(texto), fechaKey);
+        document.getElementById('contenido-dashboard').innerHTML = renderDiario(parsearActividades(textoConRec || agenda.texto), fechaKey);
     } else {
         mostrarEditor(fechaKey);
     }
 }
 
-// ── SELECTOR FECHA MINI ───────────────────────────────
+// ── MINI CALENDARIO ───────────────────────────────────
 function toggleCalendario() {
     const cal = document.getElementById('mini-calendario');
     cal.classList.toggle('oculto');
-    if (!cal.classList.contains('oculto')) {
-        mesActualMini = new Date(fechaSeleccionada);
-        renderMiniCalendario();
-    }
+    if (!cal.classList.contains('oculto')) { mesActualMini = new Date(fechaSeleccionada); renderMiniCalendario(); }
 }
 
 function cambiarMesMini(delta) {
@@ -1258,17 +1299,14 @@ function renderMiniCalendario() {
     const hoy = new Date();
     const año = mesActualMini.getFullYear();
     const mes = mesActualMini.getMonth();
-    document.getElementById('mini-mes-titulo').textContent =
-        mesActualMini.toLocaleDateString('es-MX', { month: 'long', year: 'numeric' });
+    document.getElementById('mini-mes-titulo').textContent = mesActualMini.toLocaleDateString('es-MX', { month: 'long', year: 'numeric' });
     const primerDia = new Date(año, mes, 1).getDay();
     const diasEnMes = new Date(año, mes + 1, 0).getDate();
     let html = '';
     for (let i = 0; i < primerDia; i++) html += '<div class="mini-dia vacio"></div>';
     for (let d = 1; d <= diasEnMes; d++) {
         const fecha = new Date(año, mes, d);
-        let clases = 'mini-dia';
-        if (esMismaFecha(fecha, hoy)) clases += ' hoy';
-        if (esMismaFecha(fecha, fechaSeleccionada)) clases += ' seleccionado';
+        let clases = 'mini-dia' + (esMismaFecha(fecha, hoy) ? ' hoy' : '') + (esMismaFecha(fecha, fechaSeleccionada) ? ' seleccionado' : '');
         html += `<div class="${clases}" onclick="seleccionarFecha(${año}, ${mes}, ${d})">${d}</div>`;
     }
     document.getElementById('mini-cal-grid').innerHTML = html;
@@ -1283,11 +1321,9 @@ function seleccionarFecha(año, mes, dia) {
 function actualizarDisplayFecha() {
     const hoy = new Date();
     const display = document.getElementById('fecha-display');
-    if (esMismaFecha(fechaSeleccionada, hoy)) {
-        display.textContent = 'Hoy — ' + formatearFechaDisplay(fechaSeleccionada);
-    } else {
-        display.textContent = formatearFechaDisplay(fechaSeleccionada);
-    }
+    display.textContent = esMismaFecha(fechaSeleccionada, hoy)
+        ? 'Hoy — ' + formatearFechaDisplay(fechaSeleccionada)
+        : formatearFechaDisplay(fechaSeleccionada);
 }
 
 // ── NAVEGACIÓN ────────────────────────────────────────
@@ -1398,8 +1434,7 @@ function procesarAgenda() {
         const recActuales = cargarRecurrentes();
         recurrentesNuevas.forEach(nueva => {
             const existente = recActuales.findIndex(r => r.actividad === nueva.actividad);
-            if (existente !== -1) { recActuales[existente] = nueva; }
-            else { recActuales.push(nueva); }
+            if (existente !== -1) { recActuales[existente] = nueva; } else { recActuales.push(nueva); }
         });
         guardarRecurrentes(recActuales);
     }
@@ -1410,10 +1445,7 @@ function procesarAgenda() {
     let agendaGuardada;
     if (agendaEditandoId) {
         const idx = agendas.findIndex(a => a.id === agendaEditandoId);
-        if (idx !== -1) {
-            agendas[idx].texto = textoFinal; agendas[idx].nombre = nombre; agendas[idx].fechaKey = fechaKey;
-            agendaGuardada = agendas[idx];
-        }
+        if (idx !== -1) { agendas[idx].texto = textoFinal; agendas[idx].nombre = nombre; agendas[idx].fechaKey = fechaKey; agendaGuardada = agendas[idx]; }
         agendaViendoId = agendaEditandoId;
         agendaEditandoId = null;
     } else {
@@ -1433,12 +1465,10 @@ function procesarAgenda() {
     let wallet = cargarWallet();
     if (!wallet.primeraAgendaCreada) {
         wallet.primeraAgendaCreada = true;
-        const lunaDeMiel = enLunaDeMiel(wallet);
-        otorgarPatitas(wallet, lunaDeMiel ? 30 : 15, '¡Primera agenda creada!', 30);
+        otorgarPatitas(wallet, enLunaDeMiel(wallet) ? 30 : 15, '¡Primera agenda creada!', 30);
         guardarWallet(wallet);
     }
     revisarLogrosNuevos();
-
     document.querySelectorAll('.pantalla').forEach(p => p.classList.remove('activa'));
     document.getElementById('pantalla-hoy').classList.add('activa');
     mostrarHoy();
@@ -1466,8 +1496,7 @@ function parsearActividades(texto) {
             if (match) {
                 let hora = match[2].trim();
                 if (!hora.includes(':')) hora = hora + ':00';
-                const actividad = match[1].trim().replace(/[-–—]\s*$/, '');
-                fijas.push({ actividad, hora });
+                fijas.push({ actividad: match[1].trim().replace(/[-–—]\s*$/, ''), hora });
             } else {
                 fijas.push({ actividad: linea, hora: '--:--' });
             }
@@ -1487,7 +1516,7 @@ function renderDiario({ fijas, limpieza }, fechaKey) {
     const porcentaje = calcularPorcentaje(fijas, fechaKey);
     const mensaje = mensajeMichi(porcentaje);
 
-    let timelineItems = fijas.map((act, idx) => {
+    const timelineItems = fijas.map((act, idx) => {
         const icono = obtenerIcono(act.actividad);
         const clase = obtenerClase(icono, idx);
         const esUltimo = idx === fijas.length - 1;
@@ -1507,17 +1536,14 @@ function renderDiario({ fijas, limpieza }, fechaKey) {
         </div>`;
     }).join('');
 
-    let filas = fijas.map(act => {
-        const icono = obtenerIcono(act.actividad);
+    const filas = fijas.map(act => {
         const checkKey = act.actividad + act.hora;
         const completada = checks[checkKey];
         return `<tr class="${completada ? 'fila-done' : ''}">
             <td class="time-cell">${act.hora}</td>
-            <td>${completada ? '✅' : icono} <span class="${completada ? 'tl-nombre-done' : ''}">${act.actividad}</span></td>
+            <td>${completada ? '✅' : obtenerIcono(act.actividad)} <span class="${completada ? 'tl-nombre-done' : ''}">${act.actividad}</span></td>
         </tr>`;
     }).join('');
-
-    let limpiezaHTML = limpieza.map(t => `<li>✨ ${t}</li>`).join('');
 
     const barraHTML = fijas.length > 0 ? `
         <div class="progreso-box">
@@ -1539,7 +1565,7 @@ function renderDiario({ fijas, limpieza }, fechaKey) {
                 <table><thead><tr><th>Hora</th><th>Actividad</th></tr></thead><tbody>${filas}</tbody></table>
             </div>
         </div>
-        ${limpieza.length ? `<div class="panel" style="margin-top:15px"><h3>Tareas del Hogar</h3><ul style="padding-left:20px;line-height:2">${limpiezaHTML}</ul></div>` : ''}
+        ${limpieza.length ? `<div class="panel" style="margin-top:15px"><h3>Tareas del Hogar</h3><ul style="padding-left:20px;line-height:2">${limpieza.map(t => `<li>✨ ${t}</li>`).join('')}</ul></div>` : ''}
     `;
 }
 
@@ -1584,3 +1610,5 @@ window.borrarEmojiCustom = borrarEmojiCustom;
 window.navegarDia = navegarDia;
 window.borrarRecurrente = borrarRecurrente;
 window.toggleCheck = toggleCheck;
+window.tocarMichi = tocarMichi;
+window.adoptarMichi = adoptarMichi;

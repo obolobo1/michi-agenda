@@ -118,7 +118,92 @@ header h2 { font-size: 0.9rem; color: #9ca3af; margin-top: 4px; font-weight: 400
 /* SECCIÓN TÍTULOS */
 .seccion-titulo { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
 .seccion-titulo span { font-size: 0.75rem; color: #9ca3af; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
-.acciones-hoy { display: flex; gap: 8px; }
+
+/* LAYOUT PRINCIPAL HOY — dos columnas */
+.hoy-main-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 12px;
+    align-items: start;
+}
+.hoy-timeline-col { display: flex; flex-direction: column; }
+
+/* MICHI COMPAÑERO */
+.michi-col {
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+}
+.michi-caja {
+    width: 100%; aspect-ratio: 1;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 20px;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    cursor: pointer; position: relative; overflow: hidden;
+    padding: 12px;
+    transition: border-color 0.2s;
+}
+.michi-caja:hover { border-color: rgba(56,189,248,0.3); }
+.michi-caja:active { transform: scale(0.97); }
+.michi-img {
+    width: 100%; height: 100%;
+    object-fit: contain;
+    transition: opacity 0.3s;
+}
+.michi-ojos {
+    position: absolute;
+    font-size: 1.8rem;
+    animation: parpadeoOjos 0.8s ease-in-out;
+}
+.michi-patita {
+    position: absolute;
+    bottom: 10px;
+    font-size: 1.5rem;
+    animation: salePatita 0.8s ease-in-out;
+}
+.michi-mensaje {
+    font-size: 0.7rem; color: #9ca3af;
+    text-align: center; line-height: 1.4;
+    padding: 0 4px;
+}
+.btn-adoptar {
+    width: 100%; padding: 10px;
+    background: linear-gradient(135deg, #7c3aed, #ec4899);
+    border: none; border-radius: 12px;
+    color: white; font-size: 0.82rem; font-weight: 600;
+    cursor: pointer; transition: opacity 0.2s;
+}
+.btn-adoptar:active { opacity: 0.8; }
+
+/* ANIMACIONES MICHI */
+@keyframes parpadeoOjos {
+    0% { opacity: 0; transform: scale(0.5); }
+    30% { opacity: 1; transform: scale(1.1); }
+    70% { opacity: 1; transform: scale(1); }
+    100% { opacity: 0; transform: scale(0.5); }
+}
+@keyframes salePatita {
+    0% { opacity: 0; transform: translateY(20px); }
+    30% { opacity: 1; transform: translateY(0); }
+    70% { opacity: 1; transform: translateY(0); }
+    100% { opacity: 0; transform: translateY(20px); }
+}
+@keyframes sacudirCaja {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-6px) rotate(-2deg); }
+    40% { transform: translateX(6px) rotate(2deg); }
+    60% { transform: translateX(-4px) rotate(-1deg); }
+    80% { transform: translateX(4px) rotate(1deg); }
+}
+.sacudiendo { animation: sacudirCaja 0.6s ease-in-out; }
+
+@keyframes aparecer {
+    0% { opacity: 0; transform: scale(0.5) translateY(20px); }
+    60% { transform: scale(1.08) translateY(-4px); }
+    100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+.michi-aparece { animation: aparecer 0.8s ease-out forwards; }
 
 /* PENDIENTES */
 .pendientes-box { background: rgba(236,72,153,0.05); border-radius: 16px; padding: 14px; position: relative; }
@@ -216,9 +301,9 @@ textarea { width: 100%; height: 200px; background: #1f2937; border: 1px solid rg
 .timeline-left { display: flex; flex-direction: column; align-items: center; flex-shrink: 0; }
 .tl-circle { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1rem; flex-shrink: 0; }
 .tl-line { width: 2px; height: 30px; background: linear-gradient(to bottom, #3b82f6, #ec4899); margin: 3px 0; }
-.tl-content { padding-top: 4px; padding-bottom: 10px; }
+.tl-content { padding-top: 4px; padding-bottom: 10px; flex: 1; min-width: 0; }
 .tl-hora { font-size: 0.7rem; color: #38bdf8; font-weight: bold; }
-.tl-nombre { font-size: 0.8rem; font-weight: 500; margin-top: 2px; }
+.tl-nombre { font-size: 0.8rem; font-weight: 500; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .azul { background: linear-gradient(135deg,#2563eb,#1d4ed8); border: 2px solid #60a5fa; }
 .morado { background: linear-gradient(135deg,#7c3aed,#6d28d9); border: 2px solid #a78bfa; }
 .rosa { background: linear-gradient(135deg,#db2777,#be185d); border: 2px solid #f472b6; }
@@ -241,7 +326,7 @@ th { color: #9ca3af; font-size: 0.7rem; text-transform: uppercase; }
 .badge-recurrente { font-size: 0.6rem; background: rgba(16,185,129,0.2); color: #34d399; border: 1px solid rgba(16,185,129,0.4); padding: 1px 6px; border-radius: 20px; margin-left: 4px; font-weight: 600; }
 
 /* CHECKS Y PROGRESO */
-.btn-check { background: none; border: 2px solid rgba(255,255,255,0.2); border-radius: 50%; width: 28px; height: 28px; color: #6b7280; font-size: 0.85rem; cursor: pointer; flex-shrink: 0; margin-left: auto; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+.btn-check { background: none; border: 2px solid rgba(255,255,255,0.2); border-radius: 50%; width: 26px; height: 26px; color: #6b7280; font-size: 0.8rem; cursor: pointer; flex-shrink: 0; margin-left: auto; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
 .btn-check.checked { background: rgba(16,185,129,0.2); border-color: #10b981; color: #10b981; }
 .btn-check:hover { border-color: #38bdf8; color: #38bdf8; }
 .tl-circle-done { opacity: 0.5; }
@@ -249,7 +334,7 @@ th { color: #9ca3af; font-size: 0.7rem; text-transform: uppercase; }
 .fila-done td { opacity: 0.5; }
 .completada .tl-hora { color: #6b7280; }
 
-.progreso-box { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 12px 14px; margin-top: 12px; }
+.progreso-box { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 12px 14px; margin-top: 4px; margin-bottom: 8px; }
 .progreso-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
 .progreso-label { font-size: 0.75rem; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.5px; }
 .progreso-pct { font-size: 0.9rem; font-weight: 700; color: #38bdf8; }
@@ -292,15 +377,9 @@ th { color: #9ca3af; font-size: 0.7rem; text-transform: uppercase; }
 
 /* WALLET BADGE EN HEADER */
 .badge-wallet {
-    background: rgba(255,255,255,0.06);
-    border: none;
-    border-radius: 20px;
-    padding: 6px 12px;
-    font-size: 0.78rem;
-    font-weight: 600;
-    color: #f9fafb;
-    cursor: pointer;
-    display: flex; gap: 8px; align-items: center;
+    background: rgba(255,255,255,0.06); border: none; border-radius: 20px;
+    padding: 6px 12px; font-size: 0.78rem; font-weight: 600; color: #f9fafb;
+    cursor: pointer; display: flex; gap: 8px; align-items: center;
 }
 .badge-wallet:active { background: rgba(255,255,255,0.12); }
 
@@ -312,52 +391,30 @@ th { color: #9ca3af; font-size: 0.7rem; text-transform: uppercase; }
     color: white; padding: 12px 20px; border-radius: 14px;
     font-size: 0.9rem; font-weight: 600; text-align: center;
     box-shadow: 0 8px 24px rgba(0,0,0,0.4);
-    z-index: 500; opacity: 0; transition: all 0.4s ease;
-    pointer-events: none;
+    z-index: 500; opacity: 0; transition: all 0.4s ease; pointer-events: none;
 }
 .toast-patitas.mostrar { opacity: 1; transform: translateX(-50%) translateY(0); }
 .toast-motivo { font-size: 0.72rem; font-weight: 400; opacity: 0.85; }
 
 /* PANTALLA MI WALLET */
-.wallet-saldo-grande {
-    display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
-    margin-bottom: 20px;
-}
-.wallet-saldo-item {
-    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
-    border-radius: 18px; padding: 20px 10px;
-    display: flex; flex-direction: column; align-items: center; gap: 4px;
-}
+.wallet-saldo-grande { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+.wallet-saldo-item { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 18px; padding: 20px 10px; display: flex; flex-direction: column; align-items: center; gap: 4px; }
 .wallet-saldo-emoji { font-size: 2rem; }
 .wallet-saldo-num { font-size: 1.8rem; font-weight: 800; color: #f9fafb; }
 .wallet-saldo-label { font-size: 0.72rem; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.5px; }
-
-.wallet-nivel-box {
-    background: rgba(124,58,237,0.08); border: 1px solid rgba(124,58,237,0.25);
-    border-radius: 16px; padding: 16px; margin-bottom: 16px;
-}
+.wallet-nivel-box { background: rgba(124,58,237,0.08); border: 1px solid rgba(124,58,237,0.25); border-radius: 16px; padding: 16px; margin-bottom: 16px; }
 .wallet-nivel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
 .wallet-nivel-titulo { font-size: 1.1rem; font-weight: 700; color: #c4b5fd; }
 .wallet-nivel-xp { font-size: 0.78rem; color: #9ca3af; }
 .wallet-nivel-barra { width: 100%; height: 10px; background: rgba(255,255,255,0.08); border-radius: 5px; overflow: hidden; }
 .wallet-nivel-fill { height: 100%; background: linear-gradient(to right, #7c3aed, #ec4899); border-radius: 5px; transition: width 0.4s ease; }
-
 .wallet-racha-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 10px; }
-.wallet-racha-card {
-    background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 14px; padding: 14px 6px;
-    display: flex; flex-direction: column; align-items: center; gap: 3px;
-}
+.wallet-racha-card { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 14px 6px; display: flex; flex-direction: column; align-items: center; gap: 3px; }
 .wallet-racha-emoji { font-size: 1.3rem; }
 .wallet-racha-num { font-size: 1.2rem; font-weight: 700; }
 .wallet-racha-label { font-size: 0.65rem; color: #9ca3af; text-align: center; }
-
 .lista-logros { display: flex; flex-direction: column; gap: 8px; }
-.logro-item {
-    display: flex; align-items: center; gap: 12px;
-    background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 14px; padding: 12px 14px;
-}
+.logro-item { display: flex; align-items: center; gap: 12px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 12px 14px; }
 .logro-item.desbloqueado { background: rgba(16,185,129,0.08); border-color: rgba(16,185,129,0.25); }
 .logro-emoji { font-size: 1.5rem; flex-shrink: 0; width: 36px; text-align: center; }
 .logro-item.bloqueado .logro-emoji { filter: grayscale(1); opacity: 0.4; }
