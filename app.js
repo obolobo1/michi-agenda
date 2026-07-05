@@ -8,7 +8,8 @@ import {
     guardarRecurrentesNube, cargarRecurrentesNube,
     guardarChecksNube, cargarChecksNube,
     guardarWalletNube, cargarWalletNube,
-    guardarLogrosNube, cargarLogrosNube
+    guardarLogrosNube, cargarLogrosNube,
+    guardarMichiNube, cargarMichiNube
 } from './firebase.js';
 
 // ── ESTADO GLOBAL ─────────────────────────────────────
@@ -20,6 +21,7 @@ let agendaViendoId = null;
 let pantallaAnterior = 'pantalla-hoy';
 let usuarioActual = null;
 let fechaDashboard = null;
+let michiPendienteDeNombre = null;
 
 // ── MICHI COMPAÑERO ───────────────────────────────────
 const MICHIS_DISPONIBLES = [
@@ -28,6 +30,14 @@ const MICHIS_DISPONIBLES = [
     { id: 'blanco',    nombre: 'Blanco',    img: 'michis/blanco.png'    },
     { id: 'gris',      nombre: 'Gris',      img: 'michis/gris.png'      },
     { id: 'calica',    nombre: 'Calica',    img: 'michis/calica.png'    }
+];
+
+const MICHIS_TIENDA = [
+    { id: 'naranjoso', nombre: 'Naranjoso', img: 'michis/naranjoso.png', precio: 200 },
+    { id: 'negro',     nombre: 'Negro',     img: 'michis/negro.png',     precio: 200 },
+    { id: 'blanco',    nombre: 'Blanco',    img: 'michis/blanco.png',    precio: 200 },
+    { id: 'gris',      nombre: 'Gris',      img: 'michis/gris.png',      precio: 200 },
+    { id: 'calica',    nombre: 'Calica',    img: 'michis/calica.png',    precio: 200 }
 ];
 
 const IMG_TRANSPORTADORA = 'michis/transportadora.png';
@@ -41,6 +51,15 @@ function cargarMichi() {
 
 function guardarMichi(michi) {
     localStorage.setItem('michi-companero', JSON.stringify(michi));
+    if (usuarioActual) guardarMichiNube(usuarioActual.uid, michi).catch(() => {});
+}
+
+function cargarMichisDesbloqueados() {
+    return JSON.parse(localStorage.getItem('michi-desbloqueados') || '[]');
+}
+
+function guardarMichisDesbloqueados(lista) {
+    localStorage.setItem('michi-desbloqueados', JSON.stringify(lista));
 }
 
 function renderMichiHome() {
@@ -50,17 +69,21 @@ function renderMichiHome() {
     const img = document.getElementById('michi-img');
     const mensaje = document.getElementById('michi-mensaje');
     const btnAdoptar = document.getElementById('btn-adoptar');
+    const btnTienda = document.getElementById('btn-tienda-header');
+    const btnIrTienda = document.getElementById('btn-ir-tienda');
 
     if (michi) {
-        // Ya tiene michi — mostrar imagen del gato
         img.src = michi.img;
         img.style.display = 'block';
-        mensaje.textContent = `${michi.nombre} te acompaña 🐾`;
+        mensaje.textContent = `${michi.nombrePersonalizado || michi.nombre} te acompaña 🐾`;
         btnAdoptar.classList.add('oculto');
+        if (btnTienda) btnTienda.classList.remove('oculto');
+        if (btnIrTienda) btnIrTienda.classList.remove('oculto');
     } else {
-        // Sin michi — mostrar transportadora
         img.src = IMG_TRANSPORTADORA;
         img.style.display = 'block';
+        if (btnTienda) btnTienda.classList.add('oculto');
+        if (btnIrTienda) btnIrTienda.classList.add('oculto');
 
         if (nivel >= NIVEL_ADOPCION && wallet.patitas >= COSTO_ADOPCION) {
             mensaje.textContent = '¡Ya puedes abrir la caja! 🐾';
@@ -80,13 +103,11 @@ function tocarMichi() {
     const caja = document.getElementById('michi-caja');
 
     if (michi) {
-        // Ya tiene michi — pequeña animación de reacción
         caja.classList.add('sacudiendo');
         setTimeout(() => caja.classList.remove('sacudiendo'), 600);
         return;
     }
 
-    // Sin michi — animación aleatoria de la transportadora
     const ojos = document.getElementById('michi-ojos');
     const patita = document.getElementById('michi-patita');
     const random = Math.floor(Math.random() * 3);
@@ -103,68 +124,167 @@ function tocarMichi() {
     }
 }
 
-function adoptarMichi() {
+function mostrarModalNombre() {
     const wallet = cargarWallet();
     const { nivel } = calcularNivelDesdeXP(wallet.xp || 0);
-
     if (nivel < NIVEL_ADOPCION || wallet.patitas < COSTO_ADOPCION) return;
 
-    // Descontar patitas
+    // Descontar patitas y elegir michi aleatorio
     wallet.patitas -= COSTO_ADOPCION;
     guardarWallet(wallet);
 
-    // Elegir michi aleatorio
     const idx = Math.floor(Math.random() * MICHIS_DISPONIBLES.length);
-    const michiElegido = MICHIS_DISPONIBLES[idx];
-    guardarMichi(michiElegido);
+    michiPendienteDeNombre = { ...MICHIS_DISPONIBLES[idx] };
 
-    // Animación de revelación
+    // Mostrar preview en el modal
+    document.getElementById('modal-michi-preview').textContent = '🐱';
+    document.getElementById('input-nombre-michi').value = '';
+    document.getElementById('modal-nombre-michi').classList.remove('oculto');
+
+    // Animar imagen de fondo
     const img = document.getElementById('michi-img');
-    const mensaje = document.getElementById('michi-mensaje');
-    const btnAdoptar = document.getElementById('btn-adoptar');
-
+    img.src = michiPendienteDeNombre.img;
     img.classList.add('michi-aparece');
-    img.src = michiElegido.img;
-    mensaje.textContent = `¡${michiElegido.nombre} es tu nuevo compañero! 🎉`;
-    btnAdoptar.classList.add('oculto');
+}
 
-    // Confeti con toasts
-    mostrarToastPatitas(0, `🎉 ¡Adoptaste a ${michiElegido.nombre}!`);
+function cerrarModalNombre(event) {
+    if (event.target.id === 'modal-nombre-michi') {
+        // No cerrar sin nombre — forzamos a que complete
+    }
+}
+
+function confirmarNombreMichi() {
+    const input = document.getElementById('input-nombre-michi');
+    const nombre = input.value.trim();
+    if (!nombre) { input.focus(); return; }
+
+    michiPendienteDeNombre.nombrePersonalizado = nombre;
+    guardarMichi(michiPendienteDeNombre);
+
+    // Registrar como desbloqueado
+    const desbloqueados = cargarMichisDesbloqueados();
+    if (!desbloqueados.includes(michiPendienteDeNombre.id)) {
+        desbloqueados.push(michiPendienteDeNombre.id);
+        guardarMichisDesbloqueados(desbloqueados);
+    }
+
+    document.getElementById('modal-nombre-michi').classList.add('oculto');
+    mostrarToastPatitas(0, `🎉 ¡${nombre} es tu nuevo compañero!`);
+    renderBadgeWallet();
+    mostrarHoy();
+    michiPendienteDeNombre = null;
+}
+
+// ── TIENDA ────────────────────────────────────────────
+function mostrarTienda() {
+    pantallaAnterior = document.querySelector('.pantalla.activa')?.id || 'pantalla-hoy';
+    document.querySelectorAll('.pantalla').forEach(p => p.classList.remove('activa'));
+    document.getElementById('pantalla-tienda').classList.add('activa');
+    renderTienda();
+}
+
+function renderTienda() {
+    const wallet = cargarWallet();
+    const michiActual = cargarMichi();
+    const desbloqueados = cargarMichisDesbloqueados();
+
+    document.getElementById('tienda-saldo-patitas').textContent = wallet.patitas;
+    document.getElementById('tienda-saldo-bolas').textContent = wallet.bolasDePelo;
+
+    // Grid de michis — mostrar todos excepto el que ya tiene como principal
+    const gridMichis = document.getElementById('tienda-michis');
+    gridMichis.innerHTML = MICHIS_TIENDA.map(m => {
+        const yaDesbloqueado = desbloqueados.includes(m.id) || (michiActual && michiActual.id === m.id);
+        const puedePagar = wallet.patitas >= m.precio;
+
+        return `<div class="tienda-card ${yaDesbloqueado ? 'ya-tiene' : ''}">
+            <img src="${m.img}" alt="${m.nombre}" class="tienda-card-img"/>
+            <div class="tienda-card-nombre">${m.nombre}</div>
+            <div class="tienda-card-precio">${yaDesbloqueado ? '✅ Ya lo tienes' : `🐾 ${m.precio}`}</div>
+            <button class="btn-comprar ${yaDesbloqueado ? 'ya-tiene' : ''}"
+                ${yaDesbloqueado ? 'disabled' : ''}
+                onclick="comprarMichi('${m.id}')">
+                ${yaDesbloqueado ? 'Adoptado' : (puedePagar ? 'Adoptar' : 'Sin patitas')}
+            </button>
+        </div>`;
+    }).join('');
+
+    // Grid de items — Michi Freeze
+    const gridItems = document.getElementById('tienda-items');
+    const puedePagarFreeze300 = wallet.patitas >= 300;
+    const puedePagarFreeze1 = wallet.bolasDePelo >= 1;
+
+    gridItems.innerHTML = `
+        <div class="tienda-card">
+            <div class="tienda-card-emoji">🧊</div>
+            <div class="tienda-card-nombre">Michi Freeze</div>
+            <div class="tienda-card-precio">🐾 300 patitas</div>
+            <button class="btn-comprar" ${!puedePagarFreeze300 ? 'disabled' : ''}
+                onclick="comprarFreeze('patitas')">
+                ${puedePagarFreeze300 ? 'Comprar' : 'Sin patitas'}
+            </button>
+        </div>
+        <div class="tienda-card">
+            <div class="tienda-card-emoji">🧊</div>
+            <div class="tienda-card-nombre">Michi Freeze</div>
+            <div class="tienda-card-precio">🧶 1 bola de pelo</div>
+            <button class="btn-comprar" ${!puedePagarFreeze1 ? 'disabled' : ''}
+                onclick="comprarFreeze('bolas')">
+                ${puedePagarFreeze1 ? 'Comprar' : 'Sin bolas'}
+            </button>
+        </div>
+    `;
+}
+
+function comprarMichi(michiId) {
+    const wallet = cargarWallet();
+    const michi = MICHIS_TIENDA.find(m => m.id === michiId);
+    const desbloqueados = cargarMichisDesbloqueados();
+
+    if (!michi || desbloqueados.includes(michiId)) return;
+    if (wallet.patitas < michi.precio) return;
+
+    wallet.patitas -= michi.precio;
+    guardarWallet(wallet);
+
+    // Agregar a desbloqueados
+    desbloqueados.push(michiId);
+    guardarMichisDesbloqueados(desbloqueados);
+
+    // Pedir nombre
+    michiPendienteDeNombre = { ...michi };
+    document.getElementById('input-nombre-michi').value = '';
+    document.getElementById('modal-nombre-michi').classList.remove('oculto');
+
+    renderTienda();
+    renderBadgeWallet();
+}
+
+function comprarFreeze(tipo) {
+    const wallet = cargarWallet();
+
+    if (tipo === 'patitas') {
+        if (wallet.patitas < 300) return;
+        wallet.patitas -= 300;
+    } else {
+        if (wallet.bolasDePelo < 1) return;
+        wallet.bolasDePelo -= 1;
+    }
+
+    wallet.michiFreezes = (wallet.michiFreezes || 0) + 1;
+    guardarWallet(wallet);
+    mostrarToastPatitas(0, '🧊 ¡Michi Freeze agregado!');
+    renderTienda();
     renderBadgeWallet();
 }
 
 // ── ONBOARDING ────────────────────────────────────────
 const SLIDES = [
-    {
-        emoji: '🐱',
-        titulo: '¡Bienvenido a Michi Agenda!',
-        desc: 'Tu agenda inteligente que se adapta a tu rutina. Planea tu día, semana y mes en un solo lugar.',
-        ejemplo: null
-    },
-    {
-        emoji: '📅',
-        titulo: 'Escribe tus actividades',
-        desc: 'Cada actividad va en una línea. Escribe la actividad y la hora separadas por un espacio.',
-        ejemplo: 'GYM 07:00\nDesayuno 09:00\nTrabajo 10:00\nComer con mamá 14:00'
-    },
-    {
-        emoji: '↻',
-        titulo: 'Actividades recurrentes',
-        desc: 'Agrega [días] al final para que la actividad aparezca automáticamente esos días.',
-        ejemplo: 'GYM 07:00 [lunes, miércoles, viernes]\nMedicinas 08:00 [todos los días]\nTrabajo 09:00 [entre semana]'
-    },
-    {
-        emoji: '🐾',
-        titulo: '¡Gana patitas y sube de nivel!',
-        desc: 'Usa la app cada día, completa tus actividades y junta patitas para tu futuro michi compañero.',
-        ejemplo: null
-    },
-    {
-        emoji: '✅',
-        titulo: '¡Listo para empezar!',
-        desc: 'Toca el botón + para crear tu primera agenda. Tus datos se guardan en la nube y están disponibles en todos tus dispositivos.',
-        ejemplo: null
-    }
+    { emoji: '🐱', titulo: '¡Bienvenido a Michi Agenda!', desc: 'Tu agenda inteligente que se adapta a tu rutina. Planea tu día, semana y mes en un solo lugar.', ejemplo: null },
+    { emoji: '📅', titulo: 'Escribe tus actividades', desc: 'Cada actividad va en una línea. Escribe la actividad y la hora separadas por un espacio.', ejemplo: 'GYM 07:00\nDesayuno 09:00\nTrabajo 10:00\nComer con mamá 14:00' },
+    { emoji: '↻', titulo: 'Actividades recurrentes', desc: 'Agrega [días] al final para que la actividad aparezca automáticamente esos días.', ejemplo: 'GYM 07:00 [lunes, miércoles, viernes]\nMedicinas 08:00 [todos los días]\nTrabajo 09:00 [entre semana]' },
+    { emoji: '🐾', titulo: '¡Gana patitas y sube de nivel!', desc: 'Usa la app cada día, completa tus actividades y junta patitas para tu futuro michi compañero.', ejemplo: null },
+    { emoji: '✅', titulo: '¡Listo para empezar!', desc: 'Toca el botón + para crear tu primera agenda. Tus datos se guardan en la nube y están disponibles en todos tus dispositivos.', ejemplo: null }
 ];
 
 let slideActual = 0;
@@ -177,21 +297,15 @@ function renderOnboarding() {
         <div class="onboarding-desc">${slide.desc}</div>
         ${slide.ejemplo ? `<div class="onboarding-ejemplo">${slide.ejemplo}</div>` : ''}
     `;
-    const dots = document.getElementById('onboarding-dots');
-    dots.innerHTML = SLIDES.map((_, i) =>
+    document.getElementById('onboarding-dots').innerHTML = SLIDES.map((_, i) =>
         `<div class="onboarding-dot ${i === slideActual ? 'activo' : ''}"></div>`
     ).join('');
-    const btnNext = document.getElementById('btn-onboarding-next');
-    btnNext.textContent = slideActual === SLIDES.length - 1 ? '¡Comenzar! 🐱' : 'Siguiente →';
+    document.getElementById('btn-onboarding-next').textContent = slideActual === SLIDES.length - 1 ? '¡Comenzar! 🐱' : 'Siguiente →';
 }
 
 function siguienteSlide() {
-    if (slideActual < SLIDES.length - 1) {
-        slideActual++;
-        renderOnboarding();
-    } else {
-        terminarOnboarding();
-    }
+    if (slideActual < SLIDES.length - 1) { slideActual++; renderOnboarding(); }
+    else terminarOnboarding();
 }
 
 function terminarOnboarding() {
@@ -201,10 +315,8 @@ function terminarOnboarding() {
 }
 
 function verificarOnboarding() {
-    const visto = localStorage.getItem('michi-onboarding-visto');
-    if (!visto) {
-        slideActual = 0;
-        renderOnboarding();
+    if (!localStorage.getItem('michi-onboarding-visto')) {
+        slideActual = 0; renderOnboarding();
         document.querySelectorAll('.pantalla').forEach(p => p.classList.remove('activa'));
         document.getElementById('pantalla-onboarding').classList.add('activa');
     }
@@ -220,11 +332,9 @@ observarUsuario(async (user) => {
         procesarLoginDiario();
         mostrarHoy();
     } else {
-        const onboardingVisto = localStorage.getItem('michi-onboarding-visto');
         document.querySelectorAll('.pantalla').forEach(p => p.classList.remove('activa'));
-        if (!onboardingVisto) {
-            slideActual = 0;
-            renderOnboarding();
+        if (!localStorage.getItem('michi-onboarding-visto')) {
+            slideActual = 0; renderOnboarding();
             document.getElementById('pantalla-onboarding').classList.add('activa');
         } else {
             document.getElementById('pantalla-login').classList.add('activa');
@@ -235,14 +345,15 @@ observarUsuario(async (user) => {
 async function sincronizarDesdNube() {
     if (!usuarioActual) return;
     try {
-        const [agendas, pendientes, emojis, recurrentes, checks, wallet, logros] = await Promise.all([
+        const [agendas, pendientes, emojis, recurrentes, checks, wallet, logros, michi] = await Promise.all([
             cargarAgendasNube(usuarioActual.uid),
             cargarPendientesNube(usuarioActual.uid),
             cargarEmojisNube(usuarioActual.uid),
             cargarRecurrentesNube(usuarioActual.uid),
             cargarChecksNube(usuarioActual.uid),
             cargarWalletNube(usuarioActual.uid),
-            cargarLogrosNube(usuarioActual.uid)
+            cargarLogrosNube(usuarioActual.uid),
+            cargarMichiNube(usuarioActual.uid)
         ]);
         localStorage.setItem('michi-agendas', JSON.stringify(agendas));
         localStorage.setItem('michi-pendientes', JSON.stringify(pendientes));
@@ -251,6 +362,7 @@ async function sincronizarDesdNube() {
         localStorage.setItem('michi-checks', JSON.stringify(checks));
         if (wallet) localStorage.setItem('michi-wallet', JSON.stringify(wallet));
         localStorage.setItem('michi-logros', JSON.stringify(logros || []));
+        if (michi) localStorage.setItem('michi-companero', JSON.stringify(michi));
     } catch (e) {
         console.log('Sin conexión, usando datos locales');
     }
@@ -270,13 +382,8 @@ function mostrarTab(tab) {
 
 function togglePassword(inputId, btn) {
     const input = document.getElementById(inputId);
-    if (input.type === 'password') {
-        input.type = 'text';
-        btn.textContent = '🙈';
-    } else {
-        input.type = 'password';
-        btn.textContent = '👁️';
-    }
+    input.type = input.type === 'password' ? 'text' : 'password';
+    btn.textContent = input.type === 'password' ? '👁️' : '🙈';
 }
 
 function mostrarRecuperar() {
@@ -307,11 +414,8 @@ async function handleLogin() {
     const password = document.getElementById('login-password').value.trim();
     const errorEl = document.getElementById('login-error');
     if (!email || !password) { errorEl.textContent = 'Ingresa tu correo y contraseña.'; return; }
-    try {
-        await iniciarSesion(email, password);
-    } catch (e) {
-        errorEl.textContent = 'Correo o contraseña incorrectos.';
-    }
+    try { await iniciarSesion(email, password); }
+    catch (e) { errorEl.textContent = 'Correo o contraseña incorrectos.'; }
 }
 
 async function handleRegistro() {
@@ -320,46 +424,28 @@ async function handleRegistro() {
     const errorEl = document.getElementById('login-error');
     if (!email || !password) { errorEl.textContent = 'Ingresa tu correo y contraseña.'; return; }
     if (password.length < 6) { errorEl.textContent = 'La contraseña debe tener al menos 6 caracteres.'; return; }
-    try {
-        await registrarUsuario(email, password);
-    } catch (e) {
-        errorEl.textContent = 'Error al crear cuenta. ¿Ya tienes una?';
-    }
+    try { await registrarUsuario(email, password); }
+    catch (e) { errorEl.textContent = 'Error al crear cuenta. ¿Ya tienes una?'; }
 }
 
 async function handleGoogle() {
-    try {
-        await iniciarSesionGoogle();
-    } catch (e) {
-        document.getElementById('login-error').textContent = 'Error al iniciar con Google.';
-    }
+    try { await iniciarSesionGoogle(); }
+    catch (e) { document.getElementById('login-error').textContent = 'Error al iniciar con Google.'; }
 }
 
 async function handleCerrarSesion() {
     await cerrarSesion();
-    localStorage.removeItem('michi-agendas');
-    localStorage.removeItem('michi-pendientes');
-    localStorage.removeItem('michi-emojis-custom');
-    localStorage.removeItem('michi-recurrentes');
-    localStorage.removeItem('michi-checks');
-    localStorage.removeItem('michi-wallet');
-    localStorage.removeItem('michi-logros');
-    localStorage.removeItem('michi-companero');
+    ['michi-agendas','michi-pendientes','michi-emojis-custom','michi-recurrentes',
+     'michi-checks','michi-wallet','michi-logros','michi-companero','michi-desbloqueados'].forEach(k => localStorage.removeItem(k));
 }
 
-// ── AYUDA EN EDITOR ───────────────────────────────────
-function toggleAyuda() {
-    document.getElementById('panel-ayuda').classList.toggle('oculto');
-}
+function toggleAyuda() { document.getElementById('panel-ayuda').classList.toggle('oculto'); }
 
 // ── SISTEMA DE NIVELES ────────────────────────────────
-function xpParaNivel(nivel) {
-    return Math.round(100 * Math.pow(1.4, nivel - 1));
-}
+function xpParaNivel(nivel) { return Math.round(100 * Math.pow(1.4, nivel - 1)); }
 
 function calcularNivelDesdeXP(xpTotal) {
-    let nivel = 1;
-    let xpAcumulada = 0;
+    let nivel = 1, xpAcumulada = 0;
     while (true) {
         const xpNecesaria = xpParaNivel(nivel);
         if (xpAcumulada + xpNecesaria > xpTotal) break;
@@ -373,49 +459,28 @@ function calcularNivelDesdeXP(xpTotal) {
 
 // ── LOGROS ────────────────────────────────────────────
 const LOGROS_DEFINICION = [
-    { id: 'primera_agenda', nombre: 'Primera agenda creada', emoji: '🎉', categoria: 'inicio',
-      condicion: (s) => s.agendasCreadas >= 1, patitas: 0, xp: 0 },
-    { id: 'primera_actividad', nombre: 'Primera actividad completada', emoji: '✅', categoria: 'inicio',
-      condicion: (s) => s.actividadesCompletadas >= 1, patitas: 5, xp: 10 },
-    { id: 'primer_dia_completo', nombre: 'Primer día 100% completado', emoji: '💯', categoria: 'inicio',
-      condicion: (s) => s.diasCompletados >= 1, patitas: 10, xp: 20 },
-    { id: 'primer_emoji', nombre: 'Primer emoji personalizado', emoji: '🎨', categoria: 'inicio',
-      condicion: (s) => s.emojisCreados >= 1, patitas: 5, xp: 10 },
-    { id: 'racha_3', nombre: 'Racha de 3 días', emoji: '🔥', categoria: 'constancia',
-      condicion: (s) => s.rachaMaxima >= 3, patitas: 15, xp: 30 },
-    { id: 'racha_7', nombre: 'Racha de 7 días', emoji: '🔥', categoria: 'constancia',
-      condicion: (s) => s.rachaMaxima >= 7, patitas: 30, xp: 60 },
-    { id: 'racha_30', nombre: 'Racha de 30 días', emoji: '🔥', categoria: 'constancia',
-      condicion: (s) => s.rachaMaxima >= 30, patitas: 80, xp: 150 },
-    { id: 'racha_90', nombre: 'Racha de 90 días', emoji: '🔥', categoria: 'constancia',
-      condicion: (s) => s.rachaMaxima >= 90, patitas: 150, xp: 300 },
-    { id: 'racha_365', nombre: 'Racha de 365 días', emoji: '🏆', categoria: 'constancia',
-      condicion: (s) => s.rachaMaxima >= 365, patitas: 500, xp: 1000 },
-    { id: 'act_50', nombre: '50 actividades completadas', emoji: '✅', categoria: 'volumen',
-      condicion: (s) => s.actividadesCompletadas >= 50, patitas: 30, xp: 60 },
-    { id: 'act_200', nombre: '200 actividades completadas', emoji: '✅', categoria: 'volumen',
-      condicion: (s) => s.actividadesCompletadas >= 200, patitas: 80, xp: 150 },
-    { id: 'act_500', nombre: '500 actividades completadas', emoji: '✅', categoria: 'volumen',
-      condicion: (s) => s.actividadesCompletadas >= 500, patitas: 150, xp: 300 },
-    { id: 'dias_10', nombre: '10 días 100% completados', emoji: '💯', categoria: 'volumen',
-      condicion: (s) => s.diasCompletados >= 10, patitas: 40, xp: 80 },
-    { id: 'dias_30', nombre: '30 días 100% completados', emoji: '💯', categoria: 'volumen',
-      condicion: (s) => s.diasCompletados >= 30, patitas: 100, xp: 200 },
-    { id: 'agenda_recurrente', nombre: 'Crear una agenda recurrente', emoji: '↻', categoria: 'comportamiento',
-      condicion: (s) => s.recurrentesCreadas >= 1, patitas: 10, xp: 20 },
-    { id: 'emojis_5', nombre: 'Personalizar 5 emojis distintos', emoji: '🎨', categoria: 'comportamiento',
-      condicion: (s) => s.emojisCreados >= 5, patitas: 15, xp: 30 },
-    { id: 'mes_1', nombre: '1 mes usando la app', emoji: '🗓️', categoria: 'antiguedad',
-      condicion: (s) => s.diasAntiguedad >= 30, patitas: 50, xp: 100 },
-    { id: 'mes_6', nombre: '6 meses usando la app', emoji: '🗓️', categoria: 'antiguedad',
-      condicion: (s) => s.diasAntiguedad >= 180, patitas: 150, xp: 300 },
-    { id: 'anio_1', nombre: '1 año usando la app', emoji: '🗓️', categoria: 'antiguedad',
-      condicion: (s) => s.diasAntiguedad >= 365, patitas: 400, xp: 800 }
+    { id: 'primera_agenda', nombre: 'Primera agenda creada', emoji: '🎉', condicion: (s) => s.agendasCreadas >= 1, patitas: 0, xp: 0 },
+    { id: 'primera_actividad', nombre: 'Primera actividad completada', emoji: '✅', condicion: (s) => s.actividadesCompletadas >= 1, patitas: 5, xp: 10 },
+    { id: 'primer_dia_completo', nombre: 'Primer día 100% completado', emoji: '💯', condicion: (s) => s.diasCompletados >= 1, patitas: 10, xp: 20 },
+    { id: 'primer_emoji', nombre: 'Primer emoji personalizado', emoji: '🎨', condicion: (s) => s.emojisCreados >= 1, patitas: 5, xp: 10 },
+    { id: 'racha_3', nombre: 'Racha de 3 días', emoji: '🔥', condicion: (s) => s.rachaMaxima >= 3, patitas: 15, xp: 30 },
+    { id: 'racha_7', nombre: 'Racha de 7 días', emoji: '🔥', condicion: (s) => s.rachaMaxima >= 7, patitas: 30, xp: 60 },
+    { id: 'racha_30', nombre: 'Racha de 30 días', emoji: '🔥', condicion: (s) => s.rachaMaxima >= 30, patitas: 80, xp: 150 },
+    { id: 'racha_90', nombre: 'Racha de 90 días', emoji: '🔥', condicion: (s) => s.rachaMaxima >= 90, patitas: 150, xp: 300 },
+    { id: 'racha_365', nombre: 'Racha de 365 días', emoji: '🏆', condicion: (s) => s.rachaMaxima >= 365, patitas: 500, xp: 1000 },
+    { id: 'act_50', nombre: '50 actividades completadas', emoji: '✅', condicion: (s) => s.actividadesCompletadas >= 50, patitas: 30, xp: 60 },
+    { id: 'act_200', nombre: '200 actividades completadas', emoji: '✅', condicion: (s) => s.actividadesCompletadas >= 200, patitas: 80, xp: 150 },
+    { id: 'act_500', nombre: '500 actividades completadas', emoji: '✅', condicion: (s) => s.actividadesCompletadas >= 500, patitas: 150, xp: 300 },
+    { id: 'dias_10', nombre: '10 días 100% completados', emoji: '💯', condicion: (s) => s.diasCompletados >= 10, patitas: 40, xp: 80 },
+    { id: 'dias_30', nombre: '30 días 100% completados', emoji: '💯', condicion: (s) => s.diasCompletados >= 30, patitas: 100, xp: 200 },
+    { id: 'agenda_recurrente', nombre: 'Crear una agenda recurrente', emoji: '↻', condicion: (s) => s.recurrentesCreadas >= 1, patitas: 10, xp: 20 },
+    { id: 'emojis_5', nombre: 'Personalizar 5 emojis distintos', emoji: '🎨', condicion: (s) => s.emojisCreados >= 5, patitas: 15, xp: 30 },
+    { id: 'mes_1', nombre: '1 mes usando la app', emoji: '🗓️', condicion: (s) => s.diasAntiguedad >= 30, patitas: 50, xp: 100 },
+    { id: 'mes_6', nombre: '6 meses usando la app', emoji: '🗓️', condicion: (s) => s.diasAntiguedad >= 180, patitas: 150, xp: 300 },
+    { id: 'anio_1', nombre: '1 año usando la app', emoji: '🗓️', condicion: (s) => s.diasAntiguedad >= 365, patitas: 400, xp: 800 }
 ];
 
-function cargarLogrosDesbloqueados() {
-    return JSON.parse(localStorage.getItem('michi-logros') || '[]');
-}
+function cargarLogrosDesbloqueados() { return JSON.parse(localStorage.getItem('michi-logros') || '[]'); }
 
 function guardarLogrosDesbloqueados(logros) {
     localStorage.setItem('michi-logros', JSON.stringify(logros));
@@ -428,8 +493,7 @@ function obtenerEstadisticas() {
     const emojis = cargarEmojisCustom();
     const recurrentes = cargarRecurrentes();
     const todosChecks = JSON.parse(localStorage.getItem('michi-checks') || '{}');
-    let actividadesCompletadas = 0;
-    let diasCompletados = 0;
+    let actividadesCompletadas = 0, diasCompletados = 0;
     Object.keys(todosChecks).forEach(fechaKey => {
         const checks = todosChecks[fechaKey];
         const completadasEnDia = Object.values(checks).filter(v => v === true).length;
@@ -441,13 +505,9 @@ function obtenerEstadisticas() {
         }
     });
     return {
-        agendasCreadas: agendas.length,
-        actividadesCompletadas,
-        diasCompletados,
-        emojisCreados: emojis.length,
-        recurrentesCreadas: recurrentes.length,
-        rachaMaxima: wallet.rachaMaxima || 0,
-        diasAntiguedad: diasDesdeRegistro(wallet)
+        agendasCreadas: agendas.length, actividadesCompletadas, diasCompletados,
+        emojisCreados: emojis.length, recurrentesCreadas: recurrentes.length,
+        rachaMaxima: wallet.rachaMaxima || 0, diasAntiguedad: diasDesdeRegistro(wallet)
     };
 }
 
@@ -466,11 +526,7 @@ function revisarLogrosNuevos() {
             mostrarToastPatitas(logro.patitas, `🏆 Logro: ${logro.nombre}`);
         }
     });
-    if (huboNuevos) {
-        guardarLogrosDesbloqueados(desbloqueados);
-        guardarWallet(wallet);
-        renderBadgeWallet();
-    }
+    if (huboNuevos) { guardarLogrosDesbloqueados(desbloqueados); guardarWallet(wallet); renderBadgeWallet(); }
 }
 
 function renderListaLogros() {
@@ -478,10 +534,8 @@ function renderListaLogros() {
     const cont = document.getElementById('lista-logros');
     if (!cont) return;
     const ordenados = [...LOGROS_DEFINICION].sort((a, b) => {
-        const aDesb = desbloqueados.includes(a.id);
-        const bDesb = desbloqueados.includes(b.id);
-        if (aDesb === bDesb) return 0;
-        return aDesb ? -1 : 1;
+        const aD = desbloqueados.includes(a.id), bD = desbloqueados.includes(b.id);
+        return aD === bD ? 0 : aD ? -1 : 1;
     });
     cont.innerHTML = ordenados.map(logro => {
         const desb = desbloqueados.includes(logro.id);
@@ -521,9 +575,7 @@ function diasDesdeRegistro(wallet) {
     return Math.floor((hoy - inicio) / (1000 * 60 * 60 * 24));
 }
 
-function enLunaDeMiel(wallet) {
-    return diasDesdeRegistro(wallet) < 7;
-}
+function enLunaDeMiel(wallet) { return diasDesdeRegistro(wallet) < 7; }
 
 function otorgarPatitas(wallet, cantidad, motivo, xpExtra) {
     wallet.patitas += cantidad;
@@ -534,16 +586,14 @@ function otorgarPatitas(wallet, cantidad, motivo, xpExtra) {
 function mostrarToastPatitas(cantidad, motivo) {
     const toast = document.createElement('div');
     toast.className = 'toast-patitas';
-    const textoCantidad = cantidad > 0 ? `🐾 +${cantidad} patitas<br>` : '';
-    toast.innerHTML = `${textoCantidad}<span class="toast-motivo">${motivo}</span>`;
+    toast.innerHTML = `${cantidad > 0 ? `🐾 +${cantidad} patitas<br>` : ''}<span class="toast-motivo">${motivo}</span>`;
     document.body.appendChild(toast);
     setTimeout(() => toast.classList.add('mostrar'), 50);
     setTimeout(() => { toast.classList.remove('mostrar'); setTimeout(() => toast.remove(), 400); }, 2800);
 }
 
 function revisarMichiFreeze(wallet) {
-    const dias = diasDesdeRegistro(wallet);
-    const bloquesDe15 = Math.floor(dias / 15);
+    const bloquesDe15 = Math.floor(diasDesdeRegistro(wallet) / 15);
     const freezesYaOtorgados = wallet.ultimoFreezeOtorgado || 0;
     if (bloquesDe15 > freezesYaOtorgados) {
         const nuevos = bloquesDe15 - freezesYaOtorgados;
@@ -561,11 +611,7 @@ function procesarLoginDiario() {
     if (wallet.michiFreezes === undefined) wallet.michiFreezes = 0;
     if (wallet.ultimoFreezeOtorgado === undefined) wallet.ultimoFreezeOtorgado = 0;
 
-    if (wallet.ultimoLogin === hoyKey) {
-        guardarWallet(wallet);
-        renderBadgeWallet();
-        return;
-    }
+    if (wallet.ultimoLogin === hoyKey) { guardarWallet(wallet); renderBadgeWallet(); return; }
 
     const lunaDeMiel = enLunaDeMiel(wallet);
     const ayer = formatearFechaKey(sumarDias(new Date(), -1));
@@ -606,9 +652,8 @@ function otorgarBonusDiaCompleto(fechaKey) {
     if (!esDiaActivo(fechaKey)) return;
     let wallet = cargarWallet();
     if (wallet.diaCompletadoHoy) return;
-    const lunaDeMiel = enLunaDeMiel(wallet);
     wallet.diaCompletadoHoy = true;
-    otorgarPatitas(wallet, lunaDeMiel ? 20 : 10, '¡Día 100% completado!', 25);
+    otorgarPatitas(wallet, enLunaDeMiel(wallet) ? 20 : 10, '¡Día 100% completado!', 25);
     guardarWallet(wallet);
     renderBadgeWallet();
     revisarLogrosNuevos();
@@ -618,10 +663,7 @@ function renderBadgeWallet() {
     const wallet = cargarWallet();
     const badge = document.getElementById('badge-wallet');
     if (!badge) return;
-    badge.innerHTML = `
-        <span class="badge-item">🐾 ${wallet.patitas}</span>
-        <span class="badge-item">🧶 ${wallet.bolasDePelo}</span>
-    `;
+    badge.innerHTML = `<span class="badge-item">🐾 ${wallet.patitas}</span><span class="badge-item">🧶 ${wallet.bolasDePelo}</span>`;
 }
 
 function mostrarWallet() {
@@ -638,60 +680,44 @@ function renderPantallaWallet() {
     const { nivel, xpEnNivelActual, xpNecesariaNivelActual } = calcularNivelDesdeXP(wallet.xp || 0);
     document.getElementById('wallet-nivel-num').textContent = nivel;
     document.getElementById('wallet-nivel-xp').textContent = `${xpEnNivelActual} / ${xpNecesariaNivelActual} XP`;
-    const pct = Math.min(100, Math.round((xpEnNivelActual / xpNecesariaNivelActual) * 100));
-    document.getElementById('wallet-nivel-fill').style.width = pct + '%';
+    document.getElementById('wallet-nivel-fill').style.width = Math.min(100, Math.round((xpEnNivelActual / xpNecesariaNivelActual) * 100)) + '%';
     document.getElementById('wallet-racha-actual').textContent = wallet.rachaActual;
     document.getElementById('wallet-racha-maxima').textContent = wallet.rachaMaxima;
     document.getElementById('wallet-freezes').textContent = wallet.michiFreezes || 0;
+    const michi = cargarMichi();
+    const btnIrTienda = document.getElementById('btn-ir-tienda');
+    if (btnIrTienda) { michi ? btnIrTienda.classList.remove('oculto') : btnIrTienda.classList.add('oculto'); }
     renderListaLogros();
 }
 
 // ── NOTIFICACIONES ────────────────────────────────────
 async function pedirPermisoNotificaciones() {
-    if (!('Notification' in window)) return false;
-    if (Notification.permission === 'granted') return true;
-    if (Notification.permission === 'denied') return false;
-    const permiso = await Notification.requestPermission();
-    return permiso === 'granted';
+    if (!('Notification' in window) || Notification.permission !== 'default') return;
+    await Notification.requestPermission();
 }
 
 function programarNotificaciones(fijas, fechaKey) {
     if (!('Notification' in window) || Notification.permission !== 'granted') return;
-    const hoyKey = formatearFechaKey(new Date());
-    if (fechaKey !== hoyKey) return;
+    if (fechaKey !== formatearFechaKey(new Date())) return;
     if (window._notifTimers) window._notifTimers.forEach(t => clearTimeout(t));
     window._notifTimers = [];
     const ahora = new Date();
     fijas.forEach(act => {
         const [h, m] = parsearHora(act.hora);
         if (h === 99) return;
-        const horaActividad = new Date();
-        horaActividad.setHours(h, m, 0, 0);
-        const msHastaAviso = horaActividad.getTime() - 15 * 60 * 1000 - ahora.getTime();
-        const msHastaHora = horaActividad.getTime() - ahora.getTime();
-        if (msHastaAviso > 0) {
-            window._notifTimers.push(setTimeout(() => {
-                new Notification('🐱 Michi Agenda', { body: `En 15 min: ${obtenerIcono(act.actividad)} ${act.actividad}`, icon: '/michi-agenda/Icono agenda.png' });
-            }, msHastaAviso));
-        }
-        if (msHastaHora > 0) {
-            window._notifTimers.push(setTimeout(() => {
-                new Notification('🐱 Michi Agenda', { body: `¡Ahora! ${obtenerIcono(act.actividad)} ${act.actividad}`, icon: '/michi-agenda/Icono agenda.png' });
-            }, msHastaHora));
-        }
+        const horaAct = new Date(); horaAct.setHours(h, m, 0, 0);
+        const msAviso = horaAct.getTime() - 15 * 60 * 1000 - ahora.getTime();
+        const msHora = horaAct.getTime() - ahora.getTime();
+        if (msAviso > 0) window._notifTimers.push(setTimeout(() => new Notification('🐱 Michi Agenda', { body: `En 15 min: ${act.actividad}` }), msAviso));
+        if (msHora > 0) window._notifTimers.push(setTimeout(() => new Notification('🐱 Michi Agenda', { body: `¡Ahora! ${act.actividad}` }), msHora));
     });
 }
 
 // ── RECURRENTES ───────────────────────────────────────
-const DIAS_MAP = {
-    'lunes': 1, 'martes': 2, 'miércoles': 3, 'miercoles': 3,
-    'jueves': 4, 'viernes': 5, 'sábado': 6, 'sabado': 6, 'domingo': 0
-};
+const DIAS_MAP = { 'lunes':1,'martes':2,'miércoles':3,'miercoles':3,'jueves':4,'viernes':5,'sábado':6,'sabado':6,'domingo':0 };
 const DIAS_NOMBRES = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
 
-function cargarRecurrentes() {
-    return JSON.parse(localStorage.getItem('michi-recurrentes') || '[]');
-}
+function cargarRecurrentes() { return JSON.parse(localStorage.getItem('michi-recurrentes') || '[]'); }
 
 function guardarRecurrentes(recurrentes) {
     localStorage.setItem('michi-recurrentes', JSON.stringify(recurrentes));
@@ -701,27 +727,17 @@ function guardarRecurrentes(recurrentes) {
 function parsearRecurrente(linea) {
     const match = linea.match(/^(.*?)\[(.+?)\]\s*$/);
     if (!match) return null;
-    const actividad = match[1].trim();
     const diasStr = match[2].toLowerCase();
     let diasAplica = [];
-    if (diasStr.includes('todos los días') || diasStr.includes('todos los dias') || diasStr.includes('diario')) {
-        diasAplica = [0,1,2,3,4,5,6];
-    } else if (diasStr.includes('entre semana') || diasStr.includes('dias habiles') || diasStr.includes('días hábiles')) {
-        diasAplica = [1,2,3,4,5];
-    } else if (diasStr.includes('fines de semana') || diasStr.includes('fin de semana')) {
-        diasAplica = [0,6];
-    } else {
-        diasStr.split(',').forEach(d => {
-            const dia = d.trim();
-            if (DIAS_MAP[dia] !== undefined) diasAplica.push(DIAS_MAP[dia]);
-        });
-    }
-    return { actividad, diasAplica };
+    if (diasStr.includes('todos los días') || diasStr.includes('todos los dias') || diasStr.includes('diario')) diasAplica = [0,1,2,3,4,5,6];
+    else if (diasStr.includes('entre semana') || diasStr.includes('dias habiles')) diasAplica = [1,2,3,4,5];
+    else if (diasStr.includes('fines de semana') || diasStr.includes('fin de semana')) diasAplica = [0,6];
+    else diasStr.split(',').forEach(d => { const dia = d.trim(); if (DIAS_MAP[dia] !== undefined) diasAplica.push(DIAS_MAP[dia]); });
+    return { actividad: match[1].trim(), diasAplica };
 }
 
 function obtenerActividadesRecurrentesParaDia(fecha) {
-    const recurrentes = cargarRecurrentes();
-    return recurrentes.filter(r => r.diasAplica.includes(fecha.getDay())).map(r => r.actividad);
+    return cargarRecurrentes().filter(r => r.diasAplica.includes(fecha.getDay())).map(r => r.actividad);
 }
 
 function obtenerTextoConRecurrentes(fecha) {
@@ -736,8 +752,7 @@ function obtenerTextoConRecurrentes(fecha) {
             const actBase = r.replace(/\s*\d{1,2}(:\d{2})?\s*$/, '').trim().toLowerCase();
             return !lineasExistentes.some(l => l.includes(actBase));
         });
-        if (nuevas.length === 0) return agendaExistente.texto;
-        return agendaExistente.texto + '\n' + nuevas.join('\n');
+        return nuevas.length === 0 ? agendaExistente.texto : agendaExistente.texto + '\n' + nuevas.join('\n');
     }
     return recurrentes.join('\n');
 }
@@ -746,20 +761,15 @@ function renderRecurrentesConfig() {
     const recurrentes = cargarRecurrentes();
     const lista = document.getElementById('lista-recurrentes-config');
     if (!lista) return;
-    if (recurrentes.length === 0) {
-        lista.innerHTML = '<li style="color:#4b5563;font-style:italic;font-size:0.82rem;padding:6px 0">Sin actividades recurrentes todavía 🐾</li>';
-        return;
-    }
-    lista.innerHTML = recurrentes.map((r, idx) => {
-        const diasNombres = r.diasAplica.sort((a,b)=>a-b).map(d => DIAS_NOMBRES[d]).join(', ');
-        return `<li class="recurrente-item">
+    lista.innerHTML = recurrentes.length === 0
+        ? '<li style="color:#4b5563;font-style:italic;font-size:0.82rem;padding:6px 0">Sin actividades recurrentes todavía 🐾</li>'
+        : recurrentes.map((r, idx) => `<li class="recurrente-item">
             <div class="recurrente-info">
                 <div class="recurrente-actividad">${obtenerIcono(r.actividad)} ${r.actividad}</div>
-                <div class="recurrente-dias">↻ ${diasNombres}</div>
+                <div class="recurrente-dias">↻ ${r.diasAplica.sort((a,b)=>a-b).map(d => DIAS_NOMBRES[d]).join(', ')}</div>
             </div>
             <button class="btn-borrar-recurrente" onclick="borrarRecurrente(${idx})">✕</button>
-        </li>`;
-    }).join('');
+        </li>`).join('');
 }
 
 function borrarRecurrente(idx) {
@@ -771,8 +781,7 @@ function borrarRecurrente(idx) {
 
 // ── CHECKS ────────────────────────────────────────────
 function cargarChecks(fechaKey) {
-    const todos = JSON.parse(localStorage.getItem('michi-checks') || '{}');
-    return todos[fechaKey] || {};
+    return JSON.parse(localStorage.getItem('michi-checks') || '{}')[fechaKey] || {};
 }
 
 function guardarChecks(fechaKey, checks) {
@@ -782,9 +791,7 @@ function guardarChecks(fechaKey, checks) {
     if (usuarioActual) guardarChecksNube(usuarioActual.uid, todos).catch(() => {});
 }
 
-function esDiaActivo(fechaKey) {
-    return fechaKey === formatearFechaKey(new Date());
-}
+function esDiaActivo(fechaKey) { return fechaKey === formatearFechaKey(new Date()); }
 
 function toggleCheck(fechaKey, checkKey) {
     if (!esDiaActivo(fechaKey)) return;
@@ -800,16 +807,14 @@ function toggleCheck(fechaKey, checkKey) {
     }
     revisarLogrosNuevos();
     mostrarHoy();
-    if (document.getElementById('pantalla-dashboard').classList.contains('activa') && fechaDashboard) {
-        if (texto) document.getElementById('contenido-dashboard').innerHTML = renderDiario(parsearActividades(texto), fechaKey);
-    }
+    if (document.getElementById('pantalla-dashboard').classList.contains('activa') && fechaDashboard && texto)
+        document.getElementById('contenido-dashboard').innerHTML = renderDiario(parsearActividades(texto), fechaKey);
 }
 
 function calcularPorcentaje(fijas, fechaKey) {
     if (!fijas || fijas.length === 0) return 0;
     const checks = cargarChecks(fechaKey);
-    const completadas = fijas.filter(act => checks[act.actividad + act.hora]).length;
-    return Math.round((completadas / fijas.length) * 100);
+    return Math.round(fijas.filter(act => checks[act.actividad + act.hora]).length / fijas.length * 100);
 }
 
 function mensajeMichi(porcentaje) {
@@ -821,9 +826,7 @@ function mensajeMichi(porcentaje) {
 }
 
 // ── PENDIENTES ────────────────────────────────────────
-function cargarPendientes() {
-    return JSON.parse(localStorage.getItem('michi-pendientes') || '[]');
-}
+function cargarPendientes() { return JSON.parse(localStorage.getItem('michi-pendientes') || '[]'); }
 
 function guardarPendientes(pendientes) {
     localStorage.setItem('michi-pendientes', JSON.stringify(pendientes));
@@ -858,22 +861,17 @@ function renderPendientes() {
     const pendientes = cargarPendientes();
     const lista = document.getElementById('lista-pendientes');
     if (!lista) return;
-    if (pendientes.length === 0) {
-        lista.innerHTML = '<li style="color:#4b5563;font-style:italic;font-size:0.78rem;padding:6px 0">Sin pendientes 🐾</li>';
-        return;
-    }
-    lista.innerHTML = pendientes.map(p => `
-        <li class="pendiente-item ${p.completado ? 'completado' : ''}">
-            <span class="pendiente-texto" onclick="togglePendiente('${p.id}')">${p.completado ? '✅' : '⬜'} ${p.texto}</span>
-            <button class="btn-borrar-pendiente" onclick="borrarPendiente('${p.id}')">✕</button>
-        </li>
-    `).join('');
+    lista.innerHTML = pendientes.length === 0
+        ? '<li style="color:#4b5563;font-style:italic;font-size:0.78rem;padding:6px 0">Sin pendientes 🐾</li>'
+        : pendientes.map(p => `
+            <li class="pendiente-item ${p.completado ? 'completado' : ''}">
+                <span class="pendiente-texto" onclick="togglePendiente('${p.id}')">${p.completado ? '✅' : '⬜'} ${p.texto}</span>
+                <button class="btn-borrar-pendiente" onclick="borrarPendiente('${p.id}')">✕</button>
+            </li>`).join('');
 }
 
 // ── EMOJIS ────────────────────────────────────────────
-function cargarEmojisCustom() {
-    return JSON.parse(localStorage.getItem('michi-emojis-custom') || '[]');
-}
+function cargarEmojisCustom() { return JSON.parse(localStorage.getItem('michi-emojis-custom') || '[]'); }
 
 function guardarEmojisCustom(emojis) {
     localStorage.setItem('michi-emojis-custom', JSON.stringify(emojis));
@@ -886,8 +884,8 @@ function agregarEmojiPersonalizado() {
     if (!palabra || !emoji) { alert('Escribe una palabra clave y un emoji.'); return; }
     const emojis = cargarEmojisCustom();
     const existente = emojis.findIndex(e => e.palabra === palabra);
-    if (existente !== -1) { emojis[existente].emoji = emoji; }
-    else { emojis.unshift({ id: Date.now().toString(), palabra, emoji }); }
+    if (existente !== -1) emojis[existente].emoji = emoji;
+    else emojis.unshift({ id: Date.now().toString(), palabra, emoji });
     guardarEmojisCustom(emojis);
     document.getElementById('input-palabra').value = '';
     document.getElementById('input-emoji').value = '';
@@ -895,27 +893,21 @@ function agregarEmojiPersonalizado() {
     revisarLogrosNuevos();
 }
 
-function borrarEmojiCustom(id) {
-    guardarEmojisCustom(cargarEmojisCustom().filter(e => e.id !== id));
-    renderEmojisCustom();
-}
+function borrarEmojiCustom(id) { guardarEmojisCustom(cargarEmojisCustom().filter(e => e.id !== id)); renderEmojisCustom(); }
 
 function renderEmojisCustom() {
     const emojis = cargarEmojisCustom();
     const lista = document.getElementById('lista-emojis-custom');
     if (!lista) return;
-    if (emojis.length === 0) {
-        lista.innerHTML = '<li style="color:#4b5563;font-style:italic;font-size:0.82rem;padding:6px 0">Sin emojis personalizados todavía 🐾</li>';
-        return;
-    }
-    lista.innerHTML = emojis.map(e => `
-        <li class="emoji-custom-item">
-            <span class="emoji-custom-icono">${e.emoji}</span>
-            <span class="emoji-custom-flecha">←</span>
-            <span class="emoji-custom-palabra">${e.palabra}</span>
-            <button class="btn-borrar-emoji" onclick="borrarEmojiCustom('${e.id}')">✕</button>
-        </li>
-    `).join('');
+    lista.innerHTML = emojis.length === 0
+        ? '<li style="color:#4b5563;font-style:italic;font-size:0.82rem;padding:6px 0">Sin emojis personalizados todavía 🐾</li>'
+        : emojis.map(e => `
+            <li class="emoji-custom-item">
+                <span class="emoji-custom-icono">${e.emoji}</span>
+                <span class="emoji-custom-flecha">←</span>
+                <span class="emoji-custom-palabra">${e.palabra}</span>
+                <button class="btn-borrar-emoji" onclick="borrarEmojiCustom('${e.id}')">✕</button>
+            </li>`).join('');
 }
 
 // ── ICONOS ────────────────────────────────────────────
@@ -923,52 +915,52 @@ function obtenerIcono(nombre) {
     const n = nombre.toLowerCase();
     const emojisCustom = cargarEmojisCustom();
     for (const ec of emojisCustom) { if (n.includes(ec.palabra)) return ec.emoji; }
-    if (n.includes('gym') || n.includes('gimnasio') || n.includes('pesas') || n.includes('crossfit') || n.includes('entren')) return '💪';
-    if (n.includes('correr') || n.includes('jogging') || n.includes('trotar') || n.includes('maratón')) return '🏃';
-    if (n.includes('nadar') || n.includes('natación') || n.includes('alberca') || n.includes('piscina')) return '🏊';
+    if (n.includes('gym') || n.includes('gimnasio') || n.includes('pesas') || n.includes('entren')) return '💪';
+    if (n.includes('correr') || n.includes('jogging') || n.includes('trotar')) return '🏃';
+    if (n.includes('nadar') || n.includes('natación') || n.includes('alberca')) return '🏊';
     if (n.includes('bici') || n.includes('ciclismo')) return '🚴';
     if (n.includes('futbol') || n.includes('fútbol') || n.includes('soccer')) return '⚽';
     if (n.includes('basquet') || n.includes('basketball')) return '🏀';
     if (n.includes('tenis') || n.includes('pádel') || n.includes('padel')) return '🎾';
     if (n.includes('yoga') || n.includes('meditación') || n.includes('meditar') || n.includes('pilates')) return '🧘';
     if (n.includes('boxeo') || n.includes('box') || n.includes('karate')) return '🥊';
-    if (n.includes('caminar') || n.includes('caminata') || n.includes('paseo') || n.includes('parque') || n.includes('bosque')) return '🚶';
+    if (n.includes('caminar') || n.includes('caminata') || n.includes('paseo')) return '🚶';
     if (n.includes('ejercicio') || n.includes('deporte') || n.includes('entrenar')) return '🏋️';
     if (n.includes('desayuno') || n.includes('breakfast')) return '🍳';
     if (n.includes('almuerzo') || n.includes('lunch') || n.includes('comer') || n.includes('comida')) return '🍽️';
     if (n.includes('cena') || n.includes('cenar') || n.includes('dinner')) return '🌮';
     if (n.includes('café') || n.includes('cafe') || n.includes('coffee')) return '☕';
     if (n.includes('pizza') || n.includes('hamburguesa') || n.includes('tacos')) return '🍕';
-    if (n.includes('sushi') || n.includes('japonés') || n.includes('ramen')) return '🍱';
-    if (n.includes('postre') || n.includes('pastel') || n.includes('helado') || n.includes('dulce')) return '🍰';
+    if (n.includes('sushi') || n.includes('ramen')) return '🍱';
+    if (n.includes('postre') || n.includes('pastel') || n.includes('helado')) return '🍰';
     if (n.includes('bar') || n.includes('cerveza') || n.includes('bebida') || n.includes('copa')) return '🍺';
     if (n.includes('agua') || n.includes('jugo') || n.includes('smoothie')) return '🥤';
-    if (n.includes('doctor') || n.includes('médico') || n.includes('medico') || n.includes('hospital') || n.includes('clínica')) return '🏥';
-    if (n.includes('dentista') || n.includes('dental') || n.includes('dientes')) return '🦷';
+    if (n.includes('doctor') || n.includes('médico') || n.includes('medico') || n.includes('hospital')) return '🏥';
+    if (n.includes('dentista') || n.includes('dental')) return '🦷';
     if (n.includes('medicina') || n.includes('medicinas') || n.includes('pastilla') || n.includes('farmacia')) return '💊';
-    if (n.includes('terapia') || n.includes('psicólogo') || n.includes('psicologo') || n.includes('terapeuta')) return '🧠';
-    if (n.includes('vacuna') || n.includes('inyección') || n.includes('inyeccion')) return '💉';
+    if (n.includes('terapia') || n.includes('psicólogo') || n.includes('psicologo')) return '🧠';
+    if (n.includes('vacuna') || n.includes('inyección')) return '💉';
     if (n.includes('trabajo') || n.includes('trabajar') || n.includes('oficina') || n.includes('chamba')) return '💼';
-    if (n.includes('reunión') || n.includes('reunion') || n.includes('junta') || n.includes('meeting') || n.includes('zoom') || n.includes('teams')) return '👥';
+    if (n.includes('reunión') || n.includes('reunion') || n.includes('junta') || n.includes('meeting') || n.includes('zoom')) return '👥';
     if (n.includes('presentación') || n.includes('presentacion') || n.includes('pitch')) return '📊';
     if (n.includes('entrevista')) return '🤝';
-    if (n.includes('cliente') || n.includes('ventas') || n.includes('vender')) return '💰';
+    if (n.includes('cliente') || n.includes('ventas')) return '💰';
     if (n.includes('correo') || n.includes('email')) return '📧';
-    if (n.includes('escuela') || n.includes('colegio') || n.includes('prepa') || n.includes('kinder')) return '🏫';
+    if (n.includes('escuela') || n.includes('colegio') || n.includes('prepa')) return '🏫';
     if (n.includes('universidad') || n.includes('facultad')) return '🎓';
     if (n.includes('clase') || n.includes('clases') || n.includes('curso') || n.includes('taller')) return '📚';
     if (n.includes('estudiar') || n.includes('tarea') || n.includes('examen')) return '✏️';
-    if (n.includes('super') || n.includes('supermercado') || n.includes('mercado') || n.includes('mandado') || n.includes('walmart') || n.includes('costco')) return '🛒';
+    if (n.includes('super') || n.includes('supermercado') || n.includes('mercado') || n.includes('mandado')) return '🛒';
     if (n.includes('compras') || n.includes('comprar') || n.includes('tienda') || n.includes('mall')) return '🛍️';
-    if (n.includes('banco') || n.includes('cajero') || n.includes('pago') || n.includes('pagar') || n.includes('factura')) return '🏦';
-    if (n.includes('trámite') || n.includes('tramite') || n.includes('ine') || n.includes('sat') || n.includes('pasaporte')) return '🏛️';
+    if (n.includes('banco') || n.includes('cajero') || n.includes('pago') || n.includes('pagar')) return '🏦';
+    if (n.includes('trámite') || n.includes('tramite') || n.includes('ine') || n.includes('sat')) return '🏛️';
     if (n.includes('gasolina') || n.includes('gasolinera') || n.includes('gas')) return '⛽';
-    if (n.includes('manejar') || n.includes('carro') || n.includes('auto') || n.includes('coche') || n.includes('conducir')) return '🚗';
+    if (n.includes('manejar') || n.includes('carro') || n.includes('auto') || n.includes('coche')) return '🚗';
     if (n.includes('uber') || n.includes('taxi') || n.includes('didi')) return '🚕';
     if (n.includes('metro') || n.includes('metrobús') || n.includes('camión') || n.includes('bus')) return '🚌';
     if (n.includes('avión') || n.includes('avion') || n.includes('vuelo') || n.includes('aeropuerto')) return '✈️';
     if (n.includes('salir') || n.includes('llegar') || n.includes('casa')) return '🏠';
-    if (n.includes('barrer') || n.includes('trapear') || n.includes('limpiar') || n.includes('limpieza') || n.includes('aspirar')) return '🧹';
+    if (n.includes('barrer') || n.includes('trapear') || n.includes('limpiar') || n.includes('limpieza')) return '🧹';
     if (n.includes('lavar') || n.includes('lavadora') || n.includes('ropa') || n.includes('planchar')) return '👕';
     if (n.includes('cocinar') || n.includes('cocina') || n.includes('hornear')) return '👨‍🍳';
     if (n.includes('jardín') || n.includes('jardin') || n.includes('plantas') || n.includes('regar')) return '🌱';
@@ -987,14 +979,14 @@ function obtenerIcono(nombre) {
     if (n.includes('cine') || n.includes('película') || n.includes('pelicula') || n.includes('movie')) return '🎬';
     if (n.includes('teatro') || n.includes('concierto') || n.includes('show')) return '🎭';
     if (n.includes('museo') || n.includes('arte')) return '🎨';
-    if (n.includes('música') || n.includes('musica') || n.includes('guitarra') || n.includes('piano') || n.includes('ensayo')) return '🎵';
+    if (n.includes('música') || n.includes('musica') || n.includes('guitarra') || n.includes('piano')) return '🎵';
     if (n.includes('videojuego') || n.includes('gaming') || n.includes('xbox') || n.includes('playstation')) return '🎮';
     if (n.includes('leer') || n.includes('libro') || n.includes('lectura')) return '📖';
     if (n.includes('netflix') || n.includes('serie') || n.includes('streaming')) return '📺';
     if (n.includes('viaje') || n.includes('viajar') || n.includes('vacaciones') || n.includes('hotel')) return '🧳';
     if (n.includes('playa') || n.includes('mar')) return '🏖️';
-    if (n.includes('montaña') || n.includes('senderismo') || n.includes('hiking') || n.includes('naturaleza')) return '🏔️';
-    if (n.includes('corte') || n.includes('cabello') || n.includes('pelo') || n.includes('peluquería') || n.includes('barber')) return '✂️';
+    if (n.includes('montaña') || n.includes('senderismo') || n.includes('hiking')) return '🏔️';
+    if (n.includes('corte') || n.includes('cabello') || n.includes('pelo') || n.includes('peluquería')) return '✂️';
     if (n.includes('manicure') || n.includes('uñas') || n.includes('spa')) return '💅';
     if (n.includes('bañar') || n.includes('baño') || n.includes('ducha')) return '🚿';
     if (n.includes('rasurar') || n.includes('rasurarse')) return '🪒';
@@ -1032,19 +1024,12 @@ function esMismaFecha(a, b) {
 }
 
 function sumarDias(date, dias) {
-    const d = new Date(date);
-    d.setDate(d.getDate() + dias);
-    return d;
+    const d = new Date(date); d.setDate(d.getDate() + dias); return d;
 }
 
 // ── STORAGE ───────────────────────────────────────────
-function cargarAgendas() {
-    return JSON.parse(localStorage.getItem('michi-agendas') || '[]');
-}
-
-function guardarAgendas(agendas) {
-    localStorage.setItem('michi-agendas', JSON.stringify(agendas));
-}
+function cargarAgendas() { return JSON.parse(localStorage.getItem('michi-agendas') || '[]'); }
+function guardarAgendas(agendas) { localStorage.setItem('michi-agendas', JSON.stringify(agendas)); }
 
 // ── PANTALLA HOY ──────────────────────────────────────
 function mostrarHoy() {
@@ -1068,9 +1053,7 @@ function mostrarHoy() {
                     <span class="progreso-label">Progreso del día</span>
                     <span class="progreso-pct">${porcentaje}%</span>
                 </div>
-                <div class="progreso-barra">
-                    <div class="progreso-fill" style="width:${porcentaje}%"></div>
-                </div>
+                <div class="progreso-barra"><div class="progreso-fill" style="width:${porcentaje}%"></div></div>
                 ${mensaje ? `<div class="progreso-mensaje">🐱 ${mensaje}</div>` : ''}
             </div>` : '';
         programarNotificaciones(fijas, fechaKey);
@@ -1084,7 +1067,6 @@ function mostrarHoy() {
     renderSemanaStrip();
     renderPendientes();
     renderBadgeWallet();
-
     if (usuarioActual) {
         const configUsuario = document.getElementById('config-usuario');
         if (configUsuario) configUsuario.textContent = usuarioActual.email || usuarioActual.displayName || '—';
@@ -1092,8 +1074,7 @@ function mostrarHoy() {
 }
 
 function renderTimelineHoy(fijas, hoy, fechaKey) {
-    const ahoraH = hoy.getHours();
-    const ahoraM = hoy.getMinutes();
+    const ahoraH = hoy.getHours(), ahoraM = hoy.getMinutes();
     let proximaIdx = -1;
     for (let i = 0; i < fijas.length; i++) {
         const [h, m] = parsearHora(fijas[i].hora);
@@ -1113,8 +1094,7 @@ function renderTimelineHoy(fijas, hoy, fechaKey) {
         const esUltimo = idx === visibles.length - 1;
         const checkKey = act.actividad + act.hora;
         const completada = checks[checkKey];
-        return `
-        <div class="timeline-item ${esProxima && !completada ? 'proxima' : ''} ${completada ? 'completada' : ''}">
+        return `<div class="timeline-item ${esProxima && !completada ? 'proxima' : ''} ${completada ? 'completada' : ''}">
             <div class="timeline-left">
                 <div class="tl-circle ${clase} ${completada ? 'tl-circle-done' : ''}">${completada ? '✅' : icono}</div>
                 ${!esUltimo ? '<div class="tl-line"></div>' : ''}
@@ -1135,12 +1115,10 @@ function renderHorasVacias(hoy) {
         const h = ahoraH + i;
         if (h > 23) break;
         const hora = `${String(h).padStart(2,'0')}:00`;
-        const esUltimo = i === 2;
-        items += `
-        <div class="timeline-item">
+        items += `<div class="timeline-item">
             <div class="timeline-left">
                 <div class="tl-circle vacio"></div>
-                ${!esUltimo ? '<div class="tl-line tl-line-vacia"></div>' : ''}
+                ${i < 2 ? '<div class="tl-line tl-line-vacia"></div>' : ''}
             </div>
             <div class="tl-content">
                 <div class="tl-hora">${hora}</div>
@@ -1167,14 +1145,9 @@ function renderSemanaStrip() {
         const agenda = agendas.find(a => a.fechaKey === fechaKey);
         const tieneRec = obtenerActividadesRecurrentesParaDia(dia).length > 0;
         let emoji = '';
-        if (agenda) {
-            const primeraLinea = agenda.texto.split('\n').find(l => l.trim()) || '';
-            emoji = obtenerIcono(extraerActividad(primeraLinea));
-        } else if (tieneRec) {
-            emoji = obtenerIcono(extraerActividad(obtenerActividadesRecurrentesParaDia(dia)[0]));
-        }
-        let clases = 'dia-strip' + (i === 0 ? ' hoy' : '') + (agenda || tieneRec ? ' tiene-agenda' : '');
-        html += `<div class="${clases}" onclick="seleccionarDiaStrip('${fechaKey}', ${!!(agenda || tieneRec)})">
+        if (agenda) emoji = obtenerIcono(extraerActividad(agenda.texto.split('\n').find(l => l.trim()) || ''));
+        else if (tieneRec) emoji = obtenerIcono(extraerActividad(obtenerActividadesRecurrentesParaDia(dia)[0]));
+        html += `<div class="dia-strip${i === 0 ? ' hoy' : ''}${agenda || tieneRec ? ' tiene-agenda' : ''}" onclick="seleccionarDiaStrip('${fechaKey}', ${!!(agenda || tieneRec)})">
             <div class="dia-strip-nombre">${diasNombre[dia.getDay()]}</div>
             <div class="dia-strip-num">${dia.getDate()}</div>
             <div class="dia-strip-emoji">${emoji}</div>
@@ -1223,25 +1196,13 @@ function navegarDia(delta) {
 }
 
 // ── CALENDARIO ────────────────────────────────────────
-function abrirCalendario() {
-    mesActualCal = new Date();
-    renderCalendario();
-    document.getElementById('modal-calendario').classList.remove('oculto');
-}
-
-function cerrarCalendario(event) {
-    if (event.target.id === 'modal-calendario') document.getElementById('modal-calendario').classList.add('oculto');
-}
-
-function cambiarMes(delta) {
-    mesActualCal.setMonth(mesActualCal.getMonth() + delta);
-    renderCalendario();
-}
+function abrirCalendario() { mesActualCal = new Date(); renderCalendario(); document.getElementById('modal-calendario').classList.remove('oculto'); }
+function cerrarCalendario(event) { if (event.target.id === 'modal-calendario') document.getElementById('modal-calendario').classList.add('oculto'); }
+function cambiarMes(delta) { mesActualCal.setMonth(mesActualCal.getMonth() + delta); renderCalendario(); }
 
 function renderCalendario() {
     const hoy = new Date();
-    const año = mesActualCal.getFullYear();
-    const mes = mesActualCal.getMonth();
+    const año = mesActualCal.getFullYear(), mes = mesActualCal.getMonth();
     const agendas = cargarAgendas();
     document.getElementById('titulo-mes').textContent = mesActualCal.toLocaleDateString('es-MX', { month: 'long', year: 'numeric' });
     const primerDia = new Date(año, mes, 1).getDay();
@@ -1253,14 +1214,10 @@ function renderCalendario() {
         const fechaKey = formatearFechaKey(fecha);
         const agenda = agendas.find(a => a.fechaKey === fechaKey);
         const tieneRec = obtenerActividadesRecurrentesParaDia(fecha).length > 0;
-        let clases = 'cal-dia' + (esMismaFecha(fecha, hoy) ? ' hoy' : '') + (agenda || tieneRec ? ' tiene-agenda' : '');
         let emoji = '';
-        if (agenda) {
-            emoji = `<div class="cal-dia-emoji">${obtenerIcono(extraerActividad(agenda.texto.split('\n').find(l => l.trim()) || ''))}</div>`;
-        } else if (tieneRec) {
-            emoji = `<div class="cal-dia-emoji">${obtenerIcono(extraerActividad(obtenerActividadesRecurrentesParaDia(fecha)[0]))}</div>`;
-        }
-        html += `<div class="${clases}" onclick="seleccionarDiaCalendario('${fechaKey}', ${!!(agenda || tieneRec)})"><div class="cal-dia-num">${d}</div>${emoji}</div>`;
+        if (agenda) emoji = `<div class="cal-dia-emoji">${obtenerIcono(extraerActividad(agenda.texto.split('\n').find(l => l.trim()) || ''))}</div>`;
+        else if (tieneRec) emoji = `<div class="cal-dia-emoji">${obtenerIcono(extraerActividad(obtenerActividadesRecurrentesParaDia(fecha)[0]))}</div>`;
+        html += `<div class="cal-dia${esMismaFecha(fecha,hoy)?' hoy':''}${agenda||tieneRec?' tiene-agenda':''}" onclick="seleccionarDiaCalendario('${fechaKey}',${!!(agenda||tieneRec)})"><div class="cal-dia-num">${d}</div>${emoji}</div>`;
     }
     document.getElementById('cal-grid').innerHTML = html;
 }
@@ -1290,15 +1247,11 @@ function toggleCalendario() {
     if (!cal.classList.contains('oculto')) { mesActualMini = new Date(fechaSeleccionada); renderMiniCalendario(); }
 }
 
-function cambiarMesMini(delta) {
-    mesActualMini.setMonth(mesActualMini.getMonth() + delta);
-    renderMiniCalendario();
-}
+function cambiarMesMini(delta) { mesActualMini.setMonth(mesActualMini.getMonth() + delta); renderMiniCalendario(); }
 
 function renderMiniCalendario() {
     const hoy = new Date();
-    const año = mesActualMini.getFullYear();
-    const mes = mesActualMini.getMonth();
+    const año = mesActualMini.getFullYear(), mes = mesActualMini.getMonth();
     document.getElementById('mini-mes-titulo').textContent = mesActualMini.toLocaleDateString('es-MX', { month: 'long', year: 'numeric' });
     const primerDia = new Date(año, mes, 1).getDay();
     const diasEnMes = new Date(año, mes + 1, 0).getDate();
@@ -1306,8 +1259,7 @@ function renderMiniCalendario() {
     for (let i = 0; i < primerDia; i++) html += '<div class="mini-dia vacio"></div>';
     for (let d = 1; d <= diasEnMes; d++) {
         const fecha = new Date(año, mes, d);
-        let clases = 'mini-dia' + (esMismaFecha(fecha, hoy) ? ' hoy' : '') + (esMismaFecha(fecha, fechaSeleccionada) ? ' seleccionado' : '');
-        html += `<div class="${clases}" onclick="seleccionarFecha(${año}, ${mes}, ${d})">${d}</div>`;
+        html += `<div class="mini-dia${esMismaFecha(fecha,hoy)?' hoy':''}${esMismaFecha(fecha,fechaSeleccionada)?' seleccionado':''}" onclick="seleccionarFecha(${año},${mes},${d})">${d}</div>`;
     }
     document.getElementById('mini-cal-grid').innerHTML = html;
 }
@@ -1417,24 +1369,19 @@ function procesarAgenda() {
     const texto = document.getElementById('input-actividades').value.trim();
     if (!texto) { alert('Por favor ingresa tus actividades.'); return; }
     const lineas = texto.split('\n');
-    const recurrentesNuevas = [];
-    const lineasNormales = [];
+    const recurrentesNuevas = [], lineasNormales = [];
     lineas.forEach(linea => {
         linea = linea.trim();
         if (!linea) return;
         const rec = parsearRecurrente(linea);
-        if (rec && rec.diasAplica.length > 0) {
-            recurrentesNuevas.push(rec);
-            lineasNormales.push(linea.replace(/\[.+?\]/, '').trim());
-        } else {
-            lineasNormales.push(linea);
-        }
+        if (rec && rec.diasAplica.length > 0) { recurrentesNuevas.push(rec); lineasNormales.push(linea.replace(/\[.+?\]/, '').trim()); }
+        else lineasNormales.push(linea);
     });
     if (recurrentesNuevas.length > 0) {
         const recActuales = cargarRecurrentes();
         recurrentesNuevas.forEach(nueva => {
             const existente = recActuales.findIndex(r => r.actividad === nueva.actividad);
-            if (existente !== -1) { recActuales[existente] = nueva; } else { recActuales.push(nueva); }
+            if (existente !== -1) recActuales[existente] = nueva; else recActuales.push(nueva);
         });
         guardarRecurrentes(recActuales);
     }
@@ -1446,22 +1393,15 @@ function procesarAgenda() {
     if (agendaEditandoId) {
         const idx = agendas.findIndex(a => a.id === agendaEditandoId);
         if (idx !== -1) { agendas[idx].texto = textoFinal; agendas[idx].nombre = nombre; agendas[idx].fechaKey = fechaKey; agendaGuardada = agendas[idx]; }
-        agendaViendoId = agendaEditandoId;
-        agendaEditandoId = null;
+        agendaViendoId = agendaEditandoId; agendaEditandoId = null;
     } else {
         const existente = agendas.findIndex(a => a.fechaKey === fechaKey);
-        if (existente !== -1) {
-            agendas[existente].texto = textoFinal; agendas[existente].nombre = nombre;
-            agendaViendoId = agendas[existente].id; agendaGuardada = agendas[existente];
-        } else {
-            const nueva = { id: Date.now().toString(), nombre, texto: textoFinal, fechaKey };
-            agendas.unshift(nueva); agendaViendoId = nueva.id; agendaGuardada = nueva;
-        }
+        if (existente !== -1) { agendas[existente].texto = textoFinal; agendas[existente].nombre = nombre; agendaViendoId = agendas[existente].id; agendaGuardada = agendas[existente]; }
+        else { const nueva = { id: Date.now().toString(), nombre, texto: textoFinal, fechaKey }; agendas.unshift(nueva); agendaViendoId = nueva.id; agendaGuardada = nueva; }
     }
     agendas.sort((a, b) => b.fechaKey.localeCompare(a.fechaKey));
     guardarAgendas(agendas);
     if (usuarioActual && agendaGuardada) guardarAgendaNube(usuarioActual.uid, agendaGuardada).catch(() => {});
-
     let wallet = cargarWallet();
     if (!wallet.primeraAgendaCreada) {
         wallet.primeraAgendaCreada = true;
@@ -1489,24 +1429,17 @@ function parsearActividades(texto) {
         linea = linea.trim().replace(/\[.+?\]/, '').trim();
         if (!linea) return;
         const esLimpieza = palabrasLimpieza.some(p => linea.toLowerCase().includes(p)) && !/\d/.test(linea);
-        if (esLimpieza) {
-            limpieza.push(linea);
-        } else {
+        if (esLimpieza) { limpieza.push(linea); }
+        else {
             const match = linea.match(/^(.*?)\s*[-–—]?\s*(\d{1,2}:\d{2}|\d{1,2})\s*$/);
             if (match) {
                 let hora = match[2].trim();
                 if (!hora.includes(':')) hora = hora + ':00';
                 fijas.push({ actividad: match[1].trim().replace(/[-–—]\s*$/, ''), hora });
-            } else {
-                fijas.push({ actividad: linea, hora: '--:--' });
-            }
+            } else { fijas.push({ actividad: linea, hora: '--:--' }); }
         }
     });
-    fijas.sort((a, b) => {
-        const [ah, am] = parsearHora(a.hora);
-        const [bh, bm] = parsearHora(b.hora);
-        return ah !== bh ? ah - bh : am - bm;
-    });
+    fijas.sort((a, b) => { const [ah,am]=parsearHora(a.hora),[bh,bm]=parsearHora(b.hora); return ah!==bh?ah-bh:am-bm; });
     return { fijas, limpieza };
 }
 
@@ -1515,15 +1448,13 @@ function renderDiario({ fijas, limpieza }, fechaKey) {
     const activo = esDiaActivo(fechaKey);
     const porcentaje = calcularPorcentaje(fijas, fechaKey);
     const mensaje = mensajeMichi(porcentaje);
-
     const timelineItems = fijas.map((act, idx) => {
         const icono = obtenerIcono(act.actividad);
         const clase = obtenerClase(icono, idx);
         const esUltimo = idx === fijas.length - 1;
         const checkKey = act.actividad + act.hora;
         const completada = checks[checkKey];
-        return `
-        <div class="timeline-item ${completada ? 'completada' : ''}">
+        return `<div class="timeline-item ${completada ? 'completada' : ''}">
             <div class="timeline-left">
                 <div class="tl-circle ${clase} ${completada ? 'tl-circle-done' : ''}">${completada ? '✅' : icono}</div>
                 ${!esUltimo ? '<div class="tl-line"></div>' : ''}
@@ -1535,7 +1466,6 @@ function renderDiario({ fijas, limpieza }, fechaKey) {
             ${activo ? `<button class="btn-check ${completada ? 'checked' : ''}" onclick="toggleCheck('${fechaKey}', '${checkKey}')">${completada ? '✓' : '○'}</button>` : ''}
         </div>`;
     }).join('');
-
     const filas = fijas.map(act => {
         const checkKey = act.actividad + act.hora;
         const completada = checks[checkKey];
@@ -1544,29 +1474,18 @@ function renderDiario({ fijas, limpieza }, fechaKey) {
             <td>${completada ? '✅' : obtenerIcono(act.actividad)} <span class="${completada ? 'tl-nombre-done' : ''}">${act.actividad}</span></td>
         </tr>`;
     }).join('');
-
     const barraHTML = fijas.length > 0 ? `
         <div class="progreso-box">
-            <div class="progreso-header">
-                <span class="progreso-label">Progreso del día</span>
-                <span class="progreso-pct">${porcentaje}%</span>
-            </div>
-            <div class="progreso-barra">
-                <div class="progreso-fill" style="width:${porcentaje}%"></div>
-            </div>
+            <div class="progreso-header"><span class="progreso-label">Progreso del día</span><span class="progreso-pct">${porcentaje}%</span></div>
+            <div class="progreso-barra"><div class="progreso-fill" style="width:${porcentaje}%"></div></div>
             ${mensaje ? `<div class="progreso-mensaje">🐱 ${mensaje}</div>` : ''}
         </div>` : '';
-
-    return `
-        ${barraHTML}
+    return `${barraHTML}
         <div class="dashboard-diario">
             <div class="panel"><h3>Línea de Tiempo</h3><div class="timeline-vertical">${timelineItems}</div></div>
-            <div class="panel"><h3>Actividades</h3>
-                <table><thead><tr><th>Hora</th><th>Actividad</th></tr></thead><tbody>${filas}</tbody></table>
-            </div>
+            <div class="panel"><h3>Actividades</h3><table><thead><tr><th>Hora</th><th>Actividad</th></tr></thead><tbody>${filas}</tbody></table></div>
         </div>
-        ${limpieza.length ? `<div class="panel" style="margin-top:15px"><h3>Tareas del Hogar</h3><ul style="padding-left:20px;line-height:2">${limpieza.map(t => `<li>✨ ${t}</li>`).join('')}</ul></div>` : ''}
-    `;
+        ${limpieza.length ? `<div class="panel" style="margin-top:15px"><h3>Tareas del Hogar</h3><ul style="padding-left:20px;line-height:2">${limpieza.map(t=>`<li>✨ ${t}</li>`).join('')}</ul></div>` : ''}`;
 }
 
 // ── INIT ──────────────────────────────────────────────
@@ -1588,6 +1507,7 @@ window.mostrarHoy = mostrarHoy;
 window.mostrarEditor = mostrarEditor;
 window.mostrarConfig = mostrarConfig;
 window.mostrarWallet = mostrarWallet;
+window.mostrarTienda = mostrarTienda;
 window.volverAtras = volverAtras;
 window.editarHoy = editarHoy;
 window.borrarHoy = borrarHoy;
@@ -1611,4 +1531,8 @@ window.navegarDia = navegarDia;
 window.borrarRecurrente = borrarRecurrente;
 window.toggleCheck = toggleCheck;
 window.tocarMichi = tocarMichi;
-window.adoptarMichi = adoptarMichi;
+window.mostrarModalNombre = mostrarModalNombre;
+window.confirmarNombreMichi = confirmarNombreMichi;
+window.cerrarModalNombre = cerrarModalNombre;
+window.comprarMichi = comprarMichi;
+window.comprarFreeze = comprarFreeze;

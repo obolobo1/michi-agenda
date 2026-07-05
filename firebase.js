@@ -110,7 +110,7 @@ export async function cargarWalletNube(userId) {
     return snap.exists() ? snap.data() : null;
 }
 
-// ── LOGROS EN LA NUBE ──────────────────────────────────
+// ── LOGROS EN LA NUBE ─────────────────────────────────
 export async function guardarLogrosNube(userId, logros) {
     await setDoc(doc(db, 'usuarios', userId, 'datos', 'logros'), { lista: logros });
 }
@@ -118,4 +118,14 @@ export async function guardarLogrosNube(userId, logros) {
 export async function cargarLogrosNube(userId) {
     const snap = await getDoc(doc(db, 'usuarios', userId, 'datos', 'logros'));
     return snap.exists() ? snap.data().lista : [];
+}
+
+// ── MICHI COMPAÑERO EN LA NUBE ────────────────────────
+export async function guardarMichiNube(userId, michi) {
+    await setDoc(doc(db, 'usuarios', userId, 'datos', 'michi'), michi);
+}
+
+export async function cargarMichiNube(userId) {
+    const snap = await getDoc(doc(db, 'usuarios', userId, 'datos', 'michi'));
+    return snap.exists() ? snap.data() : null;
 }

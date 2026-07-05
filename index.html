@@ -76,19 +76,19 @@
             <div class="header-top">
                 <h1>🐱 Michi Agenda</h1>
                 <button class="badge-wallet" id="badge-wallet" onclick="mostrarWallet()"></button>
-                <button class="btn-config" onclick="mostrarConfig()">⚙️</button>
+                <div class="header-botones-derecha">
+                    <button class="btn-tienda oculto" id="btn-tienda-header" onclick="mostrarTienda()">🛍️</button>
+                    <button class="btn-config" onclick="mostrarConfig()">⚙️</button>
+                </div>
             </div>
             <h2 id="titulo-hoy"></h2>
         </header>
 
-        <!-- LAYOUT PRINCIPAL: ACTIVIDADES + MICHI -->
         <div class="seccion-titulo">
             <span>Actividades</span>
         </div>
         <div class="hoy-main-layout">
-            <!-- Columna izquierda: timeline -->
             <div class="hoy-timeline-col" id="contenido-hoy"></div>
-            <!-- Columna derecha: michi compañero -->
             <div class="michi-col">
                 <div class="michi-caja" id="michi-caja" onclick="tocarMichi()">
                     <img id="michi-img" src="" alt="michi" class="michi-img"/>
@@ -96,23 +96,20 @@
                     <div id="michi-patita" class="michi-patita oculto">🐾</div>
                 </div>
                 <div id="michi-mensaje" class="michi-mensaje"></div>
-                <button id="btn-adoptar" class="btn-adoptar oculto" onclick="adoptarMichi()">
+                <button id="btn-adoptar" class="btn-adoptar oculto" onclick="mostrarModalNombre()">
                     Abrir la caja 🐾 100
                 </button>
             </div>
         </div>
 
-        <!-- BARRA DE PROGRESO -->
         <div id="contenido-progreso"></div>
 
-        <!-- CALENDARIO -->
         <div class="seccion-titulo" style="margin-top:20px">
             <span>Calendario</span>
         </div>
         <div class="semana-strip" id="semana-strip"></div>
         <button class="btn-ver-mes-grande" onclick="abrirCalendario()">📅 Ver mes completo</button>
 
-        <!-- PENDIENTES -->
         <div class="pendientes-box" style="margin-top:16px">
             <div class="pendientes-header">
                 <span class="pendientes-titulo">📋 Pendientes</span>
@@ -123,7 +120,6 @@
             </div>
             <ul id="lista-pendientes" class="lista-pendientes"></ul>
         </div>
-
         <button class="btn-flotante" onclick="mostrarEditor(null)">+</button>
     </div>
 
@@ -138,38 +134,14 @@
         </header>
         <div id="panel-ayuda" class="panel-ayuda oculto">
             <div class="ayuda-titulo">📝 Cómo escribir tu agenda</div>
-            <div class="ayuda-item">
-                <div class="ayuda-label">Actividad normal:</div>
-                <div class="ayuda-ejemplo">GYM 12:00</div>
-            </div>
-            <div class="ayuda-item">
-                <div class="ayuda-label">También funciona con guión:</div>
-                <div class="ayuda-ejemplo">GYM - 12:00</div>
-            </div>
-            <div class="ayuda-item">
-                <div class="ayuda-label">Sin hora:</div>
-                <div class="ayuda-ejemplo">Llamar al doctor</div>
-            </div>
-            <div class="ayuda-item">
-                <div class="ayuda-label">Recurrente días específicos:</div>
-                <div class="ayuda-ejemplo">GYM 07:00 [lunes, miércoles, viernes]</div>
-            </div>
-            <div class="ayuda-item">
-                <div class="ayuda-label">Recurrente todos los días:</div>
-                <div class="ayuda-ejemplo">Medicinas 08:00 [todos los días]</div>
-            </div>
-            <div class="ayuda-item">
-                <div class="ayuda-label">Recurrente entre semana:</div>
-                <div class="ayuda-ejemplo">Trabajo 09:00 [entre semana]</div>
-            </div>
-            <div class="ayuda-item">
-                <div class="ayuda-label">Recurrente fines de semana:</div>
-                <div class="ayuda-ejemplo">Descansar 10:00 [fines de semana]</div>
-            </div>
-            <div class="ayuda-item">
-                <div class="ayuda-label">Tareas del hogar (sin hora):</div>
-                <div class="ayuda-ejemplo">barrer / trapear / lavar ropa</div>
-            </div>
+            <div class="ayuda-item"><div class="ayuda-label">Actividad normal:</div><div class="ayuda-ejemplo">GYM 12:00</div></div>
+            <div class="ayuda-item"><div class="ayuda-label">También funciona con guión:</div><div class="ayuda-ejemplo">GYM - 12:00</div></div>
+            <div class="ayuda-item"><div class="ayuda-label">Sin hora:</div><div class="ayuda-ejemplo">Llamar al doctor</div></div>
+            <div class="ayuda-item"><div class="ayuda-label">Recurrente días específicos:</div><div class="ayuda-ejemplo">GYM 07:00 [lunes, miércoles, viernes]</div></div>
+            <div class="ayuda-item"><div class="ayuda-label">Recurrente todos los días:</div><div class="ayuda-ejemplo">Medicinas 08:00 [todos los días]</div></div>
+            <div class="ayuda-item"><div class="ayuda-label">Recurrente entre semana:</div><div class="ayuda-ejemplo">Trabajo 09:00 [entre semana]</div></div>
+            <div class="ayuda-item"><div class="ayuda-label">Recurrente fines de semana:</div><div class="ayuda-ejemplo">Descansar 10:00 [fines de semana]</div></div>
+            <div class="ayuda-item"><div class="ayuda-label">Tareas del hogar (sin hora):</div><div class="ayuda-ejemplo">barrer / trapear / lavar ropa</div></div>
         </div>
         <div class="fecha-selector" onclick="toggleCalendario()">
             <span class="fecha-icono">📅</span>
@@ -255,10 +227,33 @@
                 <span class="wallet-racha-label">Michi Freeze</span>
             </div>
         </div>
+        <button class="btn-ir-tienda oculto" id="btn-ir-tienda" onclick="mostrarTienda()">🛍️ Ir a la Tienda</button>
         <div class="seccion-titulo" style="margin-top:20px">
             <span>🏆 Logros</span>
         </div>
         <div id="lista-logros" class="lista-logros"></div>
+    </div>
+
+    <!-- PANTALLA: TIENDA -->
+    <div id="pantalla-tienda" class="pantalla">
+        <header>
+            <button class="btn-back" onclick="volverAtras()">← Volver</button>
+            <h2>🛍️ Tienda</h2>
+        </header>
+        <div class="tienda-saldo-bar">
+            <span>🐾 <span id="tienda-saldo-patitas">0</span></span>
+            <span>🧶 <span id="tienda-saldo-bolas">0</span></span>
+        </div>
+
+        <div class="seccion-titulo" style="margin-top:16px">
+            <span>🐱 Michis</span>
+        </div>
+        <div class="tienda-grid" id="tienda-michis"></div>
+
+        <div class="seccion-titulo" style="margin-top:20px">
+            <span>🧊 Protección de Racha</span>
+        </div>
+        <div class="tienda-grid" id="tienda-items"></div>
     </div>
 
     <!-- PANTALLA: CONFIGURACIÓN -->
@@ -319,6 +314,21 @@
                 <div class="config-info-row"><span>Versión</span><span>1.0.0</span></div>
                 <div class="config-info-row"><span>Desarrollado por</span><span>obolobo1</span></div>
             </div>
+        </div>
+    </div>
+
+    <!-- MODAL: NOMBRE DEL MICHI -->
+    <div id="modal-nombre-michi" class="modal-overlay oculto" onclick="cerrarModalNombre(event)">
+        <div class="modal-contenido modal-nombre">
+            <div class="modal-nombre-emoji" id="modal-michi-preview">🐱</div>
+            <h3 class="modal-nombre-titulo">¡Tu michi ha llegado!</h3>
+            <p class="modal-nombre-desc">¿Cómo se va a llamar?</p>
+            <input type="text" id="input-nombre-michi" class="input-nombre-michi"
+                placeholder="Escribe un nombre..." maxlength="20"
+                onkeydown="if(event.key==='Enter') confirmarNombreMichi()"/>
+            <button class="btn-confirmar-nombre" onclick="confirmarNombreMichi()">
+                ¡Ese es su nombre! 🐾
+            </button>
         </div>
     </div>
 
