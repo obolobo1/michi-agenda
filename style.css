@@ -46,6 +46,8 @@ header { text-align: center; margin-bottom: 16px; }
     gap: 8px;
     margin-bottom: 6px;
 }
+
+
 .header-fila2-separador {
     flex: 1;
 
