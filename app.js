@@ -23,6 +23,49 @@ let usuarioActual = null;
 let fechaDashboard = null;
 let michiPendienteDeNombre = null;
 
+// ── SONIDOS ───────────────────────────────────────────
+function crearSonido(frecuencia, duracion, tipo = 'sine', volumen = 0.15) {
+    try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = ctx.createOscillator();
+        const gainNode = ctx.createGain();
+        oscillator.connect(gainNode);
+        gainNode.connect(ctx.destination);
+        oscillator.type = tipo;
+        oscillator.frequency.setValueAtTime(frecuencia, ctx.currentTime);
+        gainNode.gain.setValueAtTime(volumen, ctx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duracion);
+        oscillator.start(ctx.currentTime);
+        oscillator.stop(ctx.currentTime + duracion);
+    } catch(e) {}
+}
+
+function sonidoPatitas() {
+    crearSonido(880, 0.15, 'sine', 0.12);
+    setTimeout(() => crearSonido(1100, 0.15, 'sine', 0.1), 100);
+}
+
+function sonidoCheck() {
+    crearSonido(600, 0.1, 'sine', 0.1);
+}
+
+function sonidoNivel() {
+    crearSonido(523, 0.15, 'sine', 0.12);
+    setTimeout(() => crearSonido(659, 0.15, 'sine', 0.12), 120);
+    setTimeout(() => crearSonido(784, 0.25, 'sine', 0.15), 240);
+}
+
+function sonidoLogro() {
+    crearSonido(784, 0.15, 'sine', 0.12);
+    setTimeout(() => crearSonido(988, 0.3, 'sine', 0.15), 150);
+}
+
+function sonidoAdopcion() {
+    crearSonido(400, 0.1, 'sine', 0.1);
+    setTimeout(() => crearSonido(600, 0.1, 'sine', 0.12), 100);
+    setTimeout(() => crearSonido(800, 0.2, 'sine', 0.15), 200);
+}
+
 // ── MICHI COMPAÑERO ───────────────────────────────────
 const MICHIS_DISPONIBLES = [
     { id: 'naranjoso', nombre: 'Naranjoso', img: 'michis/naranjoso.png' },
@@ -62,6 +105,20 @@ function guardarMichisDesbloqueados(lista) {
     localStorage.setItem('michi-desbloqueados', JSON.stringify(lista));
 }
 
+function iniciarParpadeoMichi() {
+    if (window._michiParpadeoTimer) clearInterval(window._michiParpadeoTimer);
+    const michi = cargarMichi();
+    if (!michi) return;
+    window._michiParpadeoTimer = setInterval(() => {
+        const img = document.getElementById('michi-img');
+        if (!img) return;
+        img.classList.remove('michi-parpadeando');
+        void img.offsetWidth;
+        img.classList.add('michi-parpadeando');
+        setTimeout(() => img.classList.remove('michi-parpadeando'), 300);
+    }, Math.random() * 3000 + 3000);
+}
+
 function renderMichiHome() {
     const michi = cargarMichi();
     const wallet = cargarWallet();
@@ -79,6 +136,7 @@ function renderMichiHome() {
         btnAdoptar.classList.add('oculto');
         if (btnTienda) btnTienda.classList.remove('oculto');
         if (btnIrTienda) btnIrTienda.classList.remove('oculto');
+        iniciarParpadeoMichi();
     } else {
         img.src = IMG_TRANSPORTADORA;
         img.style.display = 'block';
@@ -100,11 +158,14 @@ function renderMichiHome() {
 
 function tocarMichi() {
     const michi = cargarMichi();
+    const img = document.getElementById('michi-img');
     const caja = document.getElementById('michi-caja');
 
     if (michi) {
-        caja.classList.add('sacudiendo');
-        setTimeout(() => caja.classList.remove('sacudiendo'), 600);
+        img.classList.remove('michi-cola', 'michi-parpadeando');
+        void img.offsetWidth;
+        img.classList.add('michi-cola');
+        setTimeout(() => img.classList.remove('michi-cola'), 800);
         return;
     }
 
@@ -129,19 +190,16 @@ function mostrarModalNombre() {
     const { nivel } = calcularNivelDesdeXP(wallet.xp || 0);
     if (nivel < NIVEL_ADOPCION || wallet.patitas < COSTO_ADOPCION) return;
 
-    // Descontar patitas y elegir michi aleatorio
     wallet.patitas -= COSTO_ADOPCION;
     guardarWallet(wallet);
 
     const idx = Math.floor(Math.random() * MICHIS_DISPONIBLES.length);
     michiPendienteDeNombre = { ...MICHIS_DISPONIBLES[idx] };
 
-    // Mostrar preview en el modal
     document.getElementById('modal-michi-preview').textContent = '🐱';
     document.getElementById('input-nombre-michi').value = '';
     document.getElementById('modal-nombre-michi').classList.remove('oculto');
 
-    // Animar imagen de fondo
     const img = document.getElementById('michi-img');
     img.src = michiPendienteDeNombre.img;
     img.classList.add('michi-aparece');
@@ -149,7 +207,7 @@ function mostrarModalNombre() {
 
 function cerrarModalNombre(event) {
     if (event.target.id === 'modal-nombre-michi') {
-        // No cerrar sin nombre — forzamos a que complete
+        // No cerrar sin nombre
     }
 }
 
@@ -159,9 +217,9 @@ function confirmarNombreMichi() {
     if (!nombre) { input.focus(); return; }
 
     michiPendienteDeNombre.nombrePersonalizado = nombre;
+    sonidoAdopcion();
     guardarMichi(michiPendienteDeNombre);
 
-    // Registrar como desbloqueado
     const desbloqueados = cargarMichisDesbloqueados();
     if (!desbloqueados.includes(michiPendienteDeNombre.id)) {
         desbloqueados.push(michiPendienteDeNombre.id);
@@ -191,12 +249,10 @@ function renderTienda() {
     document.getElementById('tienda-saldo-patitas').textContent = wallet.patitas;
     document.getElementById('tienda-saldo-bolas').textContent = wallet.bolasDePelo;
 
-    // Grid de michis — mostrar todos excepto el que ya tiene como principal
     const gridMichis = document.getElementById('tienda-michis');
     gridMichis.innerHTML = MICHIS_TIENDA.map(m => {
         const yaDesbloqueado = desbloqueados.includes(m.id) || (michiActual && michiActual.id === m.id);
         const puedePagar = wallet.patitas >= m.precio;
-
         return `<div class="tienda-card ${yaDesbloqueado ? 'ya-tiene' : ''}">
             <img src="${m.img}" alt="${m.nombre}" class="tienda-card-img"/>
             <div class="tienda-card-nombre">${m.nombre}</div>
@@ -209,49 +265,38 @@ function renderTienda() {
         </div>`;
     }).join('');
 
-    // Grid de items — Michi Freeze
     const gridItems = document.getElementById('tienda-items');
-    const puedePagarFreeze300 = wallet.patitas >= 300;
-    const puedePagarFreeze1 = wallet.bolasDePelo >= 1;
-
     gridItems.innerHTML = `
         <div class="tienda-card">
             <div class="tienda-card-emoji">🧊</div>
             <div class="tienda-card-nombre">Michi Freeze</div>
             <div class="tienda-card-precio">🐾 300 patitas</div>
-            <button class="btn-comprar" ${!puedePagarFreeze300 ? 'disabled' : ''}
-                onclick="comprarFreeze('patitas')">
-                ${puedePagarFreeze300 ? 'Comprar' : 'Sin patitas'}
+            <button class="btn-comprar" ${wallet.patitas < 300 ? 'disabled' : ''} onclick="comprarFreeze('patitas')">
+                ${wallet.patitas >= 300 ? 'Comprar' : 'Sin patitas'}
             </button>
         </div>
         <div class="tienda-card">
             <div class="tienda-card-emoji">🧊</div>
             <div class="tienda-card-nombre">Michi Freeze</div>
             <div class="tienda-card-precio">🧶 1 bola de pelo</div>
-            <button class="btn-comprar" ${!puedePagarFreeze1 ? 'disabled' : ''}
-                onclick="comprarFreeze('bolas')">
-                ${puedePagarFreeze1 ? 'Comprar' : 'Sin bolas'}
+            <button class="btn-comprar" ${wallet.bolasDePelo < 1 ? 'disabled' : ''} onclick="comprarFreeze('bolas')">
+                ${wallet.bolasDePelo >= 1 ? 'Comprar' : 'Sin bolas'}
             </button>
-        </div>
-    `;
+        </div>`;
 }
 
 function comprarMichi(michiId) {
     const wallet = cargarWallet();
     const michi = MICHIS_TIENDA.find(m => m.id === michiId);
     const desbloqueados = cargarMichisDesbloqueados();
-
     if (!michi || desbloqueados.includes(michiId)) return;
     if (wallet.patitas < michi.precio) return;
 
     wallet.patitas -= michi.precio;
     guardarWallet(wallet);
-
-    // Agregar a desbloqueados
     desbloqueados.push(michiId);
     guardarMichisDesbloqueados(desbloqueados);
 
-    // Pedir nombre
     michiPendienteDeNombre = { ...michi };
     document.getElementById('input-nombre-michi').value = '';
     document.getElementById('modal-nombre-michi').classList.remove('oculto');
@@ -262,7 +307,6 @@ function comprarMichi(michiId) {
 
 function comprarFreeze(tipo) {
     const wallet = cargarWallet();
-
     if (tipo === 'patitas') {
         if (wallet.patitas < 300) return;
         wallet.patitas -= 300;
@@ -270,7 +314,6 @@ function comprarFreeze(tipo) {
         if (wallet.bolasDePelo < 1) return;
         wallet.bolasDePelo -= 1;
     }
-
     wallet.michiFreezes = (wallet.michiFreezes || 0) + 1;
     guardarWallet(wallet);
     mostrarToastPatitas(0, '🧊 ¡Michi Freeze agregado!');
@@ -523,6 +566,7 @@ function revisarLogrosNuevos() {
             huboNuevos = true;
             if (logro.patitas > 0) wallet.patitas += logro.patitas;
             if (logro.xp > 0) wallet.xp = (wallet.xp || 0) + logro.xp;
+            sonidoLogro();
             mostrarToastPatitas(logro.patitas, `🏆 Logro: ${logro.nombre}`);
         }
     });
@@ -584,6 +628,7 @@ function otorgarPatitas(wallet, cantidad, motivo, xpExtra) {
 }
 
 function mostrarToastPatitas(cantidad, motivo) {
+    if (cantidad > 0) sonidoPatitas();
     const toast = document.createElement('div');
     toast.className = 'toast-patitas';
     toast.innerHTML = `${cantidad > 0 ? `🐾 +${cantidad} patitas<br>` : ''}<span class="toast-motivo">${motivo}</span>`;
@@ -630,6 +675,9 @@ function procesarLoginDiario() {
 
     if (wallet.rachaActual > wallet.rachaMaxima) wallet.rachaMaxima = wallet.rachaActual;
 
+    const xpAntes = wallet.xp || 0;
+    const nivelAntes = calcularNivelDesdeXP(xpAntes).nivel;
+
     if (wallet.ultimoLogin === null) {
         otorgarPatitas(wallet, 50, '¡Bienvenida de tu michi! 🐱', 50);
     } else {
@@ -639,6 +687,12 @@ function procesarLoginDiario() {
     if (wallet.rachaActual === 7) otorgarPatitas(wallet, 50, '¡7 días seguidos!', 100);
     else if (wallet.rachaActual === 30) otorgarPatitas(wallet, 100, '¡30 días seguidos!', 250);
     else if (wallet.rachaActual > 30 && wallet.rachaActual % 30 === 0) otorgarPatitas(wallet, 80, `¡${wallet.rachaActual} días seguidos!`, 200);
+
+    const nivelDespues = calcularNivelDesdeXP(wallet.xp || 0).nivel;
+    if (nivelDespues > nivelAntes) {
+        sonidoNivel();
+        mostrarToastPatitas(0, `🎉 ¡Subiste al Nivel ${nivelDespues}!`);
+    }
 
     revisarMichiFreeze(wallet);
     wallet.ultimoLogin = hoyKey;
@@ -652,8 +706,15 @@ function otorgarBonusDiaCompleto(fechaKey) {
     if (!esDiaActivo(fechaKey)) return;
     let wallet = cargarWallet();
     if (wallet.diaCompletadoHoy) return;
+    const xpAntes = wallet.xp || 0;
+    const nivelAntes = calcularNivelDesdeXP(xpAntes).nivel;
     wallet.diaCompletadoHoy = true;
     otorgarPatitas(wallet, enLunaDeMiel(wallet) ? 20 : 10, '¡Día 100% completado!', 25);
+    const nivelDespues = calcularNivelDesdeXP(wallet.xp || 0).nivel;
+    if (nivelDespues > nivelAntes) {
+        sonidoNivel();
+        mostrarToastPatitas(0, `🎉 ¡Subiste al Nivel ${nivelDespues}!`);
+    }
     guardarWallet(wallet);
     renderBadgeWallet();
     revisarLogrosNuevos();
@@ -686,7 +747,7 @@ function renderPantallaWallet() {
     document.getElementById('wallet-freezes').textContent = wallet.michiFreezes || 0;
     const michi = cargarMichi();
     const btnIrTienda = document.getElementById('btn-ir-tienda');
-    if (btnIrTienda) { michi ? btnIrTienda.classList.remove('oculto') : btnIrTienda.classList.add('oculto'); }
+    if (btnIrTienda) michi ? btnIrTienda.classList.remove('oculto') : btnIrTienda.classList.add('oculto');
     renderListaLogros();
 }
 
@@ -797,6 +858,7 @@ function toggleCheck(fechaKey, checkKey) {
     if (!esDiaActivo(fechaKey)) return;
     const checks = cargarChecks(fechaKey);
     checks[checkKey] = !checks[checkKey];
+    if (checks[checkKey]) sonidoCheck();
     guardarChecks(fechaKey, checks);
     const agenda = cargarAgendas().find(a => a.fechaKey === fechaKey);
     const textoConRec = obtenerTextoConRecurrentes(new Date(fechaKey + 'T12:00:00'));

@@ -428,3 +428,37 @@ th { color: #9ca3af; font-size: 0.7rem; text-transform: uppercase; }
 
 .oculto { display: none; }
 
+/* ANIMACIONES MICHI VIVO */
+.michi-img {
+    width: 90%; height: 90%;
+    object-fit: contain;
+    transition: opacity 0.3s;
+    animation: respiracion 3.5s ease-in-out infinite;
+    transform-origin: bottom center;
+}
+
+@keyframes respiracion {
+    0%, 100% { transform: scaleY(1) translateY(0); }
+    50% { transform: scaleY(1.03) translateY(-3px); }
+}
+
+@keyframes parpadeo {
+    0%, 90%, 100% { opacity: 1; }
+    95% { opacity: 0.15; }
+}
+
+@keyframes menearCola {
+    0%, 100% { transform: scaleY(1) translateY(0) rotate(0deg); }
+    20% { transform: scaleY(1) translateY(0) rotate(-2deg); }
+    40% { transform: scaleY(1) translateY(0) rotate(2deg); }
+    60% { transform: scaleY(1) translateY(0) rotate(-1.5deg); }
+    80% { transform: scaleY(1) translateY(0) rotate(1.5deg); }
+}
+
+.michi-parpadeando {
+    animation: parpadeo 0.3s ease-in-out, respiracion 3.5s ease-in-out infinite !important;
+}
+
+.michi-cola {
+    animation: menearCola 0.8s ease-in-out, respiracion 3.5s ease-in-out infinite !important;
+}
