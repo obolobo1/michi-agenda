@@ -48,7 +48,10 @@ header { text-align: center; margin-bottom: 16px; }
 }
 .header-fila2-separador {
     flex: 1;
-}.btn-config {
+
+}
+
+.btn-config {
     background: rgba(255,255,255,0.08); border: none;
     color: #9ca3af; font-size: 1.2rem;
     width: 36px; height: 36px; border-radius: 10px;
