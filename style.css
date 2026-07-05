@@ -17,18 +17,25 @@ header { text-align: center; margin-bottom: 16px; }
 }
 .header-fila1 {
     display: flex; justify-content: center; align-items: center;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
 }
 .header-fila1 h1 {
     font-size: 1.6rem;
     background: linear-gradient(to right, #38bdf8, #ec4899);
     -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    letter-spacing: -0.5px;
 }
 .header-fila2 {
-    display: flex; justify-content: center; align-items: center;
-    gap: 10px; margin-bottom: 8px;
+    display: flex; flex-direction: row;
+    justify-content: center; align-items: center;
+    gap: 8px; margin-bottom: 6px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 14px; padding: 6px 12px;
 }
-.btn-config {
+.header-fila2-separador {
+    flex: 1;
+}.btn-config {
     background: rgba(255,255,255,0.08); border: none;
     color: #9ca3af; font-size: 1.2rem;
     width: 36px; height: 36px; border-radius: 10px;
