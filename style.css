@@ -15,6 +15,15 @@ header { text-align: center; margin-bottom: 16px; }
     display: flex; justify-content: center; align-items: center;
     position: relative; margin-bottom: 4px; gap: 8px;
 }
+.header-top h1 {
+    font-size: 1.6rem;
+    background: linear-gradient(to right, #38bdf8, #ec4899);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.header-botones-derecha {
+    position: absolute; right: 0;
+    display: flex; gap: 6px; align-items: center;
+}
 .header-fila1 {
     display: flex; justify-content: center; align-items: center;
     margin-bottom: 6px;
@@ -433,7 +442,6 @@ th { color: #9ca3af; font-size: 0.7rem; text-transform: uppercase; }
     width: 90%; height: 90%;
     object-fit: contain;
     transition: opacity 0.3s;
-    animation: respiracion 3.5s ease-in-out infinite;
     transform-origin: bottom center;
 }
 
@@ -448,11 +456,9 @@ th { color: #9ca3af; font-size: 0.7rem; text-transform: uppercase; }
 }
 
 @keyframes menearCola {
-    0%, 100% { transform: scaleY(1) translateY(0) rotate(0deg); }
-    20% { transform: scaleY(1) translateY(0) rotate(-2deg); }
-    40% { transform: scaleY(1) translateY(0) rotate(2deg); }
-    60% { transform: scaleY(1) translateY(0) rotate(-1.5deg); }
-    80% { transform: scaleY(1) translateY(0) rotate(1.5deg); }
+    0%, 100% { transform: rotate(0deg); transform-origin: bottom center; }
+    25% { transform: rotate(-3deg); transform-origin: bottom center; }
+    75% { transform: rotate(3deg); transform-origin: bottom center; }
 }
 
 .michi-parpadeando {
