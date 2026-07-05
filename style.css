@@ -135,7 +135,7 @@ header h2 { font-size: 0.9rem; color: #9ca3af; margin-top: 4px; font-weight: 400
 }
 .michi-caja {
     width: 100%; aspect-ratio: 1;
-    background: rgba(255,255,255,0.04);
+    background: #0f172a;
     border: 1px solid rgba(255,255,255,0.1);
     border-radius: 20px;
     display: flex; flex-direction: column;
@@ -425,3 +425,4 @@ th { color: #9ca3af; font-size: 0.7rem; text-transform: uppercase; }
 .logro-check { font-size: 1.1rem; }
 
 .oculto { display: none; }
+
