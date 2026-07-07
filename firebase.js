@@ -129,3 +129,13 @@ export async function cargarMichiNube(userId) {
     const snap = await getDoc(doc(db, 'usuarios', userId, 'datos', 'michi'));
     return snap.exists() ? snap.data() : null;
 }
+
+// ── COLECCIÓN DE MICHIS EN LA NUBE ────────────────────
+export async function guardarColeccionNube(userId, coleccion) {
+    await setDoc(doc(db, 'usuarios', userId, 'datos', 'coleccion'), { lista: coleccion });
+}
+
+export async function cargarColeccionNube(userId) {
+    const snap = await getDoc(doc(db, 'usuarios', userId, 'datos', 'coleccion'));
+    return snap.exists() ? snap.data().lista : [];
+}

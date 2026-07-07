@@ -9,7 +9,8 @@ import {
     guardarChecksNube, cargarChecksNube,
     guardarWalletNube, cargarWalletNube,
     guardarLogrosNube, cargarLogrosNube,
-    guardarMichiNube, cargarMichiNube
+    guardarMichiNube, cargarMichiNube,
+    guardarColeccionNube, cargarColeccionNube
 } from './firebase.js';
 
 // ── ESTADO GLOBAL ─────────────────────────────────────
@@ -105,6 +106,7 @@ function cargarColeccionMichis() {
 
 function guardarColeccionMichis(coleccion) {
     localStorage.setItem('michi-coleccion', JSON.stringify(coleccion));
+    if (usuarioActual) guardarColeccionNube(usuarioActual.uid, coleccion).catch(() => {});
 }
 
 function renderMichiHome() {
@@ -213,7 +215,7 @@ function confirmarNombreMichi() {
     sonidoAdopcion();
     guardarMichi(michiPendienteDeNombre);
 
-    // Agregar a colección
+    // Agregar a colección y sincronizar
     const coleccion = cargarColeccionMichis();
     const yaEnColeccion = coleccion.find(m => m.id === michiPendienteDeNombre.id);
     if (!yaEnColeccion) coleccion.push({ ...michiPendienteDeNombre });
@@ -432,7 +434,7 @@ observarUsuario(async (user) => {
 async function sincronizarDesdNube() {
     if (!usuarioActual) return;
     try {
-        const [agendas, pendientes, emojis, recurrentes, checks, wallet, logros, michi] = await Promise.all([
+        const [agendas, pendientes, emojis, recurrentes, checks, wallet, logros, michi, coleccion] = await Promise.all([
             cargarAgendasNube(usuarioActual.uid),
             cargarPendientesNube(usuarioActual.uid),
             cargarEmojisNube(usuarioActual.uid),
@@ -440,7 +442,8 @@ async function sincronizarDesdNube() {
             cargarChecksNube(usuarioActual.uid),
             cargarWalletNube(usuarioActual.uid),
             cargarLogrosNube(usuarioActual.uid),
-            cargarMichiNube(usuarioActual.uid)
+            cargarMichiNube(usuarioActual.uid),
+            cargarColeccionNube(usuarioActual.uid)
         ]);
         localStorage.setItem('michi-agendas', JSON.stringify(agendas));
         localStorage.setItem('michi-pendientes', JSON.stringify(pendientes));
@@ -449,14 +452,16 @@ async function sincronizarDesdNube() {
         localStorage.setItem('michi-checks', JSON.stringify(checks));
         if (wallet) localStorage.setItem('michi-wallet', JSON.stringify(wallet));
         localStorage.setItem('michi-logros', JSON.stringify(logros || []));
-        if (michi) {
-            localStorage.setItem('michi-companero', JSON.stringify(michi));
-            // Reconstruir colección si no existe
-            const coleccion = cargarColeccionMichis();
-            const yaEnColeccion = coleccion.find(m => m.id === michi.id);
+        if (michi) localStorage.setItem('michi-companero', JSON.stringify(michi));
+        if (coleccion && coleccion.length > 0) {
+            localStorage.setItem('michi-coleccion', JSON.stringify(coleccion));
+        } else if (michi) {
+            // Si no hay colección en nube pero sí hay michi, reconstruir
+            const coleccionLocal = cargarColeccionMichis();
+            const yaEnColeccion = coleccionLocal.find(m => m.id === michi.id);
             if (!yaEnColeccion) {
-                coleccion.push({ ...michi });
-                guardarColeccionMichis(coleccion);
+                coleccionLocal.push({ ...michi });
+                guardarColeccionMichis(coleccionLocal);
             }
         }
     } catch (e) {
