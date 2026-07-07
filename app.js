@@ -44,22 +44,16 @@ function sonidoPatitas() {
     crearSonido(880, 0.15, 'sine', 0.12);
     setTimeout(() => crearSonido(1100, 0.15, 'sine', 0.1), 100);
 }
-
-function sonidoCheck() {
-    crearSonido(600, 0.1, 'sine', 0.1);
-}
-
+function sonidoCheck() { crearSonido(600, 0.1, 'sine', 0.1); }
 function sonidoNivel() {
     crearSonido(523, 0.15, 'sine', 0.12);
     setTimeout(() => crearSonido(659, 0.15, 'sine', 0.12), 120);
     setTimeout(() => crearSonido(784, 0.25, 'sine', 0.15), 240);
 }
-
 function sonidoLogro() {
     crearSonido(784, 0.15, 'sine', 0.12);
     setTimeout(() => crearSonido(988, 0.3, 'sine', 0.15), 150);
 }
-
 function sonidoAdopcion() {
     crearSonido(400, 0.1, 'sine', 0.1);
     setTimeout(() => crearSonido(600, 0.1, 'sine', 0.12), 100);
@@ -105,18 +99,12 @@ function guardarMichisDesbloqueados(lista) {
     localStorage.setItem('michi-desbloqueados', JSON.stringify(lista));
 }
 
-function iniciarParpadeoMichi() {
-    if (window._michiParpadeoTimer) clearInterval(window._michiParpadeoTimer);
-    const michi = cargarMichi();
-    if (!michi) return;
-    window._michiParpadeoTimer = setInterval(() => {
-        const img = document.getElementById('michi-img');
-        if (!img) return;
-        img.classList.remove('michi-parpadeando');
-        void img.offsetWidth;
-        img.classList.add('michi-parpadeando');
-        setTimeout(() => img.classList.remove('michi-parpadeando'), 300);
-    }, Math.random() * 3000 + 3000);
+function cargarColeccionMichis() {
+    return JSON.parse(localStorage.getItem('michi-coleccion') || '[]');
+}
+
+function guardarColeccionMichis(coleccion) {
+    localStorage.setItem('michi-coleccion', JSON.stringify(coleccion));
 }
 
 function renderMichiHome() {
@@ -128,6 +116,7 @@ function renderMichiHome() {
     const btnAdoptar = document.getElementById('btn-adoptar');
     const btnTienda = document.getElementById('btn-tienda-header');
     const btnIrTienda = document.getElementById('btn-ir-tienda');
+    const btnInventario = document.getElementById('btn-inventario-header');
 
     if (michi) {
         img.src = michi.img;
@@ -136,12 +125,16 @@ function renderMichiHome() {
         btnAdoptar.classList.add('oculto');
         if (btnTienda) btnTienda.classList.remove('oculto');
         if (btnIrTienda) btnIrTienda.classList.remove('oculto');
-        iniciarParpadeoMichi();
+        if (btnInventario) {
+            const coleccion = cargarColeccionMichis();
+            coleccion.length > 1 ? btnInventario.classList.remove('oculto') : btnInventario.classList.add('oculto');
+        }
     } else {
         img.src = IMG_TRANSPORTADORA;
         img.style.display = 'block';
         if (btnTienda) btnTienda.classList.add('oculto');
         if (btnIrTienda) btnIrTienda.classList.add('oculto');
+        if (btnInventario) btnInventario.classList.add('oculto');
 
         if (nivel >= NIVEL_ADOPCION && wallet.patitas >= COSTO_ADOPCION) {
             mensaje.textContent = '¡Ya puedes abrir la caja! 🐾';
@@ -162,7 +155,7 @@ function tocarMichi() {
     const caja = document.getElementById('michi-caja');
 
     if (michi) {
-        img.classList.remove('michi-cola', 'michi-parpadeando');
+        img.classList.remove('michi-cola');
         void img.offsetWidth;
         img.classList.add('michi-cola');
         setTimeout(() => img.classList.remove('michi-cola'), 800);
@@ -220,6 +213,13 @@ function confirmarNombreMichi() {
     sonidoAdopcion();
     guardarMichi(michiPendienteDeNombre);
 
+    // Agregar a colección
+    const coleccion = cargarColeccionMichis();
+    const yaEnColeccion = coleccion.find(m => m.id === michiPendienteDeNombre.id);
+    if (!yaEnColeccion) coleccion.push({ ...michiPendienteDeNombre });
+    guardarColeccionMichis(coleccion);
+
+    // Agregar a desbloqueados
     const desbloqueados = cargarMichisDesbloqueados();
     if (!desbloqueados.includes(michiPendienteDeNombre.id)) {
         desbloqueados.push(michiPendienteDeNombre.id);
@@ -231,6 +231,50 @@ function confirmarNombreMichi() {
     renderBadgeWallet();
     mostrarHoy();
     michiPendienteDeNombre = null;
+}
+
+// ── INVENTARIO ────────────────────────────────────────
+function mostrarInventario() {
+    pantallaAnterior = 'pantalla-hoy';
+    document.querySelectorAll('.pantalla').forEach(p => p.classList.remove('activa'));
+    document.getElementById('pantalla-inventario').classList.add('activa');
+    renderInventario();
+}
+
+function renderInventario() {
+    const coleccion = cargarColeccionMichis();
+    const michiActivo = cargarMichi();
+    const grid = document.getElementById('inventario-michis');
+
+    if (coleccion.length === 0) {
+        grid.innerHTML = '<p style="color:#6b7280;text-align:center;padding:20px;font-style:italic">Aún no tienes michis en tu colección 🐾</p>';
+        return;
+    }
+
+    grid.innerHTML = coleccion.map(michi => {
+        const esActivo = michiActivo && michiActivo.id === michi.id;
+        const nombre = michi.nombrePersonalizado || michi.nombre;
+        return `<div class="inventario-card ${esActivo ? 'activo' : ''}">
+            <img src="${michi.img}" alt="${nombre}" class="inventario-card-img"/>
+            <div class="inventario-card-nombre">${nombre}</div>
+            ${esActivo ? '<div class="inventario-card-badge">✨ Acompañante activo</div>' : ''}
+            <button class="btn-elegir" ${esActivo ? 'disabled' : ''} onclick="elegirAcompanante('${michi.id}')">
+                ${esActivo ? 'Activo' : 'Elegir como compañero'}
+            </button>
+        </div>`;
+    }).join('');
+}
+
+function elegirAcompanante(michiId) {
+    const coleccion = cargarColeccionMichis();
+    const michi = coleccion.find(m => m.id === michiId);
+    if (!michi) return;
+
+    guardarMichi(michi);
+    sonidoAdopcion();
+    mostrarToastPatitas(0, `🐱 ¡${michi.nombrePersonalizado || michi.nombre} es tu nuevo acompañante!`);
+    renderInventario();
+    renderMichiHome();
 }
 
 // ── TIENDA ────────────────────────────────────────────
@@ -405,7 +449,16 @@ async function sincronizarDesdNube() {
         localStorage.setItem('michi-checks', JSON.stringify(checks));
         if (wallet) localStorage.setItem('michi-wallet', JSON.stringify(wallet));
         localStorage.setItem('michi-logros', JSON.stringify(logros || []));
-        if (michi) localStorage.setItem('michi-companero', JSON.stringify(michi));
+        if (michi) {
+            localStorage.setItem('michi-companero', JSON.stringify(michi));
+            // Reconstruir colección si no existe
+            const coleccion = cargarColeccionMichis();
+            const yaEnColeccion = coleccion.find(m => m.id === michi.id);
+            if (!yaEnColeccion) {
+                coleccion.push({ ...michi });
+                guardarColeccionMichis(coleccion);
+            }
+        }
     } catch (e) {
         console.log('Sin conexión, usando datos locales');
     }
@@ -479,7 +532,8 @@ async function handleGoogle() {
 async function handleCerrarSesion() {
     await cerrarSesion();
     ['michi-agendas','michi-pendientes','michi-emojis-custom','michi-recurrentes',
-     'michi-checks','michi-wallet','michi-logros','michi-companero','michi-desbloqueados'].forEach(k => localStorage.removeItem(k));
+     'michi-checks','michi-wallet','michi-logros','michi-companero',
+     'michi-desbloqueados','michi-coleccion'].forEach(k => localStorage.removeItem(k));
 }
 
 function toggleAyuda() { document.getElementById('panel-ayuda').classList.toggle('oculto'); }
@@ -1570,6 +1624,7 @@ window.mostrarEditor = mostrarEditor;
 window.mostrarConfig = mostrarConfig;
 window.mostrarWallet = mostrarWallet;
 window.mostrarTienda = mostrarTienda;
+window.mostrarInventario = mostrarInventario;
 window.volverAtras = volverAtras;
 window.editarHoy = editarHoy;
 window.borrarHoy = borrarHoy;
@@ -1598,3 +1653,4 @@ window.confirmarNombreMichi = confirmarNombreMichi;
 window.cerrarModalNombre = cerrarModalNombre;
 window.comprarMichi = comprarMichi;
 window.comprarFreeze = comprarFreeze;
+window.elegirAcompanante = elegirAcompanante;

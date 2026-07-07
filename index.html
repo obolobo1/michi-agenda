@@ -79,6 +79,7 @@
             <div class="header-fila2">
                 <button class="badge-wallet" id="badge-wallet" onclick="mostrarWallet()"></button>
                 <div class="header-fila2-derecha">
+                    <button class="btn-inventario oculto" id="btn-inventario-header" onclick="mostrarInventario()">🎒</button>
                     <button class="btn-tienda oculto" id="btn-tienda-header" onclick="mostrarTienda()">🛍️</button>
                     <button class="btn-config" onclick="mostrarConfig()">⚙️</button>
                 </div>
@@ -254,6 +255,24 @@
             <span>🧊 Protección de Racha</span>
         </div>
         <div class="tienda-grid" id="tienda-items"></div>
+    </div>
+
+    <!-- PANTALLA: INVENTARIO -->
+    <div id="pantalla-inventario" class="pantalla">
+        <header>
+            <button class="btn-back" onclick="volverAtras()">← Volver</button>
+            <h2>🎒 Mis Michis</h2>
+        </header>
+        <div class="seccion-titulo">
+            <span>🐱 Michis disponibles</span>
+        </div>
+        <div class="inventario-grid" id="inventario-michis"></div>
+        <div class="seccion-titulo" style="margin-top:24px">
+            <span>✨ Skins <span class="badge-pronto">Próximamente</span></span>
+        </div>
+        <div class="inventario-pronto">
+            <p>Aquí podrás equipar accesorios y skins a tus michis 🐾</p>
+        </div>
     </div>
 
     <!-- PANTALLA: CONFIGURACIÓN -->
