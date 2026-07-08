@@ -215,13 +215,11 @@ function confirmarNombreMichi() {
     sonidoAdopcion();
     guardarMichi(michiPendienteDeNombre);
 
-    // Agregar a colección y sincronizar
     const coleccion = cargarColeccionMichis();
     const yaEnColeccion = coleccion.find(m => m.id === michiPendienteDeNombre.id);
     if (!yaEnColeccion) coleccion.push({ ...michiPendienteDeNombre });
     guardarColeccionMichis(coleccion);
 
-    // Agregar a desbloqueados
     const desbloqueados = cargarMichisDesbloqueados();
     if (!desbloqueados.includes(michiPendienteDeNombre.id)) {
         desbloqueados.push(michiPendienteDeNombre.id);
@@ -289,18 +287,14 @@ function mostrarTienda() {
 
 function renderTienda() {
     const wallet = cargarWallet();
-    const michiActual = cargarMichi();
-    const desbloqueados = cargarMichisDesbloqueados();
+    const coleccion = cargarColeccionMichis();
 
     document.getElementById('tienda-saldo-patitas').textContent = wallet.patitas;
     document.getElementById('tienda-saldo-bolas').textContent = wallet.bolasDePelo;
 
     const gridMichis = document.getElementById('tienda-michis');
     gridMichis.innerHTML = MICHIS_TIENDA.map(m => {
-        const coleccion = cargarColeccionMichis();
-        const yaDesbloqueado = desbloqueados.includes(m.id) || 
-            (michiActual && michiActual.id === m.id) || 
-            coleccion.some(c => c.id === m.id);
+        const yaDesbloqueado = coleccion.some(c => c.id === m.id);
         const puedePagar = wallet.patitas >= m.precio;
         return `<div class="tienda-card ${yaDesbloqueado ? 'ya-tiene' : ''}">
             <img src="${m.img}" alt="${m.nombre}" class="tienda-card-img"/>
@@ -337,14 +331,19 @@ function renderTienda() {
 function comprarMichi(michiId) {
     const wallet = cargarWallet();
     const michi = MICHIS_TIENDA.find(m => m.id === michiId);
-    const desbloqueados = cargarMichisDesbloqueados();
-    if (!michi || desbloqueados.includes(michiId)) return;
+    const coleccion = cargarColeccionMichis();
+
+    if (!michi || coleccion.some(c => c.id === michiId)) return;
     if (wallet.patitas < michi.precio) return;
 
     wallet.patitas -= michi.precio;
     guardarWallet(wallet);
-    desbloqueados.push(michiId);
-    guardarMichisDesbloqueados(desbloqueados);
+
+    const desbloqueados = cargarMichisDesbloqueados();
+    if (!desbloqueados.includes(michiId)) {
+        desbloqueados.push(michiId);
+        guardarMichisDesbloqueados(desbloqueados);
+    }
 
     michiPendienteDeNombre = { ...michi };
     document.getElementById('input-nombre-michi').value = '';
@@ -459,7 +458,6 @@ async function sincronizarDesdNube() {
         if (coleccion && coleccion.length > 0) {
             localStorage.setItem('michi-coleccion', JSON.stringify(coleccion));
         } else if (michi) {
-            // Si no hay colección en nube pero sí hay michi, reconstruir
             const coleccionLocal = cargarColeccionMichis();
             const yaEnColeccion = coleccionLocal.find(m => m.id === michi.id);
             if (!yaEnColeccion) {
