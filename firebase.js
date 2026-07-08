@@ -139,3 +139,23 @@ export async function cargarColeccionNube(userId) {
     const snap = await getDoc(doc(db, 'usuarios', userId, 'datos', 'coleccion'));
     return snap.exists() ? snap.data().lista : [];
 }
+
+// ── NIVELES DE MICHIS EN LA NUBE ──────────────────────
+export async function guardarNivelesMichisNube(userId, niveles) {
+    await setDoc(doc(db, 'usuarios', userId, 'datos', 'nivelesMichis'), { data: niveles });
+}
+
+export async function cargarNivelesMichisNube(userId) {
+    const snap = await getDoc(doc(db, 'usuarios', userId, 'datos', 'nivelesMichis'));
+    return snap.exists() ? snap.data().data : {};
+}
+
+// ── CARTAS DESBLOQUEADAS EN LA NUBE ───────────────────
+export async function guardarCartasNube(userId, cartas) {
+    await setDoc(doc(db, 'usuarios', userId, 'datos', 'cartas'), { lista: cartas });
+}
+
+export async function cargarCartasNube(userId) {
+    const snap = await getDoc(doc(db, 'usuarios', userId, 'datos', 'cartas'));
+    return snap.exists() ? snap.data().lista : [];
+}

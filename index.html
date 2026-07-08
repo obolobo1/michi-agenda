@@ -97,6 +97,7 @@
                     <img id="michi-img" src="" alt="michi" class="michi-img"/>
                     <div id="michi-ojos" class="michi-ojos oculto">👀</div>
                     <div id="michi-patita" class="michi-patita oculto">🐾</div>
+                    <div id="michi-globo" class="michi-globo oculto"></div>
                 </div>
                 <div id="michi-mensaje" class="michi-mensaje"></div>
                 <button id="btn-adoptar" class="btn-adoptar oculto" onclick="mostrarModalNombre()">
@@ -248,9 +249,13 @@
             <span>🧶 <span id="tienda-saldo-bolas">0</span></span>
         </div>
         <div class="seccion-titulo" style="margin-top:16px">
-            <span>🐱 Michis</span>
+            <span>🐱 Michis básicos</span>
         </div>
-        <div class="tienda-grid" id="tienda-michis"></div>
+        <div class="tienda-grid" id="tienda-michis-basicos"></div>
+        <div class="seccion-titulo" style="margin-top:20px">
+            <span>⭐ Michis Nivel 10</span>
+        </div>
+        <div class="tienda-grid" id="tienda-michis-nivel10"></div>
         <div class="seccion-titulo" style="margin-top:20px">
             <span>🧊 Protección de Racha</span>
         </div>
@@ -348,6 +353,17 @@
             <button class="btn-confirmar-nombre" onclick="confirmarNombreMichi()">
                 ¡Ese es su nombre! 🐾
             </button>
+        </div>
+    </div>
+
+    <!-- MODAL: CARTA ESPECIAL -->
+    <div id="modal-carta" class="modal-overlay oculto" onclick="cerrarModalCarta(event)">
+        <div class="modal-contenido modal-carta">
+            <div class="modal-carta-sobre" id="modal-carta-sobre">💌</div>
+            <h3 class="modal-carta-titulo" id="modal-carta-titulo"></h3>
+            <div class="modal-carta-texto" id="modal-carta-texto"></div>
+            <div class="modal-carta-firma" id="modal-carta-firma"></div>
+            <button class="btn-cerrar-carta" onclick="cerrarModalCarta()">Guardar en logros 🏆</button>
         </div>
     </div>
 

@@ -10,7 +10,9 @@ import {
     guardarWalletNube, cargarWalletNube,
     guardarLogrosNube, cargarLogrosNube,
     guardarMichiNube, cargarMichiNube,
-    guardarColeccionNube, cargarColeccionNube
+    guardarColeccionNube, cargarColeccionNube,
+    guardarNivelesMichisNube, cargarNivelesMichisNube,
+    guardarCartasNube, cargarCartasNube
 } from './firebase.js';
 
 // ── ESTADO GLOBAL ─────────────────────────────────────
@@ -60,24 +62,190 @@ function sonidoAdopcion() {
     setTimeout(() => crearSonido(600, 0.1, 'sine', 0.12), 100);
     setTimeout(() => crearSonido(800, 0.2, 'sine', 0.15), 200);
 }
+function sonidoRonroneo() {
+    crearSonido(120, 0.4, 'sine', 0.08);
+    setTimeout(() => crearSonido(100, 0.4, 'sine', 0.06), 200);
+    setTimeout(() => crearSonido(120, 0.4, 'sine', 0.08), 400);
+}
+function sonidoCarta() {
+    crearSonido(523, 0.2, 'sine', 0.1);
+    setTimeout(() => crearSonido(659, 0.2, 'sine', 0.12), 150);
+    setTimeout(() => crearSonido(784, 0.2, 'sine', 0.12), 300);
+    setTimeout(() => crearSonido(1047, 0.4, 'sine', 0.15), 450);
+}
 
-// ── MICHI COMPAÑERO ───────────────────────────────────
+// ── CATÁLOGO DE MICHIS ────────────────────────────────
 const MICHIS_DISPONIBLES = [
-    { id: 'naranjoso', nombre: 'Naranjoso', img: 'michis/naranjoso.png' },
-    { id: 'negro',     nombre: 'Negro',     img: 'michis/negro.png'     },
-    { id: 'blanco',    nombre: 'Blanco',    img: 'michis/blanco.png'    },
-    { id: 'gris',      nombre: 'Gris',      img: 'michis/gris.png'      },
-    { id: 'calica',    nombre: 'Calica',    img: 'michis/calica.png'    }
+    { id: 'naranjoso', nombre: 'Naranjoso', img: 'michis/naranjoso.png', tipo: 'basico' },
+    { id: 'negro',     nombre: 'Negro',     img: 'michis/negro.png',     tipo: 'basico' },
+    { id: 'blanco',    nombre: 'Blanco',    img: 'michis/blanco.png',    tipo: 'basico' },
+    { id: 'gris',      nombre: 'Gris',      img: 'michis/gris.png',      tipo: 'basico' },
+    { id: 'calica',    nombre: 'Calica',    img: 'michis/calica.png',    tipo: 'basico' },
 ];
 
 const MICHIS_TIENDA = [
-    { id: 'naranjoso', nombre: 'Naranjoso', img: 'michis/naranjoso.png', precio: 200 },
-    { id: 'negro',     nombre: 'Negro',     img: 'michis/negro.png',     precio: 200 },
-    { id: 'blanco',    nombre: 'Blanco',    img: 'michis/blanco.png',    precio: 200 },
-    { id: 'gris',      nombre: 'Gris',      img: 'michis/gris.png',      precio: 200 },
-    { id: 'calica',    nombre: 'Calica',    img: 'michis/calica.png',    precio: 200 }
+    // Básicos
+    { id: 'naranjoso', nombre: 'Naranjoso', img: 'michis/naranjoso.png', tipo: 'basico',  precioPatitas: 200, nivelRequerido: 2  },
+    { id: 'negro',     nombre: 'Negro',     img: 'michis/negro.png',     tipo: 'basico',  precioPatitas: 200, nivelRequerido: 2  },
+    { id: 'blanco',    nombre: 'Blanco',    img: 'michis/blanco.png',    tipo: 'basico',  precioPatitas: 200, nivelRequerido: 2  },
+    { id: 'gris',      nombre: 'Gris',      img: 'michis/gris.png',      tipo: 'basico',  precioPatitas: 200, nivelRequerido: 2  },
+    { id: 'calica',    nombre: 'Calica',    img: 'michis/calica.png',    tipo: 'basico',  precioPatitas: 200, nivelRequerido: 2  },
+    // Nivel 10
+    { id: 'tony',      nombre: 'Tony',      img: 'michis/tony.png',      tipo: 'nivel10', precioPatitas: 500, nivelRequerido: 10 },
+    { id: 'sombra',    nombre: 'Sombra',    img: 'michis/sombra.png',    tipo: 'nivel10', precioPatitas: 500, nivelRequerido: 10 },
+    { id: 'pachon',    nombre: 'Pachón',    img: 'michis/pachon.png',    tipo: 'nivel10', precioPatitas: 500, nivelRequerido: 10 },
 ];
 
+// ── FRASES DEL MICHI POR NIVEL ────────────────────────
+const FRASES_NIVEL1 = [
+    "¡Hola humano! 🐾",
+    "¿Ya hiciste tus actividades? 😸",
+    "Estoy aquí contigo 🐱",
+    "¡Miau! 💙",
+    "Me alegra verte hoy 🐾",
+];
+
+const FRASES_NIVEL2 = [
+    ...FRASES_NIVEL1,
+    "¡Eres increíble, humano! ✨",
+    "Sigue así, lo estás haciendo genial 💪",
+    "Hoy es un buen día para ser productivo 📅",
+    "¡Ya casi terminas el día! 🌙",
+    "Tu esfuerzo me hace muy feliz 😻",
+    "¿Qué sigue en tu agenda? 📋",
+    "¡Juntos podemos con todo! 🐾💙",
+    "Ronroneo de apoyo activado 🐱",
+    "¡No pares, humano! 🔥",
+    "Cada tarea completada cuenta ⭐",
+];
+
+const CARTAS_MICHIS = {
+    naranjoso: { nombre: "Carta de Naranjoso", texto: "Humano, gracias por cuidarme. Tu energía y constancia me inspiran cada día. Cuando completas tus actividades, siento que juntos somos imparables. Sigue brillando así, y recuerda que con este esfuerzo también estás ayudando a los gatitos del mundo real. 🧡", firma: "Con amor felino, Naranjoso 🐱" },
+    negro:     { nombre: "Carta de Negro",     texto: "Humano, he observado tu dedicación desde las sombras y me llena de orgullo. Cada día que apareces y cumples tus metas, el mundo se vuelve un lugar un poco mejor. Tu disciplina es un ejemplo, no solo para mí, sino para todos los gatitos que necesitan un hogar. 🖤", firma: "Con misterio y cariño, Negro 🐱" },
+    blanco:    { nombre: "Carta de Blanco",    texto: "Humano, tu pureza de intención y constancia me hacen sentir el gato más afortunado. Gracias por estar aquí cada día. Tu esfuerzo tiene eco en el mundo real, donde muchos gatitos esperan un ángel como tú. ¡Sigue adelante! 🤍", firma: "Con ternura infinita, Blanco 🐱" },
+    gris:      { nombre: "Carta de Gris",      texto: "Humano, entre el ruido del día a día, tú encuentras siempre un momento para tus metas. Eso es raro y valioso. Me siento honrado de ser tu compañero. Recuerda que cada acto de disciplina tuyo resuena en el mundo, ayudando a los gatitos que más lo necesitan. 🩶", firma: "Con calma y afecto, Gris 🐱" },
+    calica:    { nombre: "Carta de Calica",    texto: "Humano, soy de muchos colores y tú también tienes muchas facetas increíbles. Gracias por mostrarme tu mejor versión cada día. Tu esfuerzo no solo te hace crecer a ti, sino que contribuye a un mundo mejor para todos los gatitos. ¡Eres especial! 🤍🧡🖤", firma: "Con colores y amor, Calica 🐱" },
+    tony:      { nombre: "Carta de Tony",      texto: "Humano, llegar hasta aquí no fue fácil, pero lo lograste. Tu perseverancia me demuestra que eres alguien extraordinario. Yo, Tony, me comprometo a estar siempre a tu lado. Y juntos, con tu esfuerzo, podemos hacer del mundo un lugar más amable para los gatitos que aún esperan su hogar. ⭐", firma: "Con admiración, Tony 🐱" },
+    sombra:    { nombre: "Carta de Sombra",    texto: "Humano, desde las sombras he visto crecer tu disciplina y tu corazón. Alcanzar este nivel no es para cualquiera. Gracias por confiar en mí y por cada día que dedicas a ser mejor. Tu luz ilumina no solo tu vida, sino también la de los gatitos que necesitan un hogar. 🌑", firma: "Desde las sombras con amor, Sombra 🐱" },
+    pachon:    { nombre: "Carta de Pachón",    texto: "Humano, con mis patas gorditas y mi corazón enorme te digo: eres lo máximo. Llegar al nivel 4 conmigo significa que eres constante, dedicado y maravilloso. Tu esfuerzo diario tiene un impacto real en el mundo, ayudando a los gatitos que más lo necesitan. ¡Eres mi héroe! 💛", firma: "Con panzota y amor, Pachón 🐱" },
+};
+
+// ── NIVELES DEL MICHI ─────────────────────────────────
+const NIVELES_MICHI = [
+    { nivel: 1, costo: 100,  nivelUsuario: 5,  desc: "Frases en globo",          emoji: "💬" },
+    { nivel: 2, costo: 200,  nivelUsuario: 8,  desc: "Más frases en globo",      emoji: "💬💬" },
+    { nivel: 3, costo: 300,  nivelUsuario: 12, desc: "Ronroneo al tocar",         emoji: "🎵" },
+    { nivel: 4, costo: 450,  nivelUsuario: 15, desc: "Carta especial de cariño", emoji: "💌" },
+];
+
+function cargarNivelesMichis() {
+    return JSON.parse(localStorage.getItem('michi-niveles') || '{}');
+}
+
+function guardarNivelesMichis(niveles) {
+    localStorage.setItem('michi-niveles', JSON.stringify(niveles));
+    if (usuarioActual) guardarNivelesMichisNube(usuarioActual.uid, niveles).catch(() => {});
+}
+
+function getNivelMichi(michiId) {
+    return cargarNivelesMichis()[michiId] || 0;
+}
+
+function cargarCartas() {
+    return JSON.parse(localStorage.getItem('michi-cartas') || '[]');
+}
+
+function guardarCartas(cartas) {
+    localStorage.setItem('michi-cartas', JSON.stringify(cartas));
+    if (usuarioActual) guardarCartasNube(usuarioActual.uid, cartas).catch(() => {});
+}
+
+function subirNivelMichi(michiId) {
+    const wallet = cargarWallet();
+    const { nivel: nivelUsuario } = calcularNivelDesdeXP(wallet.xp || 0);
+    const niveles = cargarNivelesMichis();
+    const nivelActual = niveles[michiId] || 0;
+    const siguienteNivel = NIVELES_MICHI[nivelActual];
+
+    if (!siguienteNivel) return;
+
+    // Verificar nivel de usuario
+    if (nivelUsuario < siguienteNivel.nivelUsuario) {
+        mostrarToastPatitas(0, `🐱 Aún no me conoces lo suficiente... sigue creciendo y confiaré más en ti`);
+        return;
+    }
+
+    // Verificar patitas
+    if (wallet.patitas < siguienteNivel.costo) {
+        mostrarToastPatitas(0, `🐾 ¡Ya confío en ti! Pero necesito ${siguienteNivel.costo - wallet.patitas} patitas más`);
+        return;
+    }
+
+    wallet.patitas -= siguienteNivel.costo;
+    guardarWallet(wallet);
+
+    niveles[michiId] = nivelActual + 1;
+    guardarNivelesMichis(niveles);
+
+    sonidoNivel();
+    mostrarToastPatitas(0, `⭐ ¡${obtenerNombreMichi(michiId)} subió al Nivel ${nivelActual + 1}!`);
+
+    // Si llegó a Nivel 4 → desbloquear carta como logro
+    if (nivelActual + 1 === 4) {
+        desbloquearCarta(michiId);
+    }
+
+    renderBadgeWallet();
+    renderInventario();
+    revisarLogrosNuevos();
+}
+
+function obtenerNombreMichi(michiId) {
+    const coleccion = cargarColeccionMichis();
+    const michi = coleccion.find(m => m.id === michiId);
+    return michi ? (michi.nombrePersonalizado || michi.nombre) : michiId;
+}
+
+function desbloquearCarta(michiId) {
+    const cartas = cargarCartas();
+    if (cartas.includes(michiId)) return;
+    cartas.push(michiId);
+    guardarCartas(cartas);
+
+    sonidoCarta();
+    const cartaDef = CARTAS_MICHIS[michiId];
+    const nombre = obtenerNombreMichi(michiId);
+
+    setTimeout(() => {
+        document.getElementById('modal-carta-sobre').textContent = '💌';
+        document.getElementById('modal-carta-titulo').textContent = `¡Carta de ${nombre}!`;
+        document.getElementById('modal-carta-texto').textContent = cartaDef ? cartaDef.texto : `Gracias por cuidarme, humano. Tu constancia me hace muy feliz. 🐱`;
+        document.getElementById('modal-carta-firma').textContent = cartaDef ? cartaDef.firma : `Con cariño, ${nombre}`;
+        document.getElementById('modal-carta').classList.remove('oculto');
+    }, 800);
+
+    revisarLogrosNuevos();
+}
+
+function cerrarModalCarta(event) {
+    if (!event || event.target.id === 'modal-carta') {
+        document.getElementById('modal-carta').classList.add('oculto');
+    }
+}
+
+function abrirCarta(michiId) {
+    const cartas = cargarCartas();
+    if (!cartas.includes(michiId)) return;
+    const cartaDef = CARTAS_MICHIS[michiId];
+    const nombre = obtenerNombreMichi(michiId);
+    document.getElementById('modal-carta-sobre').textContent = '💌';
+    document.getElementById('modal-carta-titulo').textContent = `Carta de ${nombre}`;
+    document.getElementById('modal-carta-texto').textContent = cartaDef ? cartaDef.texto : `Gracias por cuidarme, humano. 🐱`;
+    document.getElementById('modal-carta-firma').textContent = cartaDef ? cartaDef.firma : `Con cariño, ${nombre}`;
+    document.getElementById('modal-carta').classList.remove('oculto');
+}
+
+// ── MICHI COMPAÑERO ───────────────────────────────────
 const IMG_TRANSPORTADORA = 'michis/transportadora.png';
 const COSTO_ADOPCION = 100;
 const NIVEL_ADOPCION = 2;
@@ -156,7 +324,28 @@ function tocarMichi() {
     const img = document.getElementById('michi-img');
     const caja = document.getElementById('michi-caja');
 
-    if (michi) {
+    if (!michi) {
+        // Transportadora — animaciones de curiosidad
+        const ojos = document.getElementById('michi-ojos');
+        const patita = document.getElementById('michi-patita');
+        const random = Math.floor(Math.random() * 3);
+        if (random === 0) {
+            ojos.classList.remove('oculto');
+            setTimeout(() => ojos.classList.add('oculto'), 900);
+        } else if (random === 1) {
+            patita.classList.remove('oculto');
+            setTimeout(() => patita.classList.add('oculto'), 900);
+        } else {
+            caja.classList.add('sacudiendo');
+            setTimeout(() => caja.classList.remove('sacudiendo'), 600);
+        }
+        return;
+    }
+
+    const nivelMichi = getNivelMichi(michi.id);
+
+    // Sin nivel — solo cola
+    if (nivelMichi === 0) {
         img.classList.remove('michi-cola');
         void img.offsetWidth;
         img.classList.add('michi-cola');
@@ -164,20 +353,35 @@ function tocarMichi() {
         return;
     }
 
-    const ojos = document.getElementById('michi-ojos');
-    const patita = document.getElementById('michi-patita');
-    const random = Math.floor(Math.random() * 3);
+    // Con nivel — comportamiento aleatorio según nivel
+    const random = Math.random();
 
-    if (random === 0) {
-        ojos.classList.remove('oculto');
-        setTimeout(() => ojos.classList.add('oculto'), 900);
-    } else if (random === 1) {
-        patita.classList.remove('oculto');
-        setTimeout(() => patita.classList.add('oculto'), 900);
+    if (nivelMichi >= 3 && random < 0.10) {
+        // 10% ronroneo (solo nivel 3+)
+        sonidoRonroneo();
+        img.classList.remove('michi-cola');
+        void img.offsetWidth;
+        img.classList.add('michi-cola');
+        setTimeout(() => img.classList.remove('michi-cola'), 800);
+    } else if (nivelMichi >= 1 && random < 0.55) {
+        // 45% globo con frase (nivel 1+)
+        mostrarGloboFrase(michi.id, nivelMichi);
     } else {
-        caja.classList.add('sacudiendo');
-        setTimeout(() => caja.classList.remove('sacudiendo'), 600);
+        // 45% cola
+        img.classList.remove('michi-cola');
+        void img.offsetWidth;
+        img.classList.add('michi-cola');
+        setTimeout(() => img.classList.remove('michi-cola'), 800);
     }
+}
+
+function mostrarGloboFrase(michiId, nivelMichi) {
+    const frases = nivelMichi >= 2 ? FRASES_NIVEL2 : FRASES_NIVEL1;
+    const frase = frases[Math.floor(Math.random() * frases.length)];
+    const globo = document.getElementById('michi-globo');
+    globo.textContent = frase;
+    globo.classList.remove('oculto');
+    setTimeout(() => globo.classList.add('oculto'), 2500);
 }
 
 function mostrarModalNombre() {
@@ -188,8 +392,12 @@ function mostrarModalNombre() {
     wallet.patitas -= COSTO_ADOPCION;
     guardarWallet(wallet);
 
-    const idx = Math.floor(Math.random() * MICHIS_DISPONIBLES.length);
-    michiPendienteDeNombre = { ...MICHIS_DISPONIBLES[idx] };
+    // Gacha — solo michis básicos disponibles en colección
+    const coleccion = cargarColeccionMichis();
+    const disponibles = MICHIS_DISPONIBLES.filter(m => !coleccion.find(c => c.id === m.id));
+    const pool = disponibles.length > 0 ? disponibles : MICHIS_DISPONIBLES;
+    const idx = Math.floor(Math.random() * pool.length);
+    michiPendienteDeNombre = { ...pool[idx] };
 
     document.getElementById('modal-michi-preview').textContent = '🐱';
     document.getElementById('input-nombre-michi').value = '';
@@ -231,6 +439,7 @@ function confirmarNombreMichi() {
     renderBadgeWallet();
     mostrarHoy();
     michiPendienteDeNombre = null;
+    revisarLogrosNuevos();
 }
 
 // ── INVENTARIO ────────────────────────────────────────
@@ -244,6 +453,9 @@ function mostrarInventario() {
 function renderInventario() {
     const coleccion = cargarColeccionMichis();
     const michiActivo = cargarMichi();
+    const niveles = cargarNivelesMichis();
+    const wallet = cargarWallet();
+    const { nivel: nivelUsuario } = calcularNivelDesdeXP(wallet.xp || 0);
     const grid = document.getElementById('inventario-michis');
 
     if (coleccion.length === 0) {
@@ -254,10 +466,50 @@ function renderInventario() {
     grid.innerHTML = coleccion.map(michi => {
         const esActivo = michiActivo && michiActivo.id === michi.id;
         const nombre = michi.nombrePersonalizado || michi.nombre;
+        const nivelActual = niveles[michi.id] || 0;
+        const siguienteNivel = NIVELES_MICHI[nivelActual];
+
+        // Filas de niveles
+        let nivelesHTML = '<div class="inventario-niveles">';
+        NIVELES_MICHI.forEach(n => {
+            const desbloqueado = nivelActual >= n.nivel;
+            const esSiguiente = n.nivel === nivelActual + 1;
+            const puedeUsuario = nivelUsuario >= n.nivelUsuario;
+            const puedePagar = wallet.patitas >= n.costo;
+
+            let textoBtn = '';
+            let btnDisabled = '';
+            let textoNivel = '';
+
+            if (desbloqueado) {
+                textoNivel = `<span class="nivel-texto desbloqueado">${n.emoji} ${n.desc} ✅</span>`;
+            } else if (esSiguiente) {
+                if (!puedeUsuario) {
+                    textoNivel = `<span class="nivel-texto bloqueado-nivel-usuario">${n.emoji} ${n.desc} — Nv.${n.nivelUsuario} usuario</span>`;
+                    textoBtn = `${n.costo}🐾`;
+                    btnDisabled = 'disabled';
+                } else {
+                    textoNivel = `<span class="nivel-texto">${n.emoji} ${n.desc} — ${n.costo}🐾</span>`;
+                    textoBtn = `Subir`;
+                    btnDisabled = !puedePagar ? 'disabled' : '';
+                }
+            } else {
+                textoNivel = `<span class="nivel-texto" style="opacity:0.4">🔒 ${n.desc}</span>`;
+            }
+
+            nivelesHTML += `<div class="nivel-fila">
+                <div class="nivel-info">${textoNivel}</div>
+                ${esSiguiente ? `<button class="btn-subir-nivel" ${btnDisabled} onclick="subirNivelMichi('${michi.id}')">${textoBtn}</button>` : ''}
+            </div>`;
+        });
+        nivelesHTML += '</div>';
+
         return `<div class="inventario-card ${esActivo ? 'activo' : ''}">
             <img src="${michi.img}" alt="${nombre}" class="inventario-card-img"/>
             <div class="inventario-card-nombre">${nombre}</div>
             ${esActivo ? '<div class="inventario-card-badge">✨ Acompañante activo</div>' : ''}
+            ${nivelActual > 0 ? `<div style="font-size:0.7rem;color:#a78bfa">Nivel ${nivelActual} ⭐</div>` : ''}
+            ${nivelesHTML}
             <button class="btn-elegir" ${esActivo ? 'disabled' : ''} onclick="elegirAcompanante('${michi.id}')">
                 ${esActivo ? 'Activo' : 'Elegir como compañero'}
             </button>
@@ -269,7 +521,6 @@ function elegirAcompanante(michiId) {
     const coleccion = cargarColeccionMichis();
     const michi = coleccion.find(m => m.id === michiId);
     if (!michi) return;
-
     guardarMichi(michi);
     sonidoAdopcion();
     mostrarToastPatitas(0, `🐱 ¡${michi.nombrePersonalizado || michi.nombre} es tu nuevo acompañante!`);
@@ -287,26 +538,46 @@ function mostrarTienda() {
 
 function renderTienda() {
     const wallet = cargarWallet();
+    const { nivel: nivelUsuario } = calcularNivelDesdeXP(wallet.xp || 0);
     const coleccion = cargarColeccionMichis();
 
     document.getElementById('tienda-saldo-patitas').textContent = wallet.patitas;
     document.getElementById('tienda-saldo-bolas').textContent = wallet.bolasDePelo;
 
-    const gridMichis = document.getElementById('tienda-michis');
-    gridMichis.innerHTML = MICHIS_TIENDA.map(m => {
+    const renderCard = (m) => {
         const yaDesbloqueado = coleccion.some(c => c.id === m.id);
-        const puedePagar = wallet.patitas >= m.precio;
-        return `<div class="tienda-card ${yaDesbloqueado ? 'ya-tiene' : ''}">
-            <img src="${m.img}" alt="${m.nombre}" class="tienda-card-img"/>
+        const nivelOk = nivelUsuario >= m.nivelRequerido;
+        const puedePagar = wallet.patitas >= m.precioPatitas;
+        const bloqueadoPorNivel = !nivelOk && !yaDesbloqueado;
+
+        let btnTexto, btnDisabled, btnClass;
+        if (yaDesbloqueado) {
+            btnTexto = 'Adoptado'; btnDisabled = 'disabled'; btnClass = 'ya-tiene';
+        } else if (bloqueadoPorNivel) {
+            btnTexto = `Nivel ${m.nivelRequerido} requerido`; btnDisabled = 'disabled'; btnClass = '';
+        } else if (!puedePagar) {
+            btnTexto = 'Sin patitas'; btnDisabled = 'disabled'; btnClass = '';
+        } else {
+            btnTexto = `Adoptar 🐾${m.precioPatitas}`; btnDisabled = ''; btnClass = '';
+        }
+
+        return `<div class="tienda-card ${yaDesbloqueado ? 'ya-tiene' : ''} ${bloqueadoPorNivel ? 'bloqueado-nivel' : ''}">
+            ${bloqueadoPorNivel ? '<div class="tienda-candado">🔒</div>' : ''}
+            <img src="${m.img}" alt="${m.nombre}" class="tienda-card-img" style="${bloqueadoPorNivel ? 'filter:grayscale(0.6)' : ''}"/>
             <div class="tienda-card-nombre">${m.nombre}</div>
-            <div class="tienda-card-precio">${yaDesbloqueado ? '✅ Ya lo tienes' : `🐾 ${m.precio}`}</div>
-            <button class="btn-comprar ${yaDesbloqueado ? 'ya-tiene' : ''}"
-                ${yaDesbloqueado ? 'disabled' : ''}
-                onclick="comprarMichi('${m.id}')">
-                ${yaDesbloqueado ? 'Adoptado' : (puedePagar ? 'Adoptar' : 'Sin patitas')}
+            ${bloqueadoPorNivel ? `<div class="tienda-card-nivel">⭐ Nivel ${m.nivelRequerido} requerido</div>` : ''}
+            <div class="tienda-card-precio">${yaDesbloqueado ? '✅ Ya lo tienes' : `🐾 ${m.precioPatitas}`}</div>
+            <button class="btn-comprar ${btnClass}" ${btnDisabled} onclick="comprarMichi('${m.id}')">
+                ${btnTexto}
             </button>
         </div>`;
-    }).join('');
+    };
+
+    const gridBasicos = document.getElementById('tienda-michis-basicos');
+    gridBasicos.innerHTML = MICHIS_TIENDA.filter(m => m.tipo === 'basico').map(renderCard).join('');
+
+    const gridNivel10 = document.getElementById('tienda-michis-nivel10');
+    gridNivel10.innerHTML = MICHIS_TIENDA.filter(m => m.tipo === 'nivel10').map(renderCard).join('');
 
     const gridItems = document.getElementById('tienda-items');
     gridItems.innerHTML = `
@@ -330,13 +601,18 @@ function renderTienda() {
 
 function comprarMichi(michiId) {
     const wallet = cargarWallet();
+    const { nivel: nivelUsuario } = calcularNivelDesdeXP(wallet.xp || 0);
     const michi = MICHIS_TIENDA.find(m => m.id === michiId);
     const coleccion = cargarColeccionMichis();
 
     if (!michi || coleccion.some(c => c.id === michiId)) return;
-    if (wallet.patitas < michi.precio) return;
+    if (nivelUsuario < michi.nivelRequerido) {
+        mostrarToastPatitas(0, `🔒 Necesitas Nivel ${michi.nivelRequerido} para adoptar este michi`);
+        return;
+    }
+    if (wallet.patitas < michi.precioPatitas) return;
 
-    wallet.patitas -= michi.precio;
+    wallet.patitas -= michi.precioPatitas;
     guardarWallet(wallet);
 
     const desbloqueados = cargarMichisDesbloqueados();
@@ -436,7 +712,7 @@ observarUsuario(async (user) => {
 async function sincronizarDesdNube() {
     if (!usuarioActual) return;
     try {
-        const [agendas, pendientes, emojis, recurrentes, checks, wallet, logros, michi, coleccion] = await Promise.all([
+        const [agendas, pendientes, emojis, recurrentes, checks, wallet, logros, michi, coleccion, nivelesMichis, cartas] = await Promise.all([
             cargarAgendasNube(usuarioActual.uid),
             cargarPendientesNube(usuarioActual.uid),
             cargarEmojisNube(usuarioActual.uid),
@@ -445,7 +721,9 @@ async function sincronizarDesdNube() {
             cargarWalletNube(usuarioActual.uid),
             cargarLogrosNube(usuarioActual.uid),
             cargarMichiNube(usuarioActual.uid),
-            cargarColeccionNube(usuarioActual.uid)
+            cargarColeccionNube(usuarioActual.uid),
+            cargarNivelesMichisNube(usuarioActual.uid),
+            cargarCartasNube(usuarioActual.uid),
         ]);
         localStorage.setItem('michi-agendas', JSON.stringify(agendas));
         localStorage.setItem('michi-pendientes', JSON.stringify(pendientes));
@@ -460,11 +738,10 @@ async function sincronizarDesdNube() {
         } else if (michi) {
             const coleccionLocal = cargarColeccionMichis();
             const yaEnColeccion = coleccionLocal.find(m => m.id === michi.id);
-            if (!yaEnColeccion) {
-                coleccionLocal.push({ ...michi });
-                guardarColeccionMichis(coleccionLocal);
-            }
+            if (!yaEnColeccion) { coleccionLocal.push({ ...michi }); guardarColeccionMichis(coleccionLocal); }
         }
+        if (nivelesMichis) localStorage.setItem('michi-niveles', JSON.stringify(nivelesMichis));
+        if (cartas && cartas.length > 0) localStorage.setItem('michi-cartas', JSON.stringify(cartas));
     } catch (e) {
         console.log('Sin conexión, usando datos locales');
     }
@@ -539,7 +816,7 @@ async function handleCerrarSesion() {
     await cerrarSesion();
     ['michi-agendas','michi-pendientes','michi-emojis-custom','michi-recurrentes',
      'michi-checks','michi-wallet','michi-logros','michi-companero',
-     'michi-desbloqueados','michi-coleccion'].forEach(k => localStorage.removeItem(k));
+     'michi-desbloqueados','michi-coleccion','michi-niveles','michi-cartas'].forEach(k => localStorage.removeItem(k));
 }
 
 function toggleAyuda() { document.getElementById('panel-ayuda').classList.toggle('oculto'); }
@@ -562,25 +839,46 @@ function calcularNivelDesdeXP(xpTotal) {
 
 // ── LOGROS ────────────────────────────────────────────
 const LOGROS_DEFINICION = [
-    { id: 'primera_agenda', nombre: 'Primera agenda creada', emoji: '🎉', condicion: (s) => s.agendasCreadas >= 1, patitas: 0, xp: 0 },
-    { id: 'primera_actividad', nombre: 'Primera actividad completada', emoji: '✅', condicion: (s) => s.actividadesCompletadas >= 1, patitas: 5, xp: 10 },
-    { id: 'primer_dia_completo', nombre: 'Primer día 100% completado', emoji: '💯', condicion: (s) => s.diasCompletados >= 1, patitas: 10, xp: 20 },
-    { id: 'primer_emoji', nombre: 'Primer emoji personalizado', emoji: '🎨', condicion: (s) => s.emojisCreados >= 1, patitas: 5, xp: 10 },
-    { id: 'racha_3', nombre: 'Racha de 3 días', emoji: '🔥', condicion: (s) => s.rachaMaxima >= 3, patitas: 15, xp: 30 },
-    { id: 'racha_7', nombre: 'Racha de 7 días', emoji: '🔥', condicion: (s) => s.rachaMaxima >= 7, patitas: 30, xp: 60 },
-    { id: 'racha_30', nombre: 'Racha de 30 días', emoji: '🔥', condicion: (s) => s.rachaMaxima >= 30, patitas: 80, xp: 150 },
-    { id: 'racha_90', nombre: 'Racha de 90 días', emoji: '🔥', condicion: (s) => s.rachaMaxima >= 90, patitas: 150, xp: 300 },
-    { id: 'racha_365', nombre: 'Racha de 365 días', emoji: '🏆', condicion: (s) => s.rachaMaxima >= 365, patitas: 500, xp: 1000 },
-    { id: 'act_50', nombre: '50 actividades completadas', emoji: '✅', condicion: (s) => s.actividadesCompletadas >= 50, patitas: 30, xp: 60 },
-    { id: 'act_200', nombre: '200 actividades completadas', emoji: '✅', condicion: (s) => s.actividadesCompletadas >= 200, patitas: 80, xp: 150 },
-    { id: 'act_500', nombre: '500 actividades completadas', emoji: '✅', condicion: (s) => s.actividadesCompletadas >= 500, patitas: 150, xp: 300 },
-    { id: 'dias_10', nombre: '10 días 100% completados', emoji: '💯', condicion: (s) => s.diasCompletados >= 10, patitas: 40, xp: 80 },
-    { id: 'dias_30', nombre: '30 días 100% completados', emoji: '💯', condicion: (s) => s.diasCompletados >= 30, patitas: 100, xp: 200 },
-    { id: 'agenda_recurrente', nombre: 'Crear una agenda recurrente', emoji: '↻', condicion: (s) => s.recurrentesCreadas >= 1, patitas: 10, xp: 20 },
-    { id: 'emojis_5', nombre: 'Personalizar 5 emojis distintos', emoji: '🎨', condicion: (s) => s.emojisCreados >= 5, patitas: 15, xp: 30 },
-    { id: 'mes_1', nombre: '1 mes usando la app', emoji: '🗓️', condicion: (s) => s.diasAntiguedad >= 30, patitas: 50, xp: 100 },
-    { id: 'mes_6', nombre: '6 meses usando la app', emoji: '🗓️', condicion: (s) => s.diasAntiguedad >= 180, patitas: 150, xp: 300 },
-    { id: 'anio_1', nombre: '1 año usando la app', emoji: '🗓️', condicion: (s) => s.diasAntiguedad >= 365, patitas: 400, xp: 800 }
+    // Inicio
+    { id: 'primera_agenda',     nombre: 'Primera agenda creada',          emoji: '🎉', condicion: (s) => s.agendasCreadas >= 1,           patitas: 0,   xp: 0,   bolas: 0 },
+    { id: 'primera_actividad',  nombre: 'Primera actividad completada',   emoji: '✅', condicion: (s) => s.actividadesCompletadas >= 1,    patitas: 5,   xp: 10,  bolas: 0 },
+    { id: 'primer_dia_completo',nombre: 'Primer día 100% completado',     emoji: '💯', condicion: (s) => s.diasCompletados >= 1,           patitas: 10,  xp: 20,  bolas: 0 },
+    { id: 'primer_emoji',       nombre: 'Primer emoji personalizado',     emoji: '🎨', condicion: (s) => s.emojisCreados >= 1,             patitas: 5,   xp: 10,  bolas: 0 },
+    // Michis
+    { id: 'primer_michi',       nombre: 'El primer paso',                 emoji: '🐾', condicion: (s) => s.michisColeccion >= 1,           patitas: 20,  xp: 30,  bolas: 0 },
+    { id: 'coleccionista',      nombre: 'Coleccionista',                  emoji: '🎒', condicion: (s) => s.michisColeccion >= 2,           patitas: 30,  xp: 50,  bolas: 0 },
+    { id: 'tres_michis',        nombre: 'Tribu de michis',                emoji: '🐱', condicion: (s) => s.michisColeccion >= 3,           patitas: 50,  xp: 80,  bolas: 0 },
+    { id: 'cinco_michis',       nombre: 'Casa llena',                     emoji: '🏠', condicion: (s) => s.michisColeccion >= 5,           patitas: 100, xp: 150, bolas: 0 },
+    { id: 'basicos_completos',  nombre: 'Básicos completos',              emoji: '⭐', condicion: (s) => s.michisBasicos >= 5,             patitas: 100, xp: 200, bolas: 1 },
+    { id: 'primer_nivel10',     nombre: 'Michi avanzado',                 emoji: '💫', condicion: (s) => s.michisNivel10 >= 1,             patitas: 50,  xp: 300, bolas: 1 },
+    // Cartas
+    { id: 'carta_naranjoso',    nombre: '💌 Carta de Naranjoso',         emoji: '📩', condicion: (s) => s.cartas.includes('naranjoso'),   patitas: 0,   xp: 50,  bolas: 0, esCarta: true, michiId: 'naranjoso' },
+    { id: 'carta_negro',        nombre: '💌 Carta de Negro',             emoji: '📩', condicion: (s) => s.cartas.includes('negro'),       patitas: 0,   xp: 50,  bolas: 0, esCarta: true, michiId: 'negro'     },
+    { id: 'carta_blanco',       nombre: '💌 Carta de Blanco',            emoji: '📩', condicion: (s) => s.cartas.includes('blanco'),      patitas: 0,   xp: 50,  bolas: 0, esCarta: true, michiId: 'blanco'    },
+    { id: 'carta_gris',         nombre: '💌 Carta de Gris',              emoji: '📩', condicion: (s) => s.cartas.includes('gris'),        patitas: 0,   xp: 50,  bolas: 0, esCarta: true, michiId: 'gris'      },
+    { id: 'carta_calica',       nombre: '💌 Carta de Calica',            emoji: '📩', condicion: (s) => s.cartas.includes('calica'),      patitas: 0,   xp: 50,  bolas: 0, esCarta: true, michiId: 'calica'    },
+    { id: 'carta_tony',         nombre: '💌 Carta de Tony',              emoji: '📩', condicion: (s) => s.cartas.includes('tony'),        patitas: 0,   xp: 100, bolas: 0, esCarta: true, michiId: 'tony'      },
+    { id: 'carta_sombra',       nombre: '💌 Carta de Sombra',            emoji: '📩', condicion: (s) => s.cartas.includes('sombra'),      patitas: 0,   xp: 100, bolas: 0, esCarta: true, michiId: 'sombra'    },
+    { id: 'carta_pachon',       nombre: '💌 Carta de Pachón',            emoji: '📩', condicion: (s) => s.cartas.includes('pachon'),      patitas: 0,   xp: 100, bolas: 0, esCarta: true, michiId: 'pachon'    },
+    // Constancia
+    { id: 'racha_3',            nombre: 'Racha de 3 días',                emoji: '🔥', condicion: (s) => s.rachaMaxima >= 3,              patitas: 15,  xp: 30,  bolas: 0 },
+    { id: 'racha_7',            nombre: 'Racha de 7 días',                emoji: '🔥', condicion: (s) => s.rachaMaxima >= 7,              patitas: 30,  xp: 60,  bolas: 0 },
+    { id: 'racha_30',           nombre: 'Racha de 30 días',               emoji: '🔥', condicion: (s) => s.rachaMaxima >= 30,             patitas: 80,  xp: 150, bolas: 1 },
+    { id: 'racha_90',           nombre: 'Racha de 90 días',               emoji: '🔥', condicion: (s) => s.rachaMaxima >= 90,             patitas: 150, xp: 300, bolas: 1 },
+    { id: 'racha_365',          nombre: 'Racha de 365 días',              emoji: '🏆', condicion: (s) => s.rachaMaxima >= 365,            patitas: 500, xp: 1000,bolas: 2 },
+    // Volumen
+    { id: 'act_50',             nombre: '50 actividades completadas',     emoji: '✅', condicion: (s) => s.actividadesCompletadas >= 50,  patitas: 30,  xp: 60,  bolas: 0 },
+    { id: 'act_200',            nombre: '200 actividades completadas',    emoji: '✅', condicion: (s) => s.actividadesCompletadas >= 200, patitas: 80,  xp: 150, bolas: 0 },
+    { id: 'act_500',            nombre: '500 actividades completadas',    emoji: '✅', condicion: (s) => s.actividadesCompletadas >= 500, patitas: 150, xp: 300, bolas: 0 },
+    { id: 'dias_10',            nombre: '10 días 100% completados',       emoji: '💯', condicion: (s) => s.diasCompletados >= 10,         patitas: 40,  xp: 80,  bolas: 0 },
+    { id: 'dias_30',            nombre: '30 días 100% completados',       emoji: '💯', condicion: (s) => s.diasCompletados >= 30,         patitas: 100, xp: 200, bolas: 0 },
+    // Comportamiento
+    { id: 'agenda_recurrente',  nombre: 'Crear una agenda recurrente',    emoji: '↻', condicion: (s) => s.recurrentesCreadas >= 1,       patitas: 10,  xp: 20,  bolas: 0 },
+    { id: 'emojis_5',           nombre: 'Personalizar 5 emojis',          emoji: '🎨', condicion: (s) => s.emojisCreados >= 5,            patitas: 15,  xp: 30,  bolas: 0 },
+    // Antigüedad
+    { id: 'mes_1',              nombre: '1 mes usando la app',            emoji: '🗓️', condicion: (s) => s.diasAntiguedad >= 30,          patitas: 50,  xp: 100, bolas: 0 },
+    { id: 'mes_6',              nombre: '6 meses usando la app',          emoji: '🗓️', condicion: (s) => s.diasAntiguedad >= 180,         patitas: 150, xp: 300, bolas: 0 },
+    { id: 'anio_1',             nombre: '1 año usando la app',            emoji: '🗓️', condicion: (s) => s.diasAntiguedad >= 365,         patitas: 400, xp: 800, bolas: 1 },
 ];
 
 function cargarLogrosDesbloqueados() { return JSON.parse(localStorage.getItem('michi-logros') || '[]'); }
@@ -595,6 +893,8 @@ function obtenerEstadisticas() {
     const agendas = cargarAgendas();
     const emojis = cargarEmojisCustom();
     const recurrentes = cargarRecurrentes();
+    const coleccion = cargarColeccionMichis();
+    const cartas = cargarCartas();
     const todosChecks = JSON.parse(localStorage.getItem('michi-checks') || '{}');
     let actividadesCompletadas = 0, diasCompletados = 0;
     Object.keys(todosChecks).forEach(fechaKey => {
@@ -608,9 +908,17 @@ function obtenerEstadisticas() {
         }
     });
     return {
-        agendasCreadas: agendas.length, actividadesCompletadas, diasCompletados,
-        emojisCreados: emojis.length, recurrentesCreadas: recurrentes.length,
-        rachaMaxima: wallet.rachaMaxima || 0, diasAntiguedad: diasDesdeRegistro(wallet)
+        agendasCreadas: agendas.length,
+        actividadesCompletadas,
+        diasCompletados,
+        emojisCreados: emojis.length,
+        recurrentesCreadas: recurrentes.length,
+        rachaMaxima: wallet.rachaMaxima || 0,
+        diasAntiguedad: diasDesdeRegistro(wallet),
+        michisColeccion: coleccion.length,
+        michisBasicos: coleccion.filter(m => !m.tipo || m.tipo === 'basico').length,
+        michisNivel10: coleccion.filter(m => m.tipo === 'nivel10').length,
+        cartas,
     };
 }
 
@@ -626,8 +934,11 @@ function revisarLogrosNuevos() {
             huboNuevos = true;
             if (logro.patitas > 0) wallet.patitas += logro.patitas;
             if (logro.xp > 0) wallet.xp = (wallet.xp || 0) + logro.xp;
-            sonidoLogro();
-            mostrarToastPatitas(logro.patitas, `🏆 Logro: ${logro.nombre}`);
+            if (logro.bolas > 0) wallet.bolasDePelo = (wallet.bolasDePelo || 0) + logro.bolas;
+            if (!logro.esCarta) {
+                sonidoLogro();
+                mostrarToastPatitas(logro.patitas, `🏆 Logro: ${logro.nombre}`);
+            }
         }
     });
     if (huboNuevos) { guardarLogrosDesbloqueados(desbloqueados); guardarWallet(wallet); renderBadgeWallet(); }
@@ -635,19 +946,41 @@ function revisarLogrosNuevos() {
 
 function renderListaLogros() {
     const desbloqueados = cargarLogrosDesbloqueados();
+    const cartas = cargarCartas();
     const cont = document.getElementById('lista-logros');
     if (!cont) return;
+
     const ordenados = [...LOGROS_DEFINICION].sort((a, b) => {
         const aD = desbloqueados.includes(a.id), bD = desbloqueados.includes(b.id);
         return aD === bD ? 0 : aD ? -1 : 1;
     });
+
     cont.innerHTML = ordenados.map(logro => {
         const desb = desbloqueados.includes(logro.id);
+        const esCarta = logro.esCarta;
+        const cartaAbierta = esCarta && cartas.includes(logro.michiId);
+
+        if (esCarta) {
+            return `<div class="logro-item carta-logro ${desb ? 'desbloqueado' : 'bloqueado'}" 
+                ${desb ? `onclick="abrirCarta('${logro.michiId}')" style="cursor:pointer"` : ''}>
+                <span class="logro-emoji">${desb ? (cartaAbierta ? '💌' : '📩') : '📩'}</span>
+                <div class="logro-info">
+                    <div class="logro-nombre">${desb ? logro.nombre : '📩 Carta secreta — sube tu michi al Nivel 4'}</div>
+                    <div class="logro-recompensa">${desb ? (cartaAbierta ? 'Toca para releer 💌' : 'Sobre cerrado...') : '🔒 Bloqueado'}</div>
+                </div>
+                ${desb ? '<span class="logro-check">✅</span>' : ''}
+            </div>`;
+        }
+
         return `<div class="logro-item ${desb ? 'desbloqueado' : 'bloqueado'}">
             <span class="logro-emoji">${desb ? logro.emoji : '🔒'}</span>
             <div class="logro-info">
                 <div class="logro-nombre">${logro.nombre}</div>
-                <div class="logro-recompensa">${logro.patitas > 0 ? `🐾 +${logro.patitas} ` : ''}${logro.xp > 0 ? `⭐ +${logro.xp} XP` : ''}</div>
+                <div class="logro-recompensa">
+                    ${logro.patitas > 0 ? `🐾 +${logro.patitas} ` : ''}
+                    ${logro.xp > 0 ? `⭐ +${logro.xp} XP ` : ''}
+                    ${logro.bolas > 0 ? `🧶 +${logro.bolas}` : ''}
+                </div>
             </div>
             ${desb ? '<span class="logro-check">✅</span>' : ''}
         </div>`;
@@ -708,6 +1041,18 @@ function revisarMichiFreeze(wallet) {
     }
 }
 
+// Bolas de pelo por racha — ahora cada 30 días
+function revisarBolasRacha(wallet) {
+    const bloquesDe30 = Math.floor((wallet.rachaActual || 0) / 30);
+    const bolasYaOtorgadas = wallet.ultimaBolaPorRacha || 0;
+    if (bloquesDe30 > bolasYaOtorgadas) {
+        const nuevas = bloquesDe30 - bolasYaOtorgadas;
+        wallet.bolasDePelo = (wallet.bolasDePelo || 0) + nuevas;
+        wallet.ultimaBolaPorRacha = bloquesDe30;
+        mostrarToastPatitas(0, `🧶 ¡Ganaste ${nuevas} Bola${nuevas > 1 ? 's' : ''} de Pelo por tu racha!`);
+    }
+}
+
 function procesarLoginDiario() {
     let wallet = cargarWallet();
     const hoyKey = formatearFechaKey(new Date());
@@ -715,6 +1060,7 @@ function procesarLoginDiario() {
     if (wallet.xp === undefined) wallet.xp = 0;
     if (wallet.michiFreezes === undefined) wallet.michiFreezes = 0;
     if (wallet.ultimoFreezeOtorgado === undefined) wallet.ultimoFreezeOtorgado = 0;
+    if (wallet.bolasDePelo === undefined) wallet.bolasDePelo = 0;
 
     if (wallet.ultimoLogin === hoyKey) { guardarWallet(wallet); renderBadgeWallet(); return; }
 
@@ -731,6 +1077,7 @@ function procesarLoginDiario() {
         wallet.rachaActual = 1;
     } else {
         wallet.rachaActual = 1;
+        wallet.ultimaBolaPorRacha = 0;
     }
 
     if (wallet.rachaActual > wallet.rachaMaxima) wallet.rachaMaxima = wallet.rachaActual;
@@ -747,6 +1094,9 @@ function procesarLoginDiario() {
     if (wallet.rachaActual === 7) otorgarPatitas(wallet, 50, '¡7 días seguidos!', 100);
     else if (wallet.rachaActual === 30) otorgarPatitas(wallet, 100, '¡30 días seguidos!', 250);
     else if (wallet.rachaActual > 30 && wallet.rachaActual % 30 === 0) otorgarPatitas(wallet, 80, `¡${wallet.rachaActual} días seguidos!`, 200);
+
+    // Bolas por racha de 30 días
+    revisarBolasRacha(wallet);
 
     const nivelDespues = calcularNivelDesdeXP(wallet.xp || 0).nivel;
     if (nivelDespues > nivelAntes) {
@@ -770,6 +1120,16 @@ function otorgarBonusDiaCompleto(fechaKey) {
     const nivelAntes = calcularNivelDesdeXP(xpAntes).nivel;
     wallet.diaCompletadoHoy = true;
     otorgarPatitas(wallet, enLunaDeMiel(wallet) ? 20 : 10, '¡Día 100% completado!', 25);
+
+    // Revisar bola por racha 7 días con 100% — cada 60 días aprox
+    if (!wallet.ultimaBolaPor7 || diasDesdeRegistro(wallet) - wallet.ultimaBolaPor7 >= 60) {
+        if ((wallet.rachaActual || 0) >= 7) {
+            wallet.bolasDePelo = (wallet.bolasDePelo || 0) + 1;
+            wallet.ultimaBolaPor7 = diasDesdeRegistro(wallet);
+            mostrarToastPatitas(0, '🧶 ¡Racha de 7 días con 100%! Bola de pelo ganada');
+        }
+    }
+
     const nivelDespues = calcularNivelDesdeXP(wallet.xp || 0).nivel;
     if (nivelDespues > nivelAntes) {
         sonidoNivel();
@@ -1660,3 +2020,6 @@ window.cerrarModalNombre = cerrarModalNombre;
 window.comprarMichi = comprarMichi;
 window.comprarFreeze = comprarFreeze;
 window.elegirAcompanante = elegirAcompanante;
+window.subirNivelMichi = subirNivelMichi;
+window.abrirCarta = abrirCarta;
+window.cerrarModalCarta = cerrarModalCarta;
