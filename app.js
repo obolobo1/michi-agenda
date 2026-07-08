@@ -297,7 +297,10 @@ function renderTienda() {
 
     const gridMichis = document.getElementById('tienda-michis');
     gridMichis.innerHTML = MICHIS_TIENDA.map(m => {
-        const yaDesbloqueado = desbloqueados.includes(m.id) || (michiActual && michiActual.id === m.id);
+        const coleccion = cargarColeccionMichis();
+        const yaDesbloqueado = desbloqueados.includes(m.id) || 
+            (michiActual && michiActual.id === m.id) || 
+            coleccion.some(c => c.id === m.id);
         const puedePagar = wallet.patitas >= m.precio;
         return `<div class="tienda-card ${yaDesbloqueado ? 'ya-tiene' : ''}">
             <img src="${m.img}" alt="${m.nombre}" class="tienda-card-img"/>
