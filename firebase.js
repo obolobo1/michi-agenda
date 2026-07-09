@@ -159,3 +159,13 @@ export async function cargarCartasNube(userId) {
     const snap = await getDoc(doc(db, 'usuarios', userId, 'datos', 'cartas'));
     return snap.exists() ? snap.data().lista : [];
 }
+
+// ── MARCOS EN LA NUBE ─────────────────────────────────
+export async function guardarMarcosNube(userId, datos) {
+    await setDoc(doc(db, 'usuarios', userId, 'datos', 'marcos'), { data: datos });
+}
+
+export async function cargarMarcosNube(userId) {
+    const snap = await getDoc(doc(db, 'usuarios', userId, 'datos', 'marcos'));
+    return snap.exists() ? snap.data().data : { coleccion: [], activo: null };
+}
