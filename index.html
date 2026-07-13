@@ -142,6 +142,7 @@
             <div class="ayuda-item"><div class="ayuda-label">Actividad normal:</div><div class="ayuda-ejemplo">GYM 12:00</div></div>
             <div class="ayuda-item"><div class="ayuda-label">También funciona con guión:</div><div class="ayuda-ejemplo">GYM - 12:00</div></div>
             <div class="ayuda-item"><div class="ayuda-label">Sin hora:</div><div class="ayuda-ejemplo">Llamar al doctor</div></div>
+            <div class="ayuda-item"><div class="ayuda-label">⚠️ Formato 24 horas:</div><div class="ayuda-ejemplo">07:00 = 7am · 19:00 = 7pm</div></div>
             <div class="ayuda-item"><div class="ayuda-label">Recurrente días específicos:</div><div class="ayuda-ejemplo">GYM 07:00 [lunes, miércoles, viernes]</div></div>
             <div class="ayuda-item"><div class="ayuda-label">Recurrente todos los días:</div><div class="ayuda-ejemplo">Medicinas 08:00 [todos los días]</div></div>
             <div class="ayuda-item"><div class="ayuda-label">Recurrente entre semana:</div><div class="ayuda-ejemplo">Trabajo 09:00 [entre semana]</div></div>
@@ -165,7 +166,7 @@
             </div>
             <div id="mini-cal-grid"></div>
         </div>
-        <textarea id="input-actividades" placeholder="Escribe tus actividades aquí...&#10;Ej: GYM 12:00&#10;Ej: GYM 07:00 [lunes, miércoles, viernes]"></textarea>
+        <textarea id="input-actividades" placeholder="Escribe tus actividades aquí...&#10;Ej: GYM 07:00&#10;Ej: Cena con mamá 19:00 (formato 24hrs)&#10;Ej: GYM 07:00 [lunes, miércoles, viernes]"></textarea>
         <button class="btn-generar" onclick="procesarAgenda()">🚀 Guardar Agenda</button>
     </div>
 
@@ -320,6 +321,16 @@
                 <button class="btn-add-emoji" onclick="agregarEmojiPersonalizado()">+</button>
             </div>
             <ul id="lista-emojis-custom" class="lista-emojis-custom"></ul>
+        </div>
+        <div class="config-seccion">
+            <div class="config-seccion-titulo">💬 Frases personalizadas del michi</div>
+            <p class="config-desc">Tu michi dirá estas frases al tocarlo y al abrir la app. Cada frase adicional cuesta una 🧶 más.</p>
+            <div id="frases-costo-info" style="font-size:0.78rem;color:#a78bfa;margin-bottom:10px"></div>
+            <div class="emoji-input-row">
+                <input type="text" id="input-frase-custom" placeholder="Escribe una frase para tu michi..." class="input-config" onkeydown="if(event.key==='Enter') agregarFrasePersonalizada()"/>
+                <button class="btn-add-emoji" onclick="agregarFrasePersonalizada()">+</button>
+            </div>
+            <ul id="lista-frases-custom" class="lista-emojis-custom"></ul>
         </div>
         <div class="config-seccion">
             <div class="config-seccion-titulo">↻ Actividades recurrentes</div>

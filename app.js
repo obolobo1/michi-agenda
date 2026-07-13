@@ -82,24 +82,33 @@ const MICHIS_DISPONIBLES = [
     { id: 'blanco',    nombre: 'Blanco',    img: 'michis/blanco.png',    tipo: 'basico' },
     { id: 'gris',      nombre: 'Gris',      img: 'michis/gris.png',      tipo: 'basico' },
     { id: 'calica',    nombre: 'Calica',    img: 'michis/calica.png',    tipo: 'basico' },
+    { id: 'azul',      nombre: 'Azul',      img: 'michis/azul.png',      tipo: 'basico' },
 ];
 
 const MICHIS_TIENDA = [
+    // Básicos
     { id: 'naranjoso', nombre: 'Naranjoso', img: 'michis/naranjoso.png', tipo: 'basico',   precioPatitas: 200, nivelRequerido: 2  },
     { id: 'negro',     nombre: 'Negro',     img: 'michis/negro.png',     tipo: 'basico',   precioPatitas: 200, nivelRequerido: 2  },
     { id: 'blanco',    nombre: 'Blanco',    img: 'michis/blanco.png',    tipo: 'basico',   precioPatitas: 200, nivelRequerido: 2  },
     { id: 'gris',      nombre: 'Gris',      img: 'michis/gris.png',      tipo: 'basico',   precioPatitas: 200, nivelRequerido: 2  },
     { id: 'calica',    nombre: 'Calica',    img: 'michis/calica.png',    tipo: 'basico',   precioPatitas: 200, nivelRequerido: 2  },
+    { id: 'azul',      nombre: 'Azul',      img: 'michis/azul.png',      tipo: 'basico',   precioPatitas: 200, nivelRequerido: 2  },
+    // Nivel 10
     { id: 'tony',      nombre: 'Tony',      img: 'michis/tony.png',      tipo: 'nivel10',  precioPatitas: 500, nivelRequerido: 10 },
     { id: 'sombra',    nombre: 'Sombra',    img: 'michis/sombra.png',    tipo: 'nivel10',  precioPatitas: 500, nivelRequerido: 10 },
     { id: 'pachon',    nombre: 'Pachón',    img: 'michis/pachon.png',    tipo: 'nivel10',  precioPatitas: 500, nivelRequerido: 10 },
+    // Especiales
     { id: 'especial1', nombre: 'Michi Especial', img: 'michis/especial1.png', tipo: 'especial', precioBolas: 2, nivelRequerido: 0 },
+    { id: 'vikingo',   nombre: 'Vikingo',   img: 'michis/vikingo.png',   tipo: 'especial', precioBolas: 2, nivelRequerido: 0 },
 ];
 
 // ── CATÁLOGO DE MARCOS ────────────────────────────────
 const MARCOS_TIENDA = [
-    { id: 'marcofuego',  nombre: 'Marco Fuego',   img: 'michis/marcofuego.png',  precioBolas: 1 },
-    { id: 'marcoflores', nombre: 'Marco Flores',  img: 'michis/marcoflores.png', precioBolas: 1 },
+    { id: 'marcofuego',   nombre: 'Marco Fuego',   img: 'michis/marcofuego.png',   precioBolas: 1 },
+    { id: 'marcoflores',  nombre: 'Marco Flores',  img: 'michis/marcoflores.png',  precioBolas: 1 },
+    { id: 'marcocyber',   nombre: 'Marco Cyber',   img: 'michis/marcocyber.png',   precioBolas: 1 },
+    { id: 'marcovikingo', nombre: 'Marco Vikingo', img: 'michis/marcovikingo.png', precioBolas: 1 },
+    { id: 'marcorosas',   nombre: 'Marco Rosas',   img: 'michis/marcorosas.png',   precioBolas: 1 },
 ];
 
 // ── FRASES POR GATO ───────────────────────────────────
@@ -209,6 +218,27 @@ const FRASES_MICHIS = {
             "¡Eres tan único como yo! ¡Y eso es increíble! 🌈",
         ],
     },
+    azul: {
+        nivel1: [
+            "¡Hola humano! El cielo es el límite 💙",
+            "Fluyo contigo como el agua 💙",
+            "¡Hoy es un día azul de los buenos! 🌊",
+            "Tranquilo y contigo, siempre 💙",
+            "¡Miau! ¿Listo para conquistar el día? 🌊",
+        ],
+        nivel2: [
+            "¡Hola humano! El cielo es el límite 💙",
+            "Fluyo contigo como el agua 💙",
+            "¡Hoy es un día azul de los buenos! 🌊",
+            "Tranquilo y contigo, siempre 💙",
+            "¡Miau! ¿Listo para conquistar el día? 🌊",
+            "Como el océano, tu potencial no tiene fondo 💙",
+            "Sigue fluyendo, humano. Nada te detiene 🌊",
+            "El azul del cielo te recuerda que todo es posible 💙",
+            "Cada actividad completada es una ola que avanza 🌊",
+            "¡Juntos somos profundos e imparables! 💙",
+        ],
+    },
     tony: {
         nivel1: [
             "Estoy aquí, todo está bajo control. ⭐",
@@ -293,6 +323,27 @@ const FRASES_MICHIS = {
             "¡Somos el dúo más increíble! ✨",
         ],
     },
+    vikingo: {
+        nivel1: [
+            "¡SKÅL, humano! ⚔️",
+            "Los vikingos no se rinden. Tú tampoco. 🪖",
+            "¡Hoy conquistamos el día! ⚔️",
+            "El valiente no teme al lunes. 🪖",
+            "¡Adelante, guerrero! ⚔️",
+        ],
+        nivel2: [
+            "¡SKÅL, humano! ⚔️",
+            "Los vikingos no se rinden. Tú tampoco. 🪖",
+            "¡Hoy conquistamos el día! ⚔️",
+            "El valiente no teme al lunes. 🪖",
+            "¡Adelante, guerrero! ⚔️",
+            "Cada actividad completada es una batalla ganada. ⚔️",
+            "Los héroes también tienen su agenda. 🪖",
+            "¡Tu disciplina es tu espada más poderosa! ⚔️",
+            "Odin observa a los constantes. Sigue adelante. 🪖",
+            "¡Eres digno de la gloria, humano! ⚔️",
+        ],
+    },
 };
 
 const FRASES_GENERICAS_N1 = [
@@ -319,10 +370,12 @@ const CARTAS_MICHIS = {
     blanco:    { nombre: "Carta de Blanco",    texto: "Humano, tu pureza de intención y constancia me hacen sentir el gato más afortunado. Gracias por estar aquí cada día. Tu esfuerzo tiene eco en el mundo real, donde muchos gatitos esperan un ángel como tú. ¡Sigue adelante! 🤍", firma: "Con ternura infinita, tu michi blanco 🐱" },
     gris:      { nombre: "Carta de Gris",      texto: "Humano, entre el ruido del día a día, tú encuentras siempre un momento para tus metas. Eso es raro y valioso. Me siento honrado de ser tu compañero. Recuerda que cada acto de disciplina tuyo resuena en el mundo, ayudando a los gatitos que más lo necesitan. 🩶", firma: "Con calma y afecto, tu michi gris 🐱" },
     calica:    { nombre: "Carta de Calica",    texto: "Humano, soy de muchos colores y tú también tienes muchas facetas increíbles. Gracias por mostrarme tu mejor versión cada día. Tu esfuerzo no solo te hace crecer a ti, sino que contribuye a un mundo mejor para todos los gatitos. ¡Eres especial! 🤍🧡🖤", firma: "Con colores y amor, tu michi calica 🐱" },
+    azul:      { nombre: "Carta de Azul",      texto: "Humano, como el océano, tu constancia no tiene fin. Cada día que apareces y completas tus metas, me demuestras que eres imparable. Tu fluir tranquilo pero firme es lo que más admiro de ti. Gracias por dejarme acompañarte en esta aventura. 💙", firma: "Con profundidad y cariño, tu michi azul 🐱" },
     tony:      { nombre: "Carta de Tony",      texto: "Humano, llegar hasta aquí no fue fácil, pero lo lograste. Tu perseverancia me demuestra que eres alguien extraordinario. Me comprometo a estar siempre a tu lado. Y juntos, con tu esfuerzo, podemos hacer del mundo un lugar más amable para los gatitos que aún esperan su hogar. ⭐", firma: "Con admiración, Tony 🐱" },
     sombra:    { nombre: "Carta de Sombra",    texto: "Humano, desde las sombras he visto crecer tu disciplina y tu corazón. Alcanzar este nivel no es para cualquiera. Gracias por confiar en mí y por cada día que dedicas a ser mejor. Tu luz ilumina no solo tu vida, sino también la de los gatitos que necesitan un hogar. 🌑", firma: "Desde las sombras con amor, Sombra 🐱" },
     pachon:    { nombre: "Carta de Pachón",    texto: "Humano, con mis patas gorditas y mi corazón enorme te digo: eres lo máximo. Llegar al nivel 4 conmigo significa que eres constante, dedicado y maravilloso. Tu esfuerzo diario tiene un impacto real en el mundo, ayudando a los gatitos que más lo necesitan. ¡Eres mi héroe! 💛", firma: "Con panzota y amor, Pachón 🐱" },
     especial1: { nombre: "Carta Especial",     texto: "Humano, ser un michi especial significa que te esforzaste más que la mayoría. Me siento honrado de ser tu compañero. Tu dedicación es extraordinaria y me inspira cada día. Gracias por cuidarme y por demostrar que el esfuerzo siempre vale la pena. ✨", firma: "Con brillo especial, tu michi especial 🌟" },
+    vikingo:   { nombre: "Carta de Vikingo",   texto: "¡Humano guerrero! Conquistar el Nivel 4 conmigo no es tarea de cualquiera. Tu disciplina y constancia son dignas de los grandes. Sigue adelante con tu hacha en alto y recuerda: cada hábito que construyes es una victoria para ti y para los gatitos que esperan un hogar. ⚔️", firma: "Con honor vikingo, tu michi Vikingo 🪖" },
 };
 
 // ── NIVELES DEL MICHI ─────────────────────────────────
@@ -353,6 +406,97 @@ function cargarCartas() {
 function guardarCartas(cartas) {
     localStorage.setItem('michi-cartas', JSON.stringify(cartas));
     if (usuarioActual) guardarCartasNube(usuarioActual.uid, cartas).catch(() => {});
+}
+
+// ── FRASES PERSONALIZADAS ─────────────────────────────
+function cargarFrasesPersonalizadas() {
+    return JSON.parse(localStorage.getItem('michi-frases-custom') || '[]');
+}
+
+function guardarFrasesPersonalizadas(frases) {
+    localStorage.setItem('michi-frases-custom', JSON.stringify(frases));
+}
+
+function costeSiguienteFrase() {
+    return cargarFrasesPersonalizadas().length + 1;
+}
+
+function agregarFrasePersonalizada() {
+    const input = document.getElementById('input-frase-custom');
+    const texto = input.value.trim();
+    if (!texto) return;
+
+    const frases = cargarFrasesPersonalizadas();
+    const costo = frases.length + 1;
+
+    if (frases.length >= 20) {
+        mostrarToastPatitas(0, '💬 Ya tienes el máximo de 20 frases personalizadas');
+        return;
+    }
+
+    const wallet = cargarWallet();
+    if (wallet.bolasDePelo < costo) {
+        mostrarToastPatitas(0, `🧶 Necesitas ${costo} bola${costo > 1 ? 's' : ''} de pelo para agregar esta frase`);
+        return;
+    }
+
+    wallet.bolasDePelo -= costo;
+    guardarWallet(wallet);
+    frases.push({ id: Date.now().toString(), texto });
+    guardarFrasesPersonalizadas(frases);
+    input.value = '';
+    renderBadgeWallet();
+    renderFrasesCustom();
+    mostrarToastPatitas(0, `💬 ¡Frase agregada! Tu michi la dirá pronto`);
+}
+
+function borrarFraseCustom(id) {
+    const frases = cargarFrasesPersonalizadas().filter(f => f.id !== id);
+    guardarFrasesPersonalizadas(frases);
+    renderFrasesCustom();
+}
+
+function renderFrasesCustom() {
+    const frases = cargarFrasesPersonalizadas();
+    const lista = document.getElementById('lista-frases-custom');
+    const infoEl = document.getElementById('frases-costo-info');
+    if (!lista) return;
+
+    const costo = frases.length + 1;
+    if (frases.length < 20) {
+        infoEl.textContent = `La siguiente frase costará ${costo} 🧶 · Tienes ${frases.length}/20 frases`;
+    } else {
+        infoEl.textContent = '✅ Máximo alcanzado (20/20 frases)';
+    }
+
+    lista.innerHTML = frases.length === 0
+        ? '<li style="color:#4b5563;font-style:italic;font-size:0.82rem;padding:6px 0">Sin frases personalizadas todavía 💬</li>'
+        : frases.map(f => `
+            <li class="emoji-custom-item">
+                <span class="emoji-custom-icono">💬</span>
+                <span class="emoji-custom-palabra" style="flex:1;font-size:0.82rem">${f.texto}</span>
+                <button class="btn-borrar-emoji" onclick="borrarFraseCustom('${f.id}')">✕</button>
+            </li>`).join('');
+}
+
+function obtenerFraseAleatoria(michiId, nivelMichi) {
+    const frasesCustom = cargarFrasesPersonalizadas();
+    const frasesGato = FRASES_MICHIS[michiId];
+    let pool = [];
+
+    if (frasesGato) {
+        pool = nivelMichi >= 2 ? frasesGato.nivel2 : frasesGato.nivel1;
+    } else {
+        pool = nivelMichi >= 2 ? FRASES_GENERICAS_N2 : FRASES_GENERICAS_N1;
+    }
+
+    // Mezclar frases del gato con personalizadas
+    if (frasesCustom.length > 0) {
+        const todasLasFrases = [...pool, ...frasesCustom.map(f => f.texto)];
+        return todasLasFrases[Math.floor(Math.random() * todasLasFrases.length)];
+    }
+
+    return pool[Math.floor(Math.random() * pool.length)];
 }
 
 // ── MARCOS ────────────────────────────────────────────
@@ -526,6 +670,22 @@ function guardarColeccionMichis(coleccion) {
     if (usuarioActual) guardarColeccionNube(usuarioActual.uid, coleccion).catch(() => {});
 }
 
+function mostrarGloboAlEntrar() {
+    const michi = cargarMichi();
+    if (!michi) return;
+    const nivelMichi = getNivelMichi(michi.id);
+    if (nivelMichi < 1) return;
+
+    setTimeout(() => {
+        const frase = obtenerFraseAleatoria(michi.id, nivelMichi);
+        const globo = document.getElementById('michi-globo');
+        if (!globo) return;
+        globo.textContent = frase;
+        globo.classList.remove('oculto');
+        setTimeout(() => globo.classList.add('oculto'), 3000);
+    }, 800);
+}
+
 function renderMichiHome() {
     const michi = cargarMichi();
     const wallet = cargarWallet();
@@ -622,14 +782,7 @@ function tocarMichi() {
 }
 
 function mostrarGloboFrase(michiId, nivelMichi) {
-    const frasesGato = FRASES_MICHIS[michiId];
-    let frases;
-    if (frasesGato) {
-        frases = nivelMichi >= 2 ? frasesGato.nivel2 : frasesGato.nivel1;
-    } else {
-        frases = nivelMichi >= 2 ? FRASES_GENERICAS_N2 : FRASES_GENERICAS_N1;
-    }
-    const frase = frases[Math.floor(Math.random() * frases.length)];
+    const frase = obtenerFraseAleatoria(michiId, nivelMichi);
     const globo = document.getElementById('michi-globo');
     globo.textContent = frase;
     globo.classList.remove('oculto');
@@ -725,7 +878,6 @@ function renderInventario() {
         const esActivo = michiActivo && michiActivo.id === michi.id;
         const nombre = michi.nombrePersonalizado || michi.nombre;
         const nivelActual = niveles[michi.id] || 0;
-        const siguienteNivel = NIVELES_MICHI[nivelActual];
 
         let nivelesHTML = `<div class="inventario-niveles oculto" id="niveles-${michi.id}">`;
         NIVELES_MICHI.forEach(n => {
@@ -870,11 +1022,9 @@ function renderTienda() {
         </div>`;
     };
 
-    // Michis especiales
     document.getElementById('tienda-michis-especiales').innerHTML =
         MICHIS_TIENDA.filter(m => m.tipo === 'especial').map(renderCardMichi).join('');
 
-    // Marcos
     document.getElementById('tienda-marcos').innerHTML = MARCOS_TIENDA.map(marco => {
         const yaComprado = datosMarcos.coleccion.includes(marco.id);
         const puedePagar = wallet.bolasDePelo >= marco.precioBolas;
@@ -890,15 +1040,12 @@ function renderTienda() {
         </div>`;
     }).join('');
 
-    // Michis básicos
     document.getElementById('tienda-michis-basicos').innerHTML =
         MICHIS_TIENDA.filter(m => m.tipo === 'basico').map(renderCardMichi).join('');
 
-    // Michis nivel 10
     document.getElementById('tienda-michis-nivel10').innerHTML =
         MICHIS_TIENDA.filter(m => m.tipo === 'nivel10').map(renderCardMichi).join('');
 
-    // Items
     document.getElementById('tienda-items').innerHTML = `
         <div class="tienda-card">
             <div class="tienda-card-emoji">🧊</div>
@@ -973,11 +1120,54 @@ function comprarFreeze(tipo) {
 
 // ── ONBOARDING ────────────────────────────────────────
 const SLIDES = [
-    { emoji: '🐱', titulo: '¡Bienvenido a Michi Agenda!', desc: 'Tu agenda inteligente que se adapta a tu rutina. Planea tu día, semana y mes en un solo lugar.', ejemplo: null },
-    { emoji: '📅', titulo: 'Escribe tus actividades', desc: 'Cada actividad va en una línea. Escribe la actividad y la hora separadas por un espacio.', ejemplo: 'GYM 07:00\nDesayuno 09:00\nTrabajo 10:00\nComer con mamá 14:00' },
-    { emoji: '↻', titulo: 'Actividades recurrentes', desc: 'Agrega [días] al final para que la actividad aparezca automáticamente esos días.', ejemplo: 'GYM 07:00 [lunes, miércoles, viernes]\nMedicinas 08:00 [todos los días]\nTrabajo 09:00 [entre semana]' },
-    { emoji: '🐾', titulo: '¡Gana patitas y sube de nivel!', desc: 'Usa la app cada día, completa tus actividades y junta patitas para tu futuro michi compañero.', ejemplo: null },
-    { emoji: '✅', titulo: '¡Listo para empezar!', desc: 'Toca el botón + para crear tu primera agenda. Tus datos se guardan en la nube y están disponibles en todos tus dispositivos.', ejemplo: null }
+    {
+        emoji: '🐱',
+        titulo: '¡Bienvenido a Michi Agenda!',
+        desc: 'Tu agenda inteligente con un compañero que te motiva. Planea tu día, completa tus actividades y gana recompensas.',
+        ejemplo: null
+    },
+    {
+        emoji: '📅',
+        titulo: 'Escribe tus actividades',
+        desc: 'El formato es siempre: Actividad primero, hora después. Una actividad por línea.',
+        ejemplo: '✅ GYM 07:00\n✅ Desayuno 09:00\n✅ Trabajo 10:00\n❌ 07:00 GYM  ← incorrecto'
+    },
+    {
+        emoji: '🕐',
+        titulo: 'Formato de 24 horas',
+        desc: 'Usamos formato de 24 horas. Las 7 de la mañana son 07:00. Las 7 de la noche son 19:00.',
+        ejemplo: '☀️ 07:00 = 7am\n🌙 19:00 = 7pm\n🌙 21:30 = 9:30pm\n🌅 13:00 = 1pm'
+    },
+    {
+        emoji: '↻',
+        titulo: 'Actividades recurrentes',
+        desc: 'Agrega [días] al final para que la actividad aparezca automáticamente esos días de la semana.',
+        ejemplo: 'GYM 07:00 [lunes, miércoles, viernes]\nMedicinas 08:00 [todos los días]\nTrabajo 09:00 [entre semana]'
+    },
+    {
+        emoji: '🐾',
+        titulo: 'Gana patitas y sube de nivel',
+        desc: 'Entra cada día y completa tus actividades para ganar patitas 🐾 y experiencia ⭐. Con patitas puedes adoptar y mejorar a tu michi compañero.',
+        ejemplo: null
+    },
+    {
+        emoji: '🧶',
+        titulo: 'Bolas de pelo — divisa premium',
+        desc: 'Las bolas de pelo 🧶 se ganan por constancia o se compran. Con ellas desbloqueas michis especiales, marcos y frases personalizadas.',
+        ejemplo: null
+    },
+    {
+        emoji: '📦',
+        titulo: 'Tu michi compañero',
+        desc: 'Cuando llegues a Nivel 2 con 100 patitas, podrás abrir la caja y adoptar a tu primer michi. ¡Él te acompañará cada día!',
+        ejemplo: null
+    },
+    {
+        emoji: '✅',
+        titulo: '¡Listo para empezar!',
+        desc: 'Toca el botón + para crear tu primera agenda. Recuerda: primero la actividad, luego la hora en formato 24hrs. ¡Tu michi te espera!',
+        ejemplo: null
+    }
 ];
 
 let slideActual = 0;
@@ -993,7 +1183,8 @@ function renderOnboarding() {
     document.getElementById('onboarding-dots').innerHTML = SLIDES.map((_, i) =>
         `<div class="onboarding-dot ${i === slideActual ? 'activo' : ''}"></div>`
     ).join('');
-    document.getElementById('btn-onboarding-next').textContent = slideActual === SLIDES.length - 1 ? '¡Comenzar! 🐱' : 'Siguiente →';
+    document.getElementById('btn-onboarding-next').textContent =
+        slideActual === SLIDES.length - 1 ? '¡Comenzar! 🐱' : 'Siguiente →';
 }
 
 function siguienteSlide() {
@@ -1024,6 +1215,7 @@ observarUsuario(async (user) => {
         await sincronizarDesdNube();
         procesarLoginDiario();
         mostrarHoy();
+        mostrarGloboAlEntrar();
     } else {
         document.querySelectorAll('.pantalla').forEach(p => p.classList.remove('activa'));
         if (!localStorage.getItem('michi-onboarding-visto')) {
@@ -1144,7 +1336,8 @@ async function handleCerrarSesion() {
     await cerrarSesion();
     ['michi-agendas','michi-pendientes','michi-emojis-custom','michi-recurrentes',
      'michi-checks','michi-wallet','michi-logros','michi-companero',
-     'michi-desbloqueados','michi-coleccion','michi-niveles','michi-cartas','michi-marcos'].forEach(k => localStorage.removeItem(k));
+     'michi-desbloqueados','michi-coleccion','michi-niveles','michi-cartas',
+     'michi-marcos','michi-frases-custom'].forEach(k => localStorage.removeItem(k));
 }
 
 function toggleAyuda() { document.getElementById('panel-ayuda').classList.toggle('oculto'); }
@@ -1182,9 +1375,11 @@ const LOGROS_DEFINICION = [
     { id: 'carta_blanco',       nombre: '💌 Carta de Blanco',            emoji: '📩', condicion: (s) => s.cartas.includes('blanco'),      patitas: 0,   xp: 50,  bolas: 0, esCarta: true, michiId: 'blanco'    },
     { id: 'carta_gris',         nombre: '💌 Carta de Gris',              emoji: '📩', condicion: (s) => s.cartas.includes('gris'),        patitas: 0,   xp: 50,  bolas: 0, esCarta: true, michiId: 'gris'      },
     { id: 'carta_calica',       nombre: '💌 Carta de Calica',            emoji: '📩', condicion: (s) => s.cartas.includes('calica'),      patitas: 0,   xp: 50,  bolas: 0, esCarta: true, michiId: 'calica'    },
+    { id: 'carta_azul',         nombre: '💌 Carta de Azul',              emoji: '📩', condicion: (s) => s.cartas.includes('azul'),        patitas: 0,   xp: 50,  bolas: 0, esCarta: true, michiId: 'azul'      },
     { id: 'carta_tony',         nombre: '💌 Carta de Tony',              emoji: '📩', condicion: (s) => s.cartas.includes('tony'),        patitas: 0,   xp: 100, bolas: 0, esCarta: true, michiId: 'tony'      },
     { id: 'carta_sombra',       nombre: '💌 Carta de Sombra',            emoji: '📩', condicion: (s) => s.cartas.includes('sombra'),      patitas: 0,   xp: 100, bolas: 0, esCarta: true, michiId: 'sombra'    },
     { id: 'carta_pachon',       nombre: '💌 Carta de Pachón',            emoji: '📩', condicion: (s) => s.cartas.includes('pachon'),      patitas: 0,   xp: 100, bolas: 0, esCarta: true, michiId: 'pachon'    },
+    { id: 'carta_vikingo',      nombre: '💌 Carta de Vikingo',           emoji: '📩', condicion: (s) => s.cartas.includes('vikingo'),     patitas: 0,   xp: 100, bolas: 0, esCarta: true, michiId: 'vikingo'   },
     { id: 'racha_3',            nombre: 'Racha de 3 días',                emoji: '🔥', condicion: (s) => s.rachaMaxima >= 3,              patitas: 15,  xp: 30,  bolas: 0 },
     { id: 'racha_7',            nombre: 'Racha de 7 días',                emoji: '🔥', condicion: (s) => s.rachaMaxima >= 7,              patitas: 30,  xp: 60,  bolas: 0 },
     { id: 'racha_30',           nombre: 'Racha de 30 días',               emoji: '🔥', condicion: (s) => s.rachaMaxima >= 30,             patitas: 80,  xp: 150, bolas: 1 },
@@ -2076,6 +2271,7 @@ function mostrarConfig() {
     document.querySelectorAll('.pantalla').forEach(p => p.classList.remove('activa'));
     document.getElementById('pantalla-config').classList.add('activa');
     renderEmojisCustom();
+    renderFrasesCustom();
     renderRecurrentesConfig();
 }
 
@@ -2321,6 +2517,8 @@ window.togglePendiente = togglePendiente;
 window.borrarPendiente = borrarPendiente;
 window.agregarEmojiPersonalizado = agregarEmojiPersonalizado;
 window.borrarEmojiCustom = borrarEmojiCustom;
+window.agregarFrasePersonalizada = agregarFrasePersonalizada;
+window.borrarFraseCustom = borrarFraseCustom;
 window.navegarDia = navegarDia;
 window.borrarRecurrente = borrarRecurrente;
 window.toggleCheck = toggleCheck;
