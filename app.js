@@ -87,18 +87,15 @@ const MICHIS_DISPONIBLES = [
 ];
 
 const MICHIS_TIENDA = [
-    // Básicos
     { id: 'naranjoso', nombre: 'Naranjoso', img: 'michis/naranjoso.png', tipo: 'basico',   precioPatitas: 200, nivelRequerido: 2  },
     { id: 'negro',     nombre: 'Negro',     img: 'michis/negro.png',     tipo: 'basico',   precioPatitas: 200, nivelRequerido: 2  },
     { id: 'blanco',    nombre: 'Blanco',    img: 'michis/blanco.png',    tipo: 'basico',   precioPatitas: 200, nivelRequerido: 2  },
     { id: 'gris',      nombre: 'Gris',      img: 'michis/gris.png',      tipo: 'basico',   precioPatitas: 200, nivelRequerido: 2  },
     { id: 'calica',    nombre: 'Calica',    img: 'michis/calica.png',    tipo: 'basico',   precioPatitas: 200, nivelRequerido: 2  },
     { id: 'azul',      nombre: 'Azul',      img: 'michis/azul.png',      tipo: 'basico',   precioPatitas: 200, nivelRequerido: 2  },
-    // Nivel 10
     { id: 'tony',      nombre: 'Tony',      img: 'michis/tony.png',      tipo: 'nivel10',  precioPatitas: 500, nivelRequerido: 10 },
     { id: 'sombra',    nombre: 'Sombra',    img: 'michis/sombra.png',    tipo: 'nivel10',  precioPatitas: 500, nivelRequerido: 10 },
     { id: 'pachon',    nombre: 'Pachón',    img: 'michis/pachon.png',    tipo: 'nivel10',  precioPatitas: 500, nivelRequerido: 10 },
-    // Especiales
     { id: 'especial1', nombre: 'Michi Especial', img: 'michis/especial1.png', tipo: 'especial', precioBolas: 2, nivelRequerido: 0 },
     { id: 'vikingo',   nombre: 'Vikingo',   img: 'michis/vikingo.png',   tipo: 'especial', precioBolas: 2, nivelRequerido: 0 },
 ];
@@ -419,10 +416,6 @@ function guardarFrasesPersonalizadas(frases) {
     if (usuarioActual) guardarFrasesNube(usuarioActual.uid, frases).catch(() => {});
 }
 
-function costeSiguienteFrase() {
-    return cargarFrasesPersonalizadas().length + 1;
-}
-
 function agregarFrasePersonalizada() {
     const input = document.getElementById('input-frase-custom');
     const texto = input.value.trim();
@@ -492,7 +485,6 @@ function obtenerFraseAleatoria(michiId, nivelMichi) {
         pool = nivelMichi >= 2 ? FRASES_GENERICAS_N2 : FRASES_GENERICAS_N1;
     }
 
-    // Mezclar frases del gato con personalizadas
     if (frasesCustom.length > 0) {
         const todasLasFrases = [...pool, ...frasesCustom.map(f => f.texto)];
         return todasLasFrases[Math.floor(Math.random() * todasLasFrases.length)];
@@ -1232,7 +1224,7 @@ observarUsuario(async (user) => {
 async function sincronizarDesdNube() {
     if (!usuarioActual) return;
     try {
-        const [agendas, pendientes, emojis, recurrentes, checks, wallet, logros, michi, coleccion, nivelesMichis, cartas, marcos] = await Promise.all([
+        const [agendas, pendientes, emojis, recurrentes, checks, wallet, logros, michi, coleccion, nivelesMichis, cartas, marcos, frases] = await Promise.all([
             cargarAgendasNube(usuarioActual.uid),
             cargarPendientesNube(usuarioActual.uid),
             cargarEmojisNube(usuarioActual.uid),
