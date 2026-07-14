@@ -169,3 +169,13 @@ export async function cargarMarcosNube(userId) {
     const snap = await getDoc(doc(db, 'usuarios', userId, 'datos', 'marcos'));
     return snap.exists() ? snap.data().data : { coleccion: [], activo: null };
 }
+
+// ── FRASES CUSTOM EN LA NUBE ──────────────────────────
+export async function guardarFrasesNube(userId, frases) {
+    await setDoc(doc(db, 'usuarios', userId, 'datos', 'frases'), { lista: frases });
+}
+
+export async function cargarFrasesNube(userId) {
+    const snap = await getDoc(doc(db, 'usuarios', userId, 'datos', 'frases'));
+    return snap.exists() ? snap.data().lista : [];
+}

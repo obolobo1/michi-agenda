@@ -14,6 +14,7 @@ import {
     guardarNivelesMichisNube, cargarNivelesMichisNube,
     guardarCartasNube, cargarCartasNube,
     guardarMarcosNube, cargarMarcosNube
+    guardarFrasesNube, cargarFrasesNube
 } from './firebase.js';
 
 // ── ESTADO GLOBAL ─────────────────────────────────────
@@ -415,6 +416,7 @@ function cargarFrasesPersonalizadas() {
 
 function guardarFrasesPersonalizadas(frases) {
     localStorage.setItem('michi-frases-custom', JSON.stringify(frases));
+    if (usuarioActual) guardarFrasesNube(usuarioActual.uid, frases).catch(() => {});
 }
 
 function costeSiguienteFrase() {
@@ -1243,6 +1245,7 @@ async function sincronizarDesdNube() {
             cargarNivelesMichisNube(usuarioActual.uid),
             cargarCartasNube(usuarioActual.uid),
             cargarMarcosNube(usuarioActual.uid),
+            cargarFrasesNube(usuarioActual.uid),
         ]);
         localStorage.setItem('michi-agendas', JSON.stringify(agendas));
         localStorage.setItem('michi-pendientes', JSON.stringify(pendientes));
@@ -1262,6 +1265,7 @@ async function sincronizarDesdNube() {
         if (nivelesMichis) localStorage.setItem('michi-niveles', JSON.stringify(nivelesMichis));
         if (cartas && cartas.length > 0) localStorage.setItem('michi-cartas', JSON.stringify(cartas));
         if (marcos) localStorage.setItem('michi-marcos', JSON.stringify(marcos));
+        if (frases && frases.length > 0) localStorage.setItem('michi-frases-custom', JSON.stringify(frases));
     } catch (e) {
         console.log('Sin conexión, usando datos locales');
     }
