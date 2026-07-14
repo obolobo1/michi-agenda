@@ -13,7 +13,7 @@ import {
     guardarColeccionNube, cargarColeccionNube,
     guardarNivelesMichisNube, cargarNivelesMichisNube,
     guardarCartasNube, cargarCartasNube,
-    guardarMarcosNube, cargarMarcosNube
+    guardarMarcosNube, cargarMarcosNube,
     guardarFrasesNube, cargarFrasesNube
 } from './firebase.js';
 
