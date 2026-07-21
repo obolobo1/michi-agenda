@@ -1026,7 +1026,7 @@ function renderTienda() {
             <img src="${marco.img}" alt="${marco.nombre}" class="tienda-card-img"/>
             <div class="tienda-card-nombre">${marco.nombre}</div>
             <div class="tienda-card-precio">${yaComprado ? '✅ Ya lo tienes' : `🧶 ${marco.precioBolas}`}</div>
-            <button class="btn-comprar ${yaComprado ? 'ya-tiene bola' : 'bola'}"
+            <button class="btn-comprar ${yaComprado ? 'ya-tiene' : ''}"
                 ${yaComprado || !puedePagar ? 'disabled' : ''}
                 onclick="comprarMarco('${marco.id}')">
                 ${yaComprado ? 'En colección' : (puedePagar ? `Comprar 🧶${marco.precioBolas}` : 'Sin bolas')}
@@ -1053,7 +1053,7 @@ function renderTienda() {
             <div class="tienda-card-emoji">🧊</div>
             <div class="tienda-card-nombre">Michi Freeze</div>
             <div class="tienda-card-precio">🧶 1 bola de pelo</div>
-            <button class="btn-comprar bola" ${wallet.bolasDePelo < 1 ? 'disabled' : ''} onclick="comprarFreeze('bolas')">
+            <button class="btn-comprar" ${wallet.bolasDePelo < 1 ? 'disabled' : ''} onclick="comprarFreeze('bolas')">
                 ${wallet.bolasDePelo >= 1 ? 'Comprar' : 'Sin bolas'}
             </button>
         </div>`;
@@ -1534,14 +1534,14 @@ function mostrarToastPatitas(cantidad, motivo) {
     setTimeout(() => { toast.classList.remove('mostrar'); setTimeout(() => toast.remove(), 400); }, 2800);
 }
 
-function revisarMichiFreeze(wallet) {
+function revisarBolasQuincenales(wallet) {
     const bloquesDe15 = Math.floor(diasDesdeRegistro(wallet) / 15);
-    const freezesYaOtorgados = wallet.ultimoFreezeOtorgado || 0;
-    if (bloquesDe15 > freezesYaOtorgados) {
-        const nuevos = bloquesDe15 - freezesYaOtorgados;
-        wallet.michiFreezes += nuevos;
-        wallet.ultimoFreezeOtorgado = bloquesDe15;
-        mostrarToastPatitas(0, `🧊 ¡Ganaste ${nuevos} Michi Freeze!`);
+    const bolasYaOtorgadas = wallet.ultimaBolaPorQuincena || 0;
+    if (bloquesDe15 > bolasYaOtorgadas) {
+        const nuevas = bloquesDe15 - bolasYaOtorgadas;
+        wallet.bolasDePelo = (wallet.bolasDePelo || 0) + nuevas;
+        wallet.ultimaBolaPorQuincena = bloquesDe15;
+        mostrarToastPatitas(0, `🧶 ¡Ganaste ${nuevas} Bola${nuevas > 1 ? 's' : ''} de Pelo por tu constancia!`);
     }
 }
 
@@ -1599,6 +1599,7 @@ function procesarLoginDiario() {
     else if (wallet.rachaActual > 30 && wallet.rachaActual % 30 === 0) otorgarPatitas(wallet, 80, `¡${wallet.rachaActual} días seguidos!`, 200);
 
     revisarBolasRacha(wallet);
+    revisarBolasQuincenales(wallet);
 
     const nivelDespues = calcularNivelDesdeXP(wallet.xp || 0).nivel;
     if (nivelDespues > nivelAntes) {
@@ -1606,7 +1607,6 @@ function procesarLoginDiario() {
         mostrarToastPatitas(0, `🎉 ¡Subiste al Nivel ${nivelDespues}!`);
     }
 
-    revisarMichiFreeze(wallet);
     wallet.ultimoLogin = hoyKey;
     wallet.diaCompletadoHoy = false;
     guardarWallet(wallet);
