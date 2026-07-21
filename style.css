@@ -563,7 +563,7 @@ th { color: #9ca3af; font-size: 0.7rem; text-transform: uppercase; }
 
 .btn-elegir { width: 100%; padding: 8px; background: linear-gradient(135deg, #2563eb, #7c3aed); border: none; border-radius: 10px; color: white; font-size: 0.8rem; font-weight: 600; cursor: pointer; }
 .btn-elegir:disabled { background: rgba(16,185,129,0.2); color: #34d399; cursor: default; }
-.btn-usar-marco { width: 100%; padding: 8px; background: linear-gradient(135deg, #f59e0b, #ec4899); border: none; border-radius: 10px; color: white; font-size: 0.8rem; font-weight: 600; cursor: pointer; }
+.btn-usar-marco { width: 100%; padding: 8px; background: linear-gradient(135deg, #7c3aed, #ec4899); border: none; border-radius: 10px; color: white; font-size: 0.8rem; font-weight: 600; cursor: pointer; }
 .btn-usar-marco:disabled { background: rgba(16,185,129,0.2); color: #34d399; cursor: default; }
 .btn-quitar-marco { width: 100%; padding: 8px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); border-radius: 10px; color: #9ca3af; font-size: 0.8rem; font-weight: 600; cursor: pointer; }
 
