@@ -14,7 +14,8 @@ import {
     guardarNivelesMichisNube, cargarNivelesMichisNube,
     guardarCartasNube, cargarCartasNube,
     guardarMarcosNube, cargarMarcosNube,
-    guardarFrasesNube, cargarFrasesNube
+    guardarFrasesNube, cargarFrasesNube,
+    cargarCatalogoMichis, cargarCatalogoMarcos
 } from './firebase.js';
 
 // ── ESTADO GLOBAL ─────────────────────────────────────
@@ -27,6 +28,8 @@ let pantallaAnterior = 'pantalla-hoy';
 let usuarioActual = null;
 let fechaDashboard = null;
 let michiPendienteDeNombre = null;
+let MICHIS_TIENDA_REMOTO = [];
+let MARCOS_TIENDA_REMOTO = [];
 
 // ── SONIDOS ───────────────────────────────────────────
 function crearSonido(frecuencia, duracion, tipo = 'sine', volumen = 0.15) {
@@ -76,7 +79,7 @@ function sonidoCarta() {
     setTimeout(() => crearSonido(1047, 0.4, 'sine', 0.15), 450);
 }
 
-// ── CATÁLOGO DE MICHIS ────────────────────────────────
+// ── CATÁLOGO DE MICHIS (fallback local) ───────────────
 const MICHIS_DISPONIBLES = [
     { id: 'naranjoso', nombre: 'Naranjoso', img: 'michis/naranjoso.png', tipo: 'basico' },
     { id: 'negro',     nombre: 'Negro',     img: 'michis/negro.png',     tipo: 'basico' },
@@ -100,7 +103,6 @@ const MICHIS_TIENDA = [
     { id: 'vikingo',   nombre: 'Vikingo',   img: 'michis/vikingo.png',   tipo: 'especial', precioBolas: 2, nivelRequerido: 0 },
 ];
 
-// ── CATÁLOGO DE MARCOS ────────────────────────────────
 const MARCOS_TIENDA = [
     { id: 'marcofuego',   nombre: 'Marco Fuego',   img: 'michis/marcofuego.png',   precioBolas: 1 },
     { id: 'marcoflores',  nombre: 'Marco Flores',  img: 'michis/marcoflores.png',  precioBolas: 1 },
@@ -508,8 +510,9 @@ function aplicarMarcoActivo() {
     const datos = cargarDatosMarcos();
     const marcoImg = document.getElementById('michi-marco-img');
     if (!marcoImg) return;
+    const marcosActivos = MARCOS_TIENDA_REMOTO.length > 0 ? MARCOS_TIENDA_REMOTO : MARCOS_TIENDA;
     if (datos.activo) {
-        const marco = MARCOS_TIENDA.find(m => m.id === datos.activo);
+        const marco = marcosActivos.find(m => m.id === datos.activo);
         if (marco) {
             marcoImg.src = marco.img;
             marcoImg.classList.remove('oculto');
@@ -526,7 +529,8 @@ function usarMarco(marcoId) {
         mostrarToastPatitas(0, '🖼️ Marco removido');
     } else {
         datos.activo = marcoId;
-        const marco = MARCOS_TIENDA.find(m => m.id === marcoId);
+        const marcosActivos = MARCOS_TIENDA_REMOTO.length > 0 ? MARCOS_TIENDA_REMOTO : MARCOS_TIENDA;
+        const marco = marcosActivos.find(m => m.id === marcoId);
         mostrarToastPatitas(0, `🖼️ ¡${marco?.nombre || 'Marco'} activado!`);
     }
     guardarDatosMarcos(datos);
@@ -536,7 +540,8 @@ function usarMarco(marcoId) {
 
 function comprarMarco(marcoId) {
     const wallet = cargarWallet();
-    const marco = MARCOS_TIENDA.find(m => m.id === marcoId);
+    const marcosActivos = MARCOS_TIENDA_REMOTO.length > 0 ? MARCOS_TIENDA_REMOTO : MARCOS_TIENDA;
+    const marco = marcosActivos.find(m => m.id === marcoId);
     const datos = cargarDatosMarcos();
     if (!marco || datos.coleccion.includes(marcoId)) return;
     if (wallet.bolasDePelo < marco.precioBolas) {
@@ -935,6 +940,7 @@ function toggleNiveles(michiId) {
 function renderInventarioMarcos() {
     const datos = cargarDatosMarcos();
     const grid = document.getElementById('inventario-marcos');
+    const marcosActivos = MARCOS_TIENDA_REMOTO.length > 0 ? MARCOS_TIENDA_REMOTO : MARCOS_TIENDA;
 
     if (datos.coleccion.length === 0) {
         grid.innerHTML = '<p style="color:#6b7280;text-align:center;padding:20px;font-style:italic;grid-column:span 2">Aún no tienes marcos 🖼️<br><br>Consíguelos en la tienda con 🧶 bolas de pelo</p>';
@@ -942,7 +948,7 @@ function renderInventarioMarcos() {
     }
 
     grid.innerHTML = datos.coleccion.map(marcoId => {
-        const marco = MARCOS_TIENDA.find(m => m.id === marcoId);
+        const marco = marcosActivos.find(m => m.id === marcoId);
         if (!marco) return '';
         const esActivo = datos.activo === marcoId;
         return `<div class="inventario-card ${esActivo ? 'activo' : ''}">
@@ -982,6 +988,14 @@ function renderTienda() {
     const coleccion = cargarColeccionMichis();
     const datosMarcos = cargarDatosMarcos();
 
+    const michisEspeciales = MICHIS_TIENDA_REMOTO.length > 0
+        ? MICHIS_TIENDA_REMOTO.filter(m => m.tipo === 'especial')
+        : MICHIS_TIENDA.filter(m => m.tipo === 'especial');
+
+    const marcosRender = MARCOS_TIENDA_REMOTO.length > 0
+        ? MARCOS_TIENDA_REMOTO
+        : MARCOS_TIENDA;
+
     document.getElementById('tienda-saldo-patitas').textContent = wallet.patitas;
     document.getElementById('tienda-saldo-bolas').textContent = wallet.bolasDePelo;
 
@@ -1017,9 +1031,9 @@ function renderTienda() {
     };
 
     document.getElementById('tienda-michis-especiales').innerHTML =
-        MICHIS_TIENDA.filter(m => m.tipo === 'especial').map(renderCardMichi).join('');
+        michisEspeciales.map(renderCardMichi).join('');
 
-    document.getElementById('tienda-marcos').innerHTML = MARCOS_TIENDA.map(marco => {
+    document.getElementById('tienda-marcos').innerHTML = marcosRender.map(marco => {
         const yaComprado = datosMarcos.coleccion.includes(marco.id);
         const puedePagar = wallet.bolasDePelo >= marco.precioBolas;
         return `<div class="tienda-card ${yaComprado ? 'ya-tiene' : ''}">
@@ -1062,7 +1076,10 @@ function renderTienda() {
 function comprarMichi(michiId) {
     const wallet = cargarWallet();
     const { nivel: nivelUsuario } = calcularNivelDesdeXP(wallet.xp || 0);
-    const michi = MICHIS_TIENDA.find(m => m.id === michiId);
+    const todosLosMichis = MICHIS_TIENDA_REMOTO.length > 0
+        ? [...MICHIS_TIENDA, ...MICHIS_TIENDA_REMOTO]
+        : MICHIS_TIENDA;
+    const michi = todosLosMichis.find(m => m.id === michiId);
     const coleccion = cargarColeccionMichis();
 
     if (!michi || coleccion.some(c => c.id === michiId)) return;
@@ -1224,7 +1241,7 @@ observarUsuario(async (user) => {
 async function sincronizarDesdNube() {
     if (!usuarioActual) return;
     try {
-        const [agendas, pendientes, emojis, recurrentes, checks, wallet, logros, michi, coleccion, nivelesMichis, cartas, marcos, frases] = await Promise.all([
+        const [agendas, pendientes, emojis, recurrentes, checks, wallet, logros, michi, coleccion, nivelesMichis, cartas, marcos, frases, catalogoMichis, catalogoMarcos] = await Promise.all([
             cargarAgendasNube(usuarioActual.uid),
             cargarPendientesNube(usuarioActual.uid),
             cargarEmojisNube(usuarioActual.uid),
@@ -1238,6 +1255,8 @@ async function sincronizarDesdNube() {
             cargarCartasNube(usuarioActual.uid),
             cargarMarcosNube(usuarioActual.uid),
             cargarFrasesNube(usuarioActual.uid),
+            cargarCatalogoMichis(),
+            cargarCatalogoMarcos(),
         ]);
         localStorage.setItem('michi-agendas', JSON.stringify(agendas));
         localStorage.setItem('michi-pendientes', JSON.stringify(pendientes));
@@ -1258,6 +1277,8 @@ async function sincronizarDesdNube() {
         if (cartas && cartas.length > 0) localStorage.setItem('michi-cartas', JSON.stringify(cartas));
         if (marcos) localStorage.setItem('michi-marcos', JSON.stringify(marcos));
         if (frases && frases.length > 0) localStorage.setItem('michi-frases-custom', JSON.stringify(frases));
+        if (catalogoMichis && catalogoMichis.length > 0) MICHIS_TIENDA_REMOTO = catalogoMichis;
+        if (catalogoMarcos && catalogoMarcos.length > 0) MARCOS_TIENDA_REMOTO = catalogoMarcos;
     } catch (e) {
         console.log('Sin conexión, usando datos locales');
     }
