@@ -79,7 +79,7 @@ function sonidoCarta() {
     setTimeout(() => crearSonido(1047, 0.4, 'sine', 0.15), 450);
 }
 
-// ── CATÁLOGO DE MICHIS (fallback local) ───────────────
+// ── CATÁLOGO LOCAL (fallback) ─────────────────────────
 const MICHIS_DISPONIBLES = [
     { id: 'naranjoso', nombre: 'Naranjoso', img: 'michis/naranjoso.png', tipo: 'basico' },
     { id: 'negro',     nombre: 'Negro',     img: 'michis/negro.png',     tipo: 'basico' },
@@ -90,17 +90,17 @@ const MICHIS_DISPONIBLES = [
 ];
 
 const MICHIS_TIENDA = [
-    { id: 'naranjoso', nombre: 'Naranjoso', img: 'michis/naranjoso.png', tipo: 'basico',   precioPatitas: 200, nivelRequerido: 2  },
-    { id: 'negro',     nombre: 'Negro',     img: 'michis/negro.png',     tipo: 'basico',   precioPatitas: 200, nivelRequerido: 2  },
-    { id: 'blanco',    nombre: 'Blanco',    img: 'michis/blanco.png',    tipo: 'basico',   precioPatitas: 200, nivelRequerido: 2  },
-    { id: 'gris',      nombre: 'Gris',      img: 'michis/gris.png',      tipo: 'basico',   precioPatitas: 200, nivelRequerido: 2  },
-    { id: 'calica',    nombre: 'Calica',    img: 'michis/calica.png',    tipo: 'basico',   precioPatitas: 200, nivelRequerido: 2  },
-    { id: 'azul',      nombre: 'Azul',      img: 'michis/azul.png',      tipo: 'basico',   precioPatitas: 200, nivelRequerido: 2  },
-    { id: 'tony',      nombre: 'Tony',      img: 'michis/tony.png',      tipo: 'nivel10',  precioPatitas: 500, nivelRequerido: 10 },
-    { id: 'sombra',    nombre: 'Sombra',    img: 'michis/sombra.png',    tipo: 'nivel10',  precioPatitas: 500, nivelRequerido: 10 },
-    { id: 'pachon',    nombre: 'Pachón',    img: 'michis/pachon.png',    tipo: 'nivel10',  precioPatitas: 500, nivelRequerido: 10 },
-    { id: 'especial1', nombre: 'Michi Especial', img: 'michis/especial1.png', tipo: 'especial', precioBolas: 2, nivelRequerido: 0 },
-    { id: 'vikingo',   nombre: 'Vikingo',   img: 'michis/vikingo.png',   tipo: 'especial', precioBolas: 2, nivelRequerido: 0 },
+    { id: 'naranjoso', nombre: 'Naranjoso', img: 'michis/naranjoso.png', tipo: 'basico',   precioPatitas: 200, nivelRequerido: 2,  precioBolas: 0 },
+    { id: 'negro',     nombre: 'Negro',     img: 'michis/negro.png',     tipo: 'basico',   precioPatitas: 200, nivelRequerido: 2,  precioBolas: 0 },
+    { id: 'blanco',    nombre: 'Blanco',    img: 'michis/blanco.png',    tipo: 'basico',   precioPatitas: 200, nivelRequerido: 2,  precioBolas: 0 },
+    { id: 'gris',      nombre: 'Gris',      img: 'michis/gris.png',      tipo: 'basico',   precioPatitas: 200, nivelRequerido: 2,  precioBolas: 0 },
+    { id: 'calica',    nombre: 'Calica',    img: 'michis/calica.png',    tipo: 'basico',   precioPatitas: 200, nivelRequerido: 2,  precioBolas: 0 },
+    { id: 'azul',      nombre: 'Azul',      img: 'michis/azul.png',      tipo: 'basico',   precioPatitas: 200, nivelRequerido: 2,  precioBolas: 0 },
+    { id: 'tony',      nombre: 'Tony',      img: 'michis/tony.png',      tipo: 'nivel10',  precioPatitas: 500, nivelRequerido: 10, precioBolas: 0 },
+    { id: 'sombra',    nombre: 'Sombra',    img: 'michis/sombra.png',    tipo: 'nivel10',  precioPatitas: 500, nivelRequerido: 10, precioBolas: 0 },
+    { id: 'pachon',    nombre: 'Pachón',    img: 'michis/pachon.png',    tipo: 'nivel10',  precioPatitas: 500, nivelRequerido: 10, precioBolas: 0 },
+    { id: 'especial1', nombre: 'Michi Especial', img: 'michis/especial1.png', tipo: 'especial', precioPatitas: 0, nivelRequerido: 0, precioBolas: 2 },
+    { id: 'vikingo',   nombre: 'Vikingo',   img: 'michis/vikingo.png',   tipo: 'especial', precioPatitas: 0, nivelRequerido: 0,  precioBolas: 2 },
 ];
 
 const MARCOS_TIENDA = [
@@ -344,6 +344,48 @@ const FRASES_MICHIS = {
             "¡Eres digno de la gloria, humano! ⚔️",
         ],
     },
+    esfinge: {
+        nivel1: [
+            "La elegancia no descansa, humano. ¡Vamos! ✨",
+            "Sin pelo pero con mucho estilo 😼",
+            "¡Muévete, que el día no espera! ✨",
+            "La energía es mi mejor accesorio 💫",
+            "¡Hoy es un gran día para ser extraordinario! ✨",
+        ],
+        nivel2: [
+            "La elegancia no descansa, humano. ¡Vamos! ✨",
+            "Sin pelo pero con mucho estilo 😼",
+            "¡Muévete, que el día no espera! ✨",
+            "La energía es mi mejor accesorio 💫",
+            "¡Hoy es un gran día para ser extraordinario! ✨",
+            "La disciplina es la forma más alta de elegancia 💫",
+            "No necesito pelo para brillar. Tú tampoco necesitas excusas. ✨",
+            "Los que se mueven conquistan. Los que esperan, observan. 😼",
+            "Cada actividad completada es un movimiento elegante 💫",
+            "Soy único y tú también. Úsalo a tu favor. ✨",
+        ],
+    },
+    persa: {
+        nivel1: [
+            "Hola... con mucho esfuerzo 😴",
+            "Eres increíble. Yo me quedo aquí. 🐾",
+            "Si yo puedo levantarme, tú puedes con todo 💛",
+            "Tan elegante... tan cansado... 😴",
+            "Te apoyo desde aquí, con mucho amor 💛",
+        ],
+        nivel2: [
+            "Hola... con mucho esfuerzo 😴",
+            "Eres increíble. Yo me quedo aquí. 🐾",
+            "Si yo puedo levantarme, tú puedes con todo 💛",
+            "Tan elegante... tan cansado... 😴",
+            "Te apoyo desde aquí, con mucho amor 💛",
+            "El éxito es como una siesta larga — hay que ganárselo 😴",
+            "Yo pongo la ternura, tú pones la energía 💛",
+            "Qué hermoso eres cuando cumples tus metas 😻",
+            "No me muevas que estoy muy cómodo... pero te quiero mucho 💛",
+            "Un paso a la vez, como yo cuando tengo hambre 😴",
+        ],
+    },
 };
 
 const FRASES_GENERICAS_N1 = [
@@ -376,6 +418,8 @@ const CARTAS_MICHIS = {
     pachon:    { nombre: "Carta de Pachón",    texto: "Humano, con mis patas gorditas y mi corazón enorme te digo: eres lo máximo. Llegar al nivel 4 conmigo significa que eres constante, dedicado y maravilloso. Tu esfuerzo diario tiene un impacto real en el mundo, ayudando a los gatitos que más lo necesitan. ¡Eres mi héroe! 💛", firma: "Con panzota y amor, Pachón 🐱" },
     especial1: { nombre: "Carta Especial",     texto: "Humano, ser un michi especial significa que te esforzaste más que la mayoría. Me siento honrado de ser tu compañero. Tu dedicación es extraordinaria y me inspira cada día. Gracias por cuidarme y por demostrar que el esfuerzo siempre vale la pena. ✨", firma: "Con brillo especial, tu michi especial 🌟" },
     vikingo:   { nombre: "Carta de Vikingo",   texto: "¡Humano guerrero! Conquistar el Nivel 4 conmigo no es tarea de cualquiera. Tu disciplina y constancia son dignas de los grandes. Sigue adelante con tu hacha en alto y recuerda: cada hábito que construyes es una victoria para ti y para los gatitos que esperan un hogar. ⚔️", firma: "Con honor vikingo, tu michi Vikingo 🪖" },
+    esfinge:   { nombre: "Carta de Esfinge",   texto: "Humano elegante, llegar al Nivel 4 conmigo demuestra que tienes clase y disciplina en igual medida. La elegancia no es solo apariencia — es constancia, es movimiento, es no rendirse nunca. Gracias por ser tan extraordinario. Los gatitos del mundo real lo notan. ✨", firma: "Con elegancia y energía, tu michi Esfinge 😼" },
+    persa:     { nombre: "Carta de Persa",     texto: "Humano querido... llegaste al Nivel 4. Con lo cansado que estoy, eso me emociona muchísimo. Eres de lo más bonito que he visto — constante, dedicado y con mucho corazón. Desde mi cojín favorito te mando todo mi amor. Los gatitos del mundo real también te lo agradecen. 💛", firma: "Con mucho amor y algo de sueño, tu michi Persa 😴" },
 };
 
 // ── NIVELES DEL MICHI ─────────────────────────────────
@@ -506,13 +550,20 @@ function guardarDatosMarcos(datos) {
     if (usuarioActual) guardarMarcosNube(usuarioActual.uid, datos).catch(() => {});
 }
 
+function obtenerMarcosActivos() {
+    return MARCOS_TIENDA_REMOTO.length > 0 ? MARCOS_TIENDA_REMOTO : MARCOS_TIENDA;
+}
+
+function obtenerMichisTiendaActivos() {
+    return MICHIS_TIENDA_REMOTO.length > 0 ? MICHIS_TIENDA_REMOTO : MICHIS_TIENDA;
+}
+
 function aplicarMarcoActivo() {
     const datos = cargarDatosMarcos();
     const marcoImg = document.getElementById('michi-marco-img');
     if (!marcoImg) return;
-    const marcosActivos = MARCOS_TIENDA_REMOTO.length > 0 ? MARCOS_TIENDA_REMOTO : MARCOS_TIENDA;
     if (datos.activo) {
-        const marco = marcosActivos.find(m => m.id === datos.activo);
+        const marco = obtenerMarcosActivos().find(m => m.id === datos.activo);
         if (marco) {
             marcoImg.src = marco.img;
             marcoImg.classList.remove('oculto');
@@ -529,8 +580,7 @@ function usarMarco(marcoId) {
         mostrarToastPatitas(0, '🖼️ Marco removido');
     } else {
         datos.activo = marcoId;
-        const marcosActivos = MARCOS_TIENDA_REMOTO.length > 0 ? MARCOS_TIENDA_REMOTO : MARCOS_TIENDA;
-        const marco = marcosActivos.find(m => m.id === marcoId);
+        const marco = obtenerMarcosActivos().find(m => m.id === marcoId);
         mostrarToastPatitas(0, `🖼️ ¡${marco?.nombre || 'Marco'} activado!`);
     }
     guardarDatosMarcos(datos);
@@ -540,8 +590,7 @@ function usarMarco(marcoId) {
 
 function comprarMarco(marcoId) {
     const wallet = cargarWallet();
-    const marcosActivos = MARCOS_TIENDA_REMOTO.length > 0 ? MARCOS_TIENDA_REMOTO : MARCOS_TIENDA;
-    const marco = marcosActivos.find(m => m.id === marcoId);
+    const marco = obtenerMarcosActivos().find(m => m.id === marcoId);
     const datos = cargarDatosMarcos();
     if (!marco || datos.coleccion.includes(marcoId)) return;
     if (wallet.bolasDePelo < marco.precioBolas) {
@@ -940,7 +989,7 @@ function toggleNiveles(michiId) {
 function renderInventarioMarcos() {
     const datos = cargarDatosMarcos();
     const grid = document.getElementById('inventario-marcos');
-    const marcosActivos = MARCOS_TIENDA_REMOTO.length > 0 ? MARCOS_TIENDA_REMOTO : MARCOS_TIENDA;
+    const marcosActivos = obtenerMarcosActivos();
 
     if (datos.coleccion.length === 0) {
         grid.innerHTML = '<p style="color:#6b7280;text-align:center;padding:20px;font-style:italic;grid-column:span 2">Aún no tienes marcos 🖼️<br><br>Consíguelos en la tienda con 🧶 bolas de pelo</p>';
@@ -987,14 +1036,8 @@ function renderTienda() {
     const { nivel: nivelUsuario } = calcularNivelDesdeXP(wallet.xp || 0);
     const coleccion = cargarColeccionMichis();
     const datosMarcos = cargarDatosMarcos();
-
-    const michisEspeciales = MICHIS_TIENDA_REMOTO.length > 0
-        ? MICHIS_TIENDA_REMOTO.filter(m => m.tipo === 'especial')
-        : MICHIS_TIENDA.filter(m => m.tipo === 'especial');
-
-    const marcosRender = MARCOS_TIENDA_REMOTO.length > 0
-        ? MARCOS_TIENDA_REMOTO
-        : MARCOS_TIENDA;
+    const todosMichis = obtenerMichisTiendaActivos();
+    const marcosRender = obtenerMarcosActivos();
 
     document.getElementById('tienda-saldo-patitas').textContent = wallet.patitas;
     document.getElementById('tienda-saldo-bolas').textContent = wallet.bolasDePelo;
@@ -1031,7 +1074,7 @@ function renderTienda() {
     };
 
     document.getElementById('tienda-michis-especiales').innerHTML =
-        michisEspeciales.map(renderCardMichi).join('');
+        todosMichis.filter(m => m.tipo === 'especial').map(renderCardMichi).join('');
 
     document.getElementById('tienda-marcos').innerHTML = marcosRender.map(marco => {
         const yaComprado = datosMarcos.coleccion.includes(marco.id);
@@ -1049,10 +1092,10 @@ function renderTienda() {
     }).join('');
 
     document.getElementById('tienda-michis-basicos').innerHTML =
-        MICHIS_TIENDA.filter(m => m.tipo === 'basico').map(renderCardMichi).join('');
+        todosMichis.filter(m => m.tipo === 'basico').map(renderCardMichi).join('');
 
     document.getElementById('tienda-michis-nivel10').innerHTML =
-        MICHIS_TIENDA.filter(m => m.tipo === 'nivel10').map(renderCardMichi).join('');
+        todosMichis.filter(m => m.tipo === 'nivel10').map(renderCardMichi).join('');
 
     document.getElementById('tienda-items').innerHTML = `
         <div class="tienda-card">
@@ -1076,10 +1119,7 @@ function renderTienda() {
 function comprarMichi(michiId) {
     const wallet = cargarWallet();
     const { nivel: nivelUsuario } = calcularNivelDesdeXP(wallet.xp || 0);
-    const todosLosMichis = MICHIS_TIENDA_REMOTO.length > 0
-        ? [...MICHIS_TIENDA, ...MICHIS_TIENDA_REMOTO]
-        : MICHIS_TIENDA;
-    const michi = todosLosMichis.find(m => m.id === michiId);
+    const michi = obtenerMichisTiendaActivos().find(m => m.id === michiId);
     const coleccion = cargarColeccionMichis();
 
     if (!michi || coleccion.some(c => c.id === michiId)) return;
@@ -1385,7 +1425,7 @@ const LOGROS_DEFINICION = [
     { id: 'coleccionista',      nombre: 'Coleccionista',                  emoji: '🎒', condicion: (s) => s.michisColeccion >= 2,           patitas: 30,  xp: 50,  bolas: 0 },
     { id: 'tres_michis',        nombre: 'Tribu de michis',                emoji: '🐱', condicion: (s) => s.michisColeccion >= 3,           patitas: 50,  xp: 80,  bolas: 0 },
     { id: 'cinco_michis',       nombre: 'Casa llena',                     emoji: '🏠', condicion: (s) => s.michisColeccion >= 5,           patitas: 100, xp: 150, bolas: 0 },
-    { id: 'basicos_completos',  nombre: 'Básicos completos',              emoji: '⭐', condicion: (s) => s.michisBasicos >= 5,             patitas: 100, xp: 200, bolas: 1 },
+    { id: 'basicos_completos',  nombre: 'Básicos completos',              emoji: '⭐', condicion: (s) => s.michisBasicos >= 6,             patitas: 100, xp: 200, bolas: 1 },
     { id: 'primer_nivel10',     nombre: 'Michi avanzado',                 emoji: '💫', condicion: (s) => s.michisNivel10 >= 1,             patitas: 50,  xp: 300, bolas: 1 },
     { id: 'carta_naranjoso',    nombre: '💌 Carta de Naranjoso',         emoji: '📩', condicion: (s) => s.cartas.includes('naranjoso'),   patitas: 0,   xp: 50,  bolas: 0, esCarta: true, michiId: 'naranjoso' },
     { id: 'carta_negro',        nombre: '💌 Carta de Negro',             emoji: '📩', condicion: (s) => s.cartas.includes('negro'),       patitas: 0,   xp: 50,  bolas: 0, esCarta: true, michiId: 'negro'     },
@@ -1397,6 +1437,8 @@ const LOGROS_DEFINICION = [
     { id: 'carta_sombra',       nombre: '💌 Carta de Sombra',            emoji: '📩', condicion: (s) => s.cartas.includes('sombra'),      patitas: 0,   xp: 100, bolas: 0, esCarta: true, michiId: 'sombra'    },
     { id: 'carta_pachon',       nombre: '💌 Carta de Pachón',            emoji: '📩', condicion: (s) => s.cartas.includes('pachon'),      patitas: 0,   xp: 100, bolas: 0, esCarta: true, michiId: 'pachon'    },
     { id: 'carta_vikingo',      nombre: '💌 Carta de Vikingo',           emoji: '📩', condicion: (s) => s.cartas.includes('vikingo'),     patitas: 0,   xp: 100, bolas: 0, esCarta: true, michiId: 'vikingo'   },
+    { id: 'carta_esfinge',      nombre: '💌 Carta de Esfinge',           emoji: '📩', condicion: (s) => s.cartas.includes('esfinge'),     patitas: 0,   xp: 100, bolas: 0, esCarta: true, michiId: 'esfinge'   },
+    { id: 'carta_persa',        nombre: '💌 Carta de Persa',             emoji: '📩', condicion: (s) => s.cartas.includes('persa'),       patitas: 0,   xp: 100, bolas: 0, esCarta: true, michiId: 'persa'     },
     { id: 'racha_3',            nombre: 'Racha de 3 días',                emoji: '🔥', condicion: (s) => s.rachaMaxima >= 3,              patitas: 15,  xp: 30,  bolas: 0 },
     { id: 'racha_7',            nombre: 'Racha de 7 días',                emoji: '🔥', condicion: (s) => s.rachaMaxima >= 7,              patitas: 30,  xp: 60,  bolas: 0 },
     { id: 'racha_30',           nombre: 'Racha de 30 días',               emoji: '🔥', condicion: (s) => s.rachaMaxima >= 30,             patitas: 80,  xp: 150, bolas: 1 },
