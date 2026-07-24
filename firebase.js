@@ -179,3 +179,14 @@ export async function cargarFrasesNube(userId) {
     const snap = await getDoc(doc(db, 'usuarios', userId, 'datos', 'frases'));
     return snap.exists() ? snap.data().lista : [];
 }
+
+// ── CATÁLOGOS EN LA NUBE v2 ──────────────────────────────
+export async function cargarCatalogoMichis() {
+    const snap = await getDoc(doc(db, 'catalogo', 'michis'));
+    return snap.exists() ? snap.data().lista : [];
+}
+
+export async function cargarCatalogoMarcos() {
+    const snap = await getDoc(doc(db, 'catalogo', 'marcos'));
+    return snap.exists() ? snap.data().lista : [];
+}
