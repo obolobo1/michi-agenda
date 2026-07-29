@@ -413,10 +413,20 @@
     <script type="module" src="app.js"></script>
     <script>
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/michi-agenda/sw.js')
-                .then(() => console.log('Service Worker registrado'))
-                .catch(err => console.log('Error SW:', err));
-        }
-    </script>
+    navigator.serviceWorker.register('/michi-agenda/sw.js')
+        .then(reg => {
+            console.log('Service Worker registrado');
+            reg.addEventListener('updatefound', () => {
+                const nuevoSW = reg.installing;
+                nuevoSW.addEventListener('statechange', () => {
+                    if (nuevoSW.state === 'activated') {
+                        window.location.reload();
+                    }
+                });
+            });
+        })
+        .catch(err => console.log('Error SW:', err));
+}
+</script>
 </body>
 </html>
