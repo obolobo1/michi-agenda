@@ -81,6 +81,7 @@
                 <div class="header-fila2-derecha">
                     <button class="btn-inventario oculto" id="btn-inventario-header" onclick="mostrarInventario()">🎒</button>
                     <button class="btn-tienda oculto" id="btn-tienda-header" onclick="mostrarTienda()">🛍️</button>
+                    <button class="btn-minijuegos" onclick="mostrarMinijuegos()">🎮</button>
                     <button class="btn-config" onclick="mostrarConfig()">⚙️</button>
                 </div>
             </div>
@@ -296,6 +297,102 @@
         </div>
     </div>
 
+    <!-- PANTALLA: MINIJUEGOS -->
+    <div id="pantalla-minijuegos" class="pantalla">
+        <header>
+            <button class="btn-back" onclick="volverAtras()">← Volver</button>
+            <h2>🎮 Minijuegos</h2>
+        </header>
+        <div class="minijuegos-saldo-bar">
+            <span>🐾 <span id="minijuegos-saldo-patitas">0</span> patitas</span>
+        </div>
+
+        <!-- BLACKJACK -->
+        <div class="minijuego-card" id="card-blackjack">
+            <div class="minijuego-card-header">
+                <span class="minijuego-emoji">🃏</span>
+                <div class="minijuego-info">
+                    <div class="minijuego-nombre">Blackjack</div>
+                    <div class="minijuego-desc">Apuesta tus patitas y planta cara al dealer</div>
+                </div>
+                <div class="minijuego-intentos" id="bj-intentos-display">3 intentos</div>
+            </div>
+            <button class="btn-jugar-bj" onclick="iniciarBlackjack()">Jugar 🃏</button>
+        </div>
+
+        <!-- MEMORAMA (próximamente) -->
+        <div class="minijuego-card proximamente">
+            <div class="minijuego-card-header">
+                <span class="minijuego-emoji">🐱</span>
+                <div class="minijuego-info">
+                    <div class="minijuego-nombre">Memorama de Michis</div>
+                    <div class="minijuego-desc">Encuentra los pares de michis y marcos</div>
+                </div>
+                <span class="badge-pronto">Próximamente</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- PANTALLA: BLACKJACK -->
+    <div id="pantalla-blackjack" class="pantalla">
+        <header>
+            <button class="btn-back" onclick="salirBlackjack()">← Salir</button>
+            <h2>🃏 Blackjack</h2>
+        </header>
+
+        <!-- FASE: APUESTA -->
+        <div id="bj-fase-apuesta">
+            <div class="bj-apuesta-box">
+                <div class="bj-saldo-display">
+                    🐾 <span id="bj-saldo">0</span> patitas disponibles
+                </div>
+                <div class="bj-apuesta-titulo">¿Cuánto quieres apostar?</div>
+                <div class="bj-apuesta-controles">
+                    <button class="btn-bj-apuesta-menos" onclick="cambiarApuesta(-10)">−</button>
+                    <div class="bj-apuesta-cantidad">🐾 <span id="bj-apuesta-display">10</span></div>
+                    <button class="btn-bj-apuesta-mas" onclick="cambiarApuesta(10)">+</button>
+                </div>
+                <div class="bj-apuesta-rapida">
+                    <button onclick="setApuesta(10)">10</button>
+                    <button onclick="setApuesta(50)">50</button>
+                    <button onclick="setApuesta(100)">100</button>
+                    <button onclick="setApuestaMax()">Máx</button>
+                </div>
+                <button class="btn-bj-repartir" onclick="repartirCartas()">Repartir 🃏</button>
+            </div>
+        </div>
+
+        <!-- FASE: JUEGO -->
+        <div id="bj-fase-juego" class="oculto">
+            <div class="bj-mesa">
+                <div class="bj-lado dealer">
+                    <div class="bj-lado-titulo">Dealer <span id="bj-dealer-valor" class="bj-valor"></span></div>
+                    <div class="bj-cartas" id="bj-dealer-cartas"></div>
+                </div>
+                <div class="bj-lado jugador">
+                    <div class="bj-lado-titulo">Tú <span id="bj-jugador-valor" class="bj-valor"></span></div>
+                    <div class="bj-cartas" id="bj-jugador-cartas"></div>
+                </div>
+            </div>
+            <div class="bj-apuesta-actual">Apuesta: 🐾 <span id="bj-apuesta-actual"></span></div>
+            <div class="bj-acciones" id="bj-acciones">
+                <button class="btn-bj-accion pedir" onclick="pedirCarta()">Pedir carta</button>
+                <button class="btn-bj-accion plantarse" onclick="plantarse()">Plantarse</button>
+            </div>
+        </div>
+
+        <!-- RESULTADO -->
+        <div id="bj-resultado" class="oculto">
+            <div class="bj-resultado-emoji" id="bj-resultado-emoji"></div>
+            <div class="bj-resultado-titulo" id="bj-resultado-titulo"></div>
+            <div class="bj-resultado-desc" id="bj-resultado-desc"></div>
+            <div class="bj-resultado-acciones">
+                <button class="btn-bj-repartir" onclick="nuevaMano()" id="btn-nueva-mano">Jugar otra mano</button>
+                <button class="btn-bj-salir" onclick="salirBlackjack()">Salir</button>
+            </div>
+        </div>
+    </div>
+
     <!-- PANTALLA: CONFIGURACIÓN -->
     <div id="pantalla-config" class="pantalla">
         <header>
@@ -413,20 +510,20 @@
     <script type="module" src="app.js"></script>
     <script>
         if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/michi-agenda/sw.js')
-        .then(reg => {
-            console.log('Service Worker registrado');
-            reg.addEventListener('updatefound', () => {
-                const nuevoSW = reg.installing;
-                nuevoSW.addEventListener('statechange', () => {
-                    if (nuevoSW.state === 'activated') {
-                        window.location.reload();
-                    }
-                });
-            });
-        })
-        .catch(err => console.log('Error SW:', err));
-}
-</script>
+            navigator.serviceWorker.register('/michi-agenda/sw.js')
+                .then(reg => {
+                    console.log('Service Worker registrado');
+                    reg.addEventListener('updatefound', () => {
+                        const nuevoSW = reg.installing;
+                        nuevoSW.addEventListener('statechange', () => {
+                            if (nuevoSW.state === 'activated') {
+                                window.location.reload();
+                            }
+                        });
+                    });
+                })
+                .catch(err => console.log('Error SW:', err));
+        }
+    </script>
 </body>
 </html>

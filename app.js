@@ -31,6 +31,13 @@ let michiPendienteDeNombre = null;
 let MICHIS_TIENDA_REMOTO = [];
 let MARCOS_TIENDA_REMOTO = [];
 
+// ── ESTADO BLACKJACK ──────────────────────────────────
+let bjBaraja = [];
+let bjManoJugador = [];
+let bjManoDealer = [];
+let bjApuesta = 10;
+let bjCartaOculta = null;
+
 // ── SONIDOS ───────────────────────────────────────────
 function crearSonido(frecuencia, duracion, tipo = 'sine', volumen = 0.15) {
     try {
@@ -77,6 +84,19 @@ function sonidoCarta() {
     setTimeout(() => crearSonido(659, 0.2, 'sine', 0.12), 150);
     setTimeout(() => crearSonido(784, 0.2, 'sine', 0.12), 300);
     setTimeout(() => crearSonido(1047, 0.4, 'sine', 0.15), 450);
+}
+function sonidoCartaBJ() {
+    crearSonido(440, 0.08, 'sine', 0.1);
+}
+function sonidoGanarBJ() {
+    crearSonido(523, 0.15, 'sine', 0.12);
+    setTimeout(() => crearSonido(659, 0.15, 'sine', 0.12), 100);
+    setTimeout(() => crearSonido(784, 0.15, 'sine', 0.12), 200);
+    setTimeout(() => crearSonido(1047, 0.3, 'sine', 0.15), 300);
+}
+function sonidoPerderBJ() {
+    crearSonido(300, 0.2, 'sine', 0.1);
+    setTimeout(() => crearSonido(250, 0.3, 'sine', 0.1), 200);
 }
 
 // ── CATÁLOGO LOCAL (fallback) ─────────────────────────
@@ -466,21 +486,11 @@ function agregarFrasePersonalizada() {
     const input = document.getElementById('input-frase-custom');
     const texto = input.value.trim();
     if (!texto) return;
-
     const frases = cargarFrasesPersonalizadas();
     const costo = frases.length + 1;
-
-    if (frases.length >= 20) {
-        mostrarToastPatitas(0, '💬 Ya tienes el máximo de 20 frases personalizadas');
-        return;
-    }
-
+    if (frases.length >= 20) { mostrarToastPatitas(0, '💬 Ya tienes el máximo de 20 frases personalizadas'); return; }
     const wallet = cargarWallet();
-    if (wallet.bolasDePelo < costo) {
-        mostrarToastPatitas(0, `🧶 Necesitas ${costo} bola${costo > 1 ? 's' : ''} de pelo para agregar esta frase`);
-        return;
-    }
-
+    if (wallet.bolasDePelo < costo) { mostrarToastPatitas(0, `🧶 Necesitas ${costo} bola${costo > 1 ? 's' : ''} de pelo para agregar esta frase`); return; }
     wallet.bolasDePelo -= costo;
     guardarWallet(wallet);
     frases.push({ id: Date.now().toString(), texto });
@@ -502,14 +512,12 @@ function renderFrasesCustom() {
     const lista = document.getElementById('lista-frases-custom');
     const infoEl = document.getElementById('frases-costo-info');
     if (!lista) return;
-
     const costo = frases.length + 1;
     if (frases.length < 20) {
         infoEl.textContent = `La siguiente frase costará ${costo} 🧶 · Tienes ${frases.length}/20 frases`;
     } else {
         infoEl.textContent = '✅ Máximo alcanzado (20/20 frases)';
     }
-
     lista.innerHTML = frases.length === 0
         ? '<li style="color:#4b5563;font-style:italic;font-size:0.82rem;padding:6px 0">Sin frases personalizadas todavía 💬</li>'
         : frases.map(f => `
@@ -524,18 +532,15 @@ function obtenerFraseAleatoria(michiId, nivelMichi) {
     const frasesCustom = cargarFrasesPersonalizadas();
     const frasesGato = FRASES_MICHIS[michiId];
     let pool = [];
-
     if (frasesGato) {
         pool = nivelMichi >= 2 ? frasesGato.nivel2 : frasesGato.nivel1;
     } else {
         pool = nivelMichi >= 2 ? FRASES_GENERICAS_N2 : FRASES_GENERICAS_N1;
     }
-
     if (frasesCustom.length > 0) {
         const todasLasFrases = [...pool, ...frasesCustom.map(f => f.texto)];
         return todasLasFrases[Math.floor(Math.random() * todasLasFrases.length)];
     }
-
     return pool[Math.floor(Math.random() * pool.length)];
 }
 
@@ -564,10 +569,7 @@ function aplicarMarcoActivo() {
     if (!marcoImg) return;
     if (datos.activo) {
         const marco = obtenerMarcosActivos().find(m => m.id === datos.activo);
-        if (marco) {
-            marcoImg.src = marco.img;
-            marcoImg.classList.remove('oculto');
-        }
+        if (marco) { marcoImg.src = marco.img; marcoImg.classList.remove('oculto'); }
     } else {
         marcoImg.classList.add('oculto');
     }
@@ -593,10 +595,7 @@ function comprarMarco(marcoId) {
     const marco = obtenerMarcosActivos().find(m => m.id === marcoId);
     const datos = cargarDatosMarcos();
     if (!marco || datos.coleccion.includes(marcoId)) return;
-    if (wallet.bolasDePelo < marco.precioBolas) {
-        mostrarToastPatitas(0, '🧶 No tienes suficientes bolas de pelo');
-        return;
-    }
+    if (wallet.bolasDePelo < marco.precioBolas) { mostrarToastPatitas(0, '🧶 No tienes suficientes bolas de pelo'); return; }
     wallet.bolasDePelo -= marco.precioBolas;
     guardarWallet(wallet);
     datos.coleccion.push(marcoId);
@@ -617,28 +616,16 @@ function subirNivelMichi(michiId) {
     const niveles = cargarNivelesMichis();
     const nivelActual = niveles[michiId] || 0;
     const siguienteNivel = NIVELES_MICHI[nivelActual];
-
     if (!siguienteNivel) return;
-
-    if (nivelUsuario < siguienteNivel.nivelUsuario) {
-        mostrarToastPatitas(0, `🐱 Aún no me conoces lo suficiente... sigue creciendo y confiaré más en ti`);
-        return;
-    }
-
-    if (wallet.patitas < siguienteNivel.costo) {
-        mostrarToastPatitas(0, `🐾 ¡Ya confío en ti! Pero necesito ${siguienteNivel.costo - wallet.patitas} patitas más`);
-        return;
-    }
-
+    if (nivelUsuario < siguienteNivel.nivelUsuario) { mostrarToastPatitas(0, `🐱 Aún no me conoces lo suficiente... sigue creciendo y confiaré más en ti`); return; }
+    if (wallet.patitas < siguienteNivel.costo) { mostrarToastPatitas(0, `🐾 ¡Ya confío en ti! Pero necesito ${siguienteNivel.costo - wallet.patitas} patitas más`); return; }
     wallet.patitas -= siguienteNivel.costo;
     guardarWallet(wallet);
     niveles[michiId] = nivelActual + 1;
     guardarNivelesMichis(niveles);
     sonidoNivel();
     mostrarToastPatitas(0, `⭐ ¡${obtenerNombreMichi(michiId)} subió al Nivel ${nivelActual + 1}!`);
-
     if (nivelActual + 1 === 4) desbloquearCarta(michiId);
-
     renderBadgeWallet();
     renderInventario();
     revisarLogrosNuevos();
@@ -723,7 +710,6 @@ function mostrarGloboAlEntrar() {
     if (!michi) return;
     const nivelMichi = getNivelMichi(michi.id);
     if (nivelMichi < 1) return;
-
     setTimeout(() => {
         const frase = obtenerFraseAleatoria(michi.id, nivelMichi);
         const globo = document.getElementById('michi-globo');
@@ -764,7 +750,6 @@ function renderMichiHome() {
         if (btnTienda) btnTienda.classList.add('oculto');
         if (btnIrTienda) btnIrTienda.classList.add('oculto');
         if (btnInventario) btnInventario.classList.add('oculto');
-
         if (nivel >= NIVEL_ADOPCION && wallet.patitas >= COSTO_ADOPCION) {
             mensaje.textContent = '¡Ya puedes abrir la caja! 🐾';
             btnAdoptar.classList.remove('oculto');
@@ -783,48 +768,28 @@ function tocarMichi() {
     const michi = cargarMichi();
     const img = document.getElementById('michi-img');
     const caja = document.getElementById('michi-caja');
-
     if (!michi) {
         const ojos = document.getElementById('michi-ojos');
         const patita = document.getElementById('michi-patita');
         const random = Math.floor(Math.random() * 3);
-        if (random === 0) {
-            ojos.classList.remove('oculto');
-            setTimeout(() => ojos.classList.add('oculto'), 900);
-        } else if (random === 1) {
-            patita.classList.remove('oculto');
-            setTimeout(() => patita.classList.add('oculto'), 900);
-        } else {
-            caja.classList.add('sacudiendo');
-            setTimeout(() => caja.classList.remove('sacudiendo'), 600);
-        }
+        if (random === 0) { ojos.classList.remove('oculto'); setTimeout(() => ojos.classList.add('oculto'), 900); }
+        else if (random === 1) { patita.classList.remove('oculto'); setTimeout(() => patita.classList.add('oculto'), 900); }
+        else { caja.classList.add('sacudiendo'); setTimeout(() => caja.classList.remove('sacudiendo'), 600); }
         return;
     }
-
     const nivelMichi = getNivelMichi(michi.id);
-
     if (nivelMichi === 0) {
-        img.classList.remove('michi-cola');
-        void img.offsetWidth;
-        img.classList.add('michi-cola');
-        setTimeout(() => img.classList.remove('michi-cola'), 800);
-        return;
+        img.classList.remove('michi-cola'); void img.offsetWidth; img.classList.add('michi-cola');
+        setTimeout(() => img.classList.remove('michi-cola'), 800); return;
     }
-
     const random = Math.random();
-
     if (nivelMichi >= 3 && random < 0.10) {
-        sonidoRonroneo();
-        img.classList.remove('michi-cola');
-        void img.offsetWidth;
-        img.classList.add('michi-cola');
+        sonidoRonroneo(); img.classList.remove('michi-cola'); void img.offsetWidth; img.classList.add('michi-cola');
         setTimeout(() => img.classList.remove('michi-cola'), 800);
     } else if (nivelMichi >= 1 && random < 0.55) {
         mostrarGloboFrase(michi.id, nivelMichi);
     } else {
-        img.classList.remove('michi-cola');
-        void img.offsetWidth;
-        img.classList.add('michi-cola');
+        img.classList.remove('michi-cola'); void img.offsetWidth; img.classList.add('michi-cola');
         setTimeout(() => img.classList.remove('michi-cola'), 800);
     }
 }
@@ -841,20 +806,16 @@ function mostrarModalNombre() {
     const wallet = cargarWallet();
     const { nivel } = calcularNivelDesdeXP(wallet.xp || 0);
     if (nivel < NIVEL_ADOPCION || wallet.patitas < COSTO_ADOPCION) return;
-
     wallet.patitas -= COSTO_ADOPCION;
     guardarWallet(wallet);
-
     const coleccion = cargarColeccionMichis();
     const disponibles = MICHIS_DISPONIBLES.filter(m => !coleccion.find(c => c.id === m.id));
     const pool = disponibles.length > 0 ? disponibles : MICHIS_DISPONIBLES;
     const idx = Math.floor(Math.random() * pool.length);
     michiPendienteDeNombre = { ...pool[idx] };
-
     document.getElementById('modal-michi-preview').textContent = '🐱';
     document.getElementById('input-nombre-michi').value = '';
     document.getElementById('modal-nombre-michi').classList.remove('oculto');
-
     const img = document.getElementById('michi-img');
     img.src = michiPendienteDeNombre.img;
     img.classList.add('michi-aparece');
@@ -868,22 +829,15 @@ function confirmarNombreMichi() {
     const input = document.getElementById('input-nombre-michi');
     const nombre = input.value.trim();
     if (!nombre) { input.focus(); return; }
-
     michiPendienteDeNombre.nombrePersonalizado = nombre;
     sonidoAdopcion();
     guardarMichi(michiPendienteDeNombre);
-
     const coleccion = cargarColeccionMichis();
     const yaEnColeccion = coleccion.find(m => m.id === michiPendienteDeNombre.id);
     if (!yaEnColeccion) coleccion.push({ ...michiPendienteDeNombre });
     guardarColeccionMichis(coleccion);
-
     const desbloqueados = cargarMichisDesbloqueados();
-    if (!desbloqueados.includes(michiPendienteDeNombre.id)) {
-        desbloqueados.push(michiPendienteDeNombre.id);
-        guardarMichisDesbloqueados(desbloqueados);
-    }
-
+    if (!desbloqueados.includes(michiPendienteDeNombre.id)) { desbloqueados.push(michiPendienteDeNombre.id); guardarMichisDesbloqueados(desbloqueados); }
     document.getElementById('modal-nombre-michi').classList.add('oculto');
     mostrarToastPatitas(0, `🎉 ¡${nombre} es tu nuevo compañero!`);
     renderBadgeWallet();
@@ -916,52 +870,38 @@ function renderInventario() {
     const wallet = cargarWallet();
     const { nivel: nivelUsuario } = calcularNivelDesdeXP(wallet.xp || 0);
     const grid = document.getElementById('inventario-michis');
-
     if (coleccion.length === 0) {
         grid.innerHTML = '<p style="color:#6b7280;text-align:center;padding:20px;font-style:italic">Aún no tienes michis en tu colección 🐾</p>';
         return;
     }
-
     grid.innerHTML = coleccion.map(michi => {
         const esActivo = michiActivo && michiActivo.id === michi.id;
         const nombre = michi.nombrePersonalizado || michi.nombre;
         const nivelActual = niveles[michi.id] || 0;
-
         let nivelesHTML = `<div class="inventario-niveles oculto" id="niveles-${michi.id}">`;
         NIVELES_MICHI.forEach(n => {
             const desbloqueado = nivelActual >= n.nivel;
             const esSiguiente = n.nivel === nivelActual + 1;
             const puedeUsuario = nivelUsuario >= n.nivelUsuario;
             const puedePagar = wallet.patitas >= n.costo;
-            let textoNivel = '';
-            let textoBtn = '';
-            let btnDisabled = '';
-
+            let textoNivel = '', textoBtn = '', btnDisabled = '';
             if (desbloqueado) {
                 textoNivel = `<span class="nivel-texto desbloqueado">${n.emoji} ${n.desc} ✅</span>`;
             } else if (esSiguiente) {
                 if (!puedeUsuario) {
                     textoNivel = `<span class="nivel-texto bloqueado-nivel-usuario">${n.emoji} ${n.desc} — Nv.${n.nivelUsuario} usuario</span>`;
-                    textoBtn = `${n.costo}🐾`;
-                    btnDisabled = 'disabled';
+                    textoBtn = `${n.costo}🐾`; btnDisabled = 'disabled';
                 } else {
                     textoNivel = `<span class="nivel-texto">${n.emoji} ${n.desc} — ${n.costo}🐾</span>`;
-                    textoBtn = `Subir`;
-                    btnDisabled = !puedePagar ? 'disabled' : '';
+                    textoBtn = `Subir`; btnDisabled = !puedePagar ? 'disabled' : '';
                 }
             } else {
                 textoNivel = `<span class="nivel-texto" style="opacity:0.4">🔒 ${n.desc}</span>`;
             }
-
-            nivelesHTML += `<div class="nivel-fila">
-                <div class="nivel-info">${textoNivel}</div>
-                ${esSiguiente ? `<button class="btn-subir-nivel" ${btnDisabled} onclick="subirNivelMichi('${michi.id}')">${textoBtn}</button>` : ''}
-            </div>`;
+            nivelesHTML += `<div class="nivel-fila"><div class="nivel-info">${textoNivel}</div>${esSiguiente ? `<button class="btn-subir-nivel" ${btnDisabled} onclick="subirNivelMichi('${michi.id}')">${textoBtn}</button>` : ''}</div>`;
         });
         nivelesHTML += '</div>';
-
         const mostrarToggle = nivelActual < 4;
-
         return `<div class="inventario-card ${esActivo ? 'activo' : ''}">
             <img src="${michi.img}" alt="${nombre}" class="inventario-card-img"/>
             <div class="inventario-card-nombre">${nombre}</div>
@@ -990,12 +930,10 @@ function renderInventarioMarcos() {
     const datos = cargarDatosMarcos();
     const grid = document.getElementById('inventario-marcos');
     const marcosActivos = obtenerMarcosActivos();
-
     if (datos.coleccion.length === 0) {
         grid.innerHTML = '<p style="color:#6b7280;text-align:center;padding:20px;font-style:italic;grid-column:span 2">Aún no tienes marcos 🖼️<br><br>Consíguelos en la tienda con 🧶 bolas de pelo</p>';
         return;
     }
-
     grid.innerHTML = datos.coleccion.map(marcoId => {
         const marco = marcosActivos.find(m => m.id === marcoId);
         if (!marco) return '';
@@ -1004,8 +942,7 @@ function renderInventarioMarcos() {
             <img src="${marco.img}" alt="${marco.nombre}" class="marco-preview"/>
             <div class="inventario-card-nombre">${marco.nombre}</div>
             ${esActivo ? '<div class="inventario-card-badge">✨ Marco activo</div>' : ''}
-            <button class="${esActivo ? 'btn-quitar-marco' : 'btn-usar-marco'}"
-                onclick="usarMarco('${marco.id}')">
+            <button class="${esActivo ? 'btn-quitar-marco' : 'btn-usar-marco'}" onclick="usarMarco('${marco.id}')">
                 ${esActivo ? 'Quitar marco' : 'Usar este marco'}
             </button>
         </div>`;
@@ -1038,10 +975,8 @@ function renderTienda() {
     const datosMarcos = cargarDatosMarcos();
     const todosMichis = obtenerMichisTiendaActivos();
     const marcosRender = obtenerMarcosActivos();
-
     document.getElementById('tienda-saldo-patitas').textContent = wallet.patitas;
     document.getElementById('tienda-saldo-bolas').textContent = wallet.bolasDePelo;
-
     const renderCardMichi = (m) => {
         const yaDesbloqueado = coleccion.some(c => c.id === m.id);
         const nivelOk = nivelUsuario >= m.nivelRequerido;
@@ -1049,33 +984,21 @@ function renderTienda() {
         const usaBolas = m.precioBolas > 0;
         const puedePagar = usaBolas ? wallet.bolasDePelo >= m.precioBolas : wallet.patitas >= m.precioPatitas;
         const precioTexto = usaBolas ? `🧶 ${m.precioBolas}` : `🐾 ${m.precioPatitas}`;
-
         let btnTexto, btnDisabled, btnClass;
-        if (yaDesbloqueado) {
-            btnTexto = 'Adoptado'; btnDisabled = 'disabled'; btnClass = 'ya-tiene';
-        } else if (bloqueadoPorNivel) {
-            btnTexto = `Nivel ${m.nivelRequerido} requerido`; btnDisabled = 'disabled'; btnClass = '';
-        } else if (!puedePagar) {
-            btnTexto = usaBolas ? 'Sin bolas de pelo' : 'Sin patitas'; btnDisabled = 'disabled'; btnClass = '';
-        } else {
-            btnTexto = `Adoptar ${precioTexto}`; btnDisabled = ''; btnClass = usaBolas ? 'bola' : '';
-        }
-
+        if (yaDesbloqueado) { btnTexto = 'Adoptado'; btnDisabled = 'disabled'; btnClass = 'ya-tiene'; }
+        else if (bloqueadoPorNivel) { btnTexto = `Nivel ${m.nivelRequerido} requerido`; btnDisabled = 'disabled'; btnClass = ''; }
+        else if (!puedePagar) { btnTexto = usaBolas ? 'Sin bolas de pelo' : 'Sin patitas'; btnDisabled = 'disabled'; btnClass = ''; }
+        else { btnTexto = `Adoptar ${precioTexto}`; btnDisabled = ''; btnClass = usaBolas ? 'bola' : ''; }
         return `<div class="tienda-card ${yaDesbloqueado ? 'ya-tiene' : ''} ${bloqueadoPorNivel ? 'bloqueado-nivel' : ''}">
             ${bloqueadoPorNivel ? '<div class="tienda-candado">🔒</div>' : ''}
             <img src="${m.img}" alt="${m.nombre}" class="tienda-card-img" style="${bloqueadoPorNivel ? 'filter:grayscale(0.6)' : ''}"/>
             <div class="tienda-card-nombre">${m.nombre}</div>
             ${bloqueadoPorNivel ? `<div class="tienda-card-nivel">⭐ Nivel ${m.nivelRequerido} requerido</div>` : ''}
             <div class="tienda-card-precio">${yaDesbloqueado ? '✅ Ya lo tienes' : precioTexto}</div>
-            <button class="btn-comprar ${btnClass}" ${btnDisabled} onclick="comprarMichi('${m.id}')">
-                ${btnTexto}
-            </button>
+            <button class="btn-comprar ${btnClass}" ${btnDisabled} onclick="comprarMichi('${m.id}')">${btnTexto}</button>
         </div>`;
     };
-
-    document.getElementById('tienda-michis-especiales').innerHTML =
-        todosMichis.filter(m => m.tipo === 'especial').map(renderCardMichi).join('');
-
+    document.getElementById('tienda-michis-especiales').innerHTML = todosMichis.filter(m => m.tipo === 'especial').map(renderCardMichi).join('');
     document.getElementById('tienda-marcos').innerHTML = marcosRender.map(marco => {
         const yaComprado = datosMarcos.coleccion.includes(marco.id);
         const puedePagar = wallet.bolasDePelo >= marco.precioBolas;
@@ -1083,36 +1006,25 @@ function renderTienda() {
             <img src="${marco.img}" alt="${marco.nombre}" class="tienda-card-img"/>
             <div class="tienda-card-nombre">${marco.nombre}</div>
             <div class="tienda-card-precio">${yaComprado ? '✅ Ya lo tienes' : `🧶 ${marco.precioBolas}`}</div>
-            <button class="btn-comprar ${yaComprado ? 'ya-tiene' : ''}"
-                ${yaComprado || !puedePagar ? 'disabled' : ''}
-                onclick="comprarMarco('${marco.id}')">
+            <button class="btn-comprar ${yaComprado ? 'ya-tiene' : ''}" ${yaComprado || !puedePagar ? 'disabled' : ''} onclick="comprarMarco('${marco.id}')">
                 ${yaComprado ? 'En colección' : (puedePagar ? `Comprar 🧶${marco.precioBolas}` : 'Sin bolas')}
             </button>
         </div>`;
     }).join('');
-
-    document.getElementById('tienda-michis-basicos').innerHTML =
-        todosMichis.filter(m => m.tipo === 'basico').map(renderCardMichi).join('');
-
-    document.getElementById('tienda-michis-nivel10').innerHTML =
-        todosMichis.filter(m => m.tipo === 'nivel10').map(renderCardMichi).join('');
-
+    document.getElementById('tienda-michis-basicos').innerHTML = todosMichis.filter(m => m.tipo === 'basico').map(renderCardMichi).join('');
+    document.getElementById('tienda-michis-nivel10').innerHTML = todosMichis.filter(m => m.tipo === 'nivel10').map(renderCardMichi).join('');
     document.getElementById('tienda-items').innerHTML = `
         <div class="tienda-card">
             <div class="tienda-card-emoji">🧊</div>
             <div class="tienda-card-nombre">Michi Freeze</div>
             <div class="tienda-card-precio">🐾 300 patitas</div>
-            <button class="btn-comprar" ${wallet.patitas < 300 ? 'disabled' : ''} onclick="comprarFreeze('patitas')">
-                ${wallet.patitas >= 300 ? 'Comprar' : 'Sin patitas'}
-            </button>
+            <button class="btn-comprar" ${wallet.patitas < 300 ? 'disabled' : ''} onclick="comprarFreeze('patitas')">${wallet.patitas >= 300 ? 'Comprar' : 'Sin patitas'}</button>
         </div>
         <div class="tienda-card">
             <div class="tienda-card-emoji">🧊</div>
             <div class="tienda-card-nombre">Michi Freeze</div>
             <div class="tienda-card-precio">🧶 1 bola de pelo</div>
-            <button class="btn-comprar" ${wallet.bolasDePelo < 1 ? 'disabled' : ''} onclick="comprarFreeze('bolas')">
-                ${wallet.bolasDePelo >= 1 ? 'Comprar' : 'Sin bolas'}
-            </button>
+            <button class="btn-comprar" ${wallet.bolasDePelo < 1 ? 'disabled' : ''} onclick="comprarFreeze('bolas')">${wallet.bolasDePelo >= 1 ? 'Comprar' : 'Sin bolas'}</button>
         </div>`;
 }
 
@@ -1121,47 +1033,25 @@ function comprarMichi(michiId) {
     const { nivel: nivelUsuario } = calcularNivelDesdeXP(wallet.xp || 0);
     const michi = obtenerMichisTiendaActivos().find(m => m.id === michiId);
     const coleccion = cargarColeccionMichis();
-
     if (!michi || coleccion.some(c => c.id === michiId)) return;
-
-    if (michi.nivelRequerido > 0 && nivelUsuario < michi.nivelRequerido) {
-        mostrarToastPatitas(0, `🔒 Necesitas Nivel ${michi.nivelRequerido} para adoptar este michi`);
-        return;
-    }
-
+    if (michi.nivelRequerido > 0 && nivelUsuario < michi.nivelRequerido) { mostrarToastPatitas(0, `🔒 Necesitas Nivel ${michi.nivelRequerido} para adoptar este michi`); return; }
     const usaBolas = michi.precioBolas > 0;
-    if (usaBolas) {
-        if (wallet.bolasDePelo < michi.precioBolas) return;
-        wallet.bolasDePelo -= michi.precioBolas;
-    } else {
-        if (wallet.patitas < michi.precioPatitas) return;
-        wallet.patitas -= michi.precioPatitas;
-    }
-
+    if (usaBolas) { if (wallet.bolasDePelo < michi.precioBolas) return; wallet.bolasDePelo -= michi.precioBolas; }
+    else { if (wallet.patitas < michi.precioPatitas) return; wallet.patitas -= michi.precioPatitas; }
     guardarWallet(wallet);
     const desbloqueados = cargarMichisDesbloqueados();
-    if (!desbloqueados.includes(michiId)) {
-        desbloqueados.push(michiId);
-        guardarMichisDesbloqueados(desbloqueados);
-    }
-
+    if (!desbloqueados.includes(michiId)) { desbloqueados.push(michiId); guardarMichisDesbloqueados(desbloqueados); }
     michiPendienteDeNombre = { ...michi };
     document.getElementById('input-nombre-michi').value = '';
     document.getElementById('modal-nombre-michi').classList.remove('oculto');
-
     renderTienda();
     renderBadgeWallet();
 }
 
 function comprarFreeze(tipo) {
     const wallet = cargarWallet();
-    if (tipo === 'patitas') {
-        if (wallet.patitas < 300) return;
-        wallet.patitas -= 300;
-    } else {
-        if (wallet.bolasDePelo < 1) return;
-        wallet.bolasDePelo -= 1;
-    }
+    if (tipo === 'patitas') { if (wallet.patitas < 300) return; wallet.patitas -= 300; }
+    else { if (wallet.bolasDePelo < 1) return; wallet.bolasDePelo -= 1; }
     wallet.michiFreezes = (wallet.michiFreezes || 0) + 1;
     guardarWallet(wallet);
     mostrarToastPatitas(0, '🧊 ¡Michi Freeze agregado!');
@@ -1169,56 +1059,282 @@ function comprarFreeze(tipo) {
     renderBadgeWallet();
 }
 
+// ── BLACKJACK ─────────────────────────────────────────
+const BJ_PALOS = ['♠', '♥', '♦', '♣'];
+const BJ_VALORES = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+const BJ_MAX_INTENTOS_FREE = 3;
+const BJ_MAX_INTENTOS_PASE = 10;
+
+function cargarIntentosBlackjack() {
+    const hoy = new Date().toISOString().split('T')[0];
+    const data = JSON.parse(localStorage.getItem('bj-intentos') || '{}');
+    if (data.fecha !== hoy) return { fecha: hoy, usados: 0 };
+    return data;
+}
+
+function guardarIntentosBlackjack(data) {
+    localStorage.setItem('bj-intentos', JSON.stringify(data));
+}
+
+function getIntentosRestantesBJ() {
+    const data = cargarIntentosBlackjack();
+    const max = BJ_MAX_INTENTOS_FREE;
+    return Math.max(0, max - data.usados);
+}
+
+function crearBaraja() {
+    let baraja = [];
+    for (let d = 0; d < 6; d++) {
+        for (const palo of BJ_PALOS) {
+            for (const valor of BJ_VALORES) {
+                baraja.push({ palo, valor });
+            }
+        }
+    }
+    for (let i = baraja.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [baraja[i], baraja[j]] = [baraja[j], baraja[i]];
+    }
+    return baraja;
+}
+
+function valorCarta(carta) {
+    if (['J', 'Q', 'K'].includes(carta.valor)) return 10;
+    if (carta.valor === 'A') return 11;
+    return parseInt(carta.valor);
+}
+
+function calcularMano(mano) {
+    let total = 0;
+    let ases = 0;
+    for (const carta of mano) {
+        total += valorCarta(carta);
+        if (carta.valor === 'A') ases++;
+    }
+    while (total > 21 && ases > 0) {
+        total -= 10;
+        ases--;
+    }
+    return total;
+}
+
+function esRoja(carta) {
+    return ['♥', '♦'].includes(carta.palo);
+}
+
+function renderCarta(carta, oculta = false) {
+    if (oculta) return `<div class="carta-bj oculta"></div>`;
+    const clase = esRoja(carta) ? 'roja' : 'negra';
+    return `<div class="carta-bj ${clase}">
+        <div class="carta-bj-valor-top">${carta.valor}${carta.palo}</div>
+        <div class="carta-bj-palo">${carta.palo}</div>
+        <div class="carta-bj-valor-bot">${carta.valor}${carta.palo}</div>
+    </div>`;
+}
+
+function renderMesaBJ(mostrarTodo = false) {
+    const dealerCartas = document.getElementById('bj-dealer-cartas');
+    const jugadorCartas = document.getElementById('bj-jugador-cartas');
+    const dealerValor = document.getElementById('bj-dealer-valor');
+    const jugadorValor = document.getElementById('bj-jugador-valor');
+
+    jugadorCartas.innerHTML = bjManoJugador.map(c => renderCarta(c)).join('');
+    jugadorValor.textContent = calcularMano(bjManoJugador);
+
+    if (mostrarTodo) {
+        dealerCartas.innerHTML = bjManoDealer.map(c => renderCarta(c)).join('');
+        dealerValor.textContent = calcularMano(bjManoDealer);
+    } else {
+        dealerCartas.innerHTML = renderCarta(bjManoDealer[0]) + renderCarta(bjManoDealer[1], true);
+        dealerValor.textContent = valorCarta(bjManoDealer[0]);
+    }
+}
+
+function mostrarMinijuegos() {
+    pantallaAnterior = 'pantalla-hoy';
+    document.querySelectorAll('.pantalla').forEach(p => p.classList.remove('activa'));
+    document.getElementById('pantalla-minijuegos').classList.add('activa');
+    const wallet = cargarWallet();
+    document.getElementById('minijuegos-saldo-patitas').textContent = wallet.patitas;
+    const intentos = getIntentosRestantesBJ();
+    document.getElementById('bj-intentos-display').textContent = `${intentos} intentos`;
+}
+
+function iniciarBlackjack() {
+    const intentos = cargarIntentosBlackjack();
+    if (intentos.usados >= BJ_MAX_INTENTOS_FREE) {
+        mostrarToastPatitas(0, '🎮 Sin intentos por hoy. ¡Vuelve mañana!');
+        return;
+    }
+    bjApuesta = 10;
+    const wallet = cargarWallet();
+    document.getElementById('bj-saldo').textContent = wallet.patitas;
+    document.getElementById('bj-apuesta-display').textContent = bjApuesta;
+    pantallaAnterior = 'pantalla-minijuegos';
+    document.querySelectorAll('.pantalla').forEach(p => p.classList.remove('activa'));
+    document.getElementById('pantalla-blackjack').classList.add('activa');
+    document.getElementById('bj-fase-apuesta').classList.remove('oculto');
+    document.getElementById('bj-fase-juego').classList.add('oculto');
+    document.getElementById('bj-resultado').classList.add('oculto');
+}
+
+function cambiarApuesta(delta) {
+    const wallet = cargarWallet();
+    const max = Math.floor(wallet.patitas / 3);
+    bjApuesta = Math.max(10, Math.min(max, bjApuesta + delta));
+    document.getElementById('bj-apuesta-display').textContent = bjApuesta;
+}
+
+function setApuesta(cantidad) {
+    const wallet = cargarWallet();
+    const max = Math.floor(wallet.patitas / 3);
+    bjApuesta = Math.max(10, Math.min(max, cantidad));
+    document.getElementById('bj-apuesta-display').textContent = bjApuesta;
+}
+
+function setApuestaMax() {
+    const wallet = cargarWallet();
+    bjApuesta = Math.max(10, Math.floor(wallet.patitas / 3));
+    document.getElementById('bj-apuesta-display').textContent = bjApuesta;
+}
+
+function repartirCartas() {
+    const wallet = cargarWallet();
+    if (wallet.patitas < bjApuesta) { mostrarToastPatitas(0, '🐾 No tienes suficientes patitas'); return; }
+    if (bjApuesta < 10) { mostrarToastPatitas(0, '🐾 La apuesta mínima es 10 patitas'); return; }
+
+    // Descontar apuesta
+    wallet.patitas -= bjApuesta;
+    guardarWallet(wallet);
+    renderBadgeWallet();
+
+    // Registrar intento
+    const intentos = cargarIntentosBlackjack();
+    intentos.usados++;
+    guardarIntentosBlackjack(intentos);
+
+    // Crear baraja y repartir
+    bjBaraja = crearBaraja();
+    bjManoJugador = [bjBaraja.pop(), bjBaraja.pop()];
+    bjManoDealer = [bjBaraja.pop(), bjBaraja.pop()];
+
+    document.getElementById('bj-fase-apuesta').classList.add('oculto');
+    document.getElementById('bj-fase-juego').classList.remove('oculto');
+    document.getElementById('bj-resultado').classList.add('oculto');
+    document.getElementById('bj-apuesta-actual').textContent = bjApuesta;
+    document.getElementById('bj-acciones').classList.remove('oculto');
+
+    renderMesaBJ(false);
+    sonidoCartaBJ();
+
+    // Verificar blackjack natural
+    if (calcularMano(bjManoJugador) === 21) {
+        setTimeout(() => terminarMano('blackjack'), 600);
+    }
+}
+
+function pedirCarta() {
+    bjManoJugador.push(bjBaraja.pop());
+    sonidoCartaBJ();
+    renderMesaBJ(false);
+    if (calcularMano(bjManoJugador) > 21) {
+        setTimeout(() => terminarMano('perdiste'), 400);
+    } else if (calcularMano(bjManoJugador) === 21) {
+        setTimeout(() => plantarse(), 400);
+    }
+}
+
+function plantarse() {
+    document.getElementById('bj-acciones').classList.add('oculto');
+    // Dealer juega
+    const intervalo = setInterval(() => {
+        if (calcularMano(bjManoDealer) < 17) {
+            bjManoDealer.push(bjBaraja.pop());
+            sonidoCartaBJ();
+            renderMesaBJ(true);
+        } else {
+            clearInterval(intervalo);
+            const jugador = calcularMano(bjManoJugador);
+            const dealer = calcularMano(bjManoDealer);
+            if (dealer > 21 || jugador > dealer) terminarMano('ganaste');
+            else if (jugador === dealer) terminarMano('empate');
+            else terminarMano('perdiste');
+        }
+    }, 600);
+}
+
+function terminarMano(resultado) {
+    renderMesaBJ(true);
+    const wallet = cargarWallet();
+    let emoji, titulo, desc, colorTitulo;
+
+    if (resultado === 'blackjack') {
+        const ganancia = Math.floor(bjApuesta * 1.25);
+        wallet.patitas += bjApuesta + ganancia;
+        guardarWallet(wallet);
+        sonidoGanarBJ();
+        emoji = '🃏'; titulo = '¡Blackjack!'; desc = `+${ganancia} patitas de ganancia 🐾`; colorTitulo = '#f59e0b';
+    } else if (resultado === 'ganaste') {
+        wallet.patitas += bjApuesta * 2;
+        guardarWallet(wallet);
+        sonidoGanarBJ();
+        emoji = '🎉'; titulo = '¡Ganaste!'; desc = `+${bjApuesta} patitas de ganancia 🐾`; colorTitulo = '#10b981';
+    } else if (resultado === 'empate') {
+        wallet.patitas += bjApuesta;
+        guardarWallet(wallet);
+        emoji = '🤝'; titulo = 'Empate'; desc = 'Recuperas tu apuesta 🐾'; colorTitulo = '#9ca3af';
+    } else {
+        sonidoPerderBJ();
+        emoji = '😿'; titulo = '¡Perdiste!'; desc = `-${bjApuesta} patitas 🐾`; colorTitulo = '#f87171';
+    }
+
+    guardarWallet(wallet);
+    renderBadgeWallet();
+
+    document.getElementById('bj-fase-juego').classList.add('oculto');
+    document.getElementById('bj-resultado').classList.remove('oculto');
+    document.getElementById('bj-resultado-emoji').textContent = emoji;
+    document.getElementById('bj-resultado-titulo').textContent = titulo;
+    document.getElementById('bj-resultado-titulo').style.color = colorTitulo;
+    document.getElementById('bj-resultado-desc').textContent = desc;
+
+    const intentos = getIntentosRestantesBJ();
+    const btnNueva = document.getElementById('btn-nueva-mano');
+    if (intentos <= 0) {
+        btnNueva.textContent = 'Sin intentos por hoy';
+        btnNueva.disabled = true;
+    } else {
+        btnNueva.textContent = `Jugar otra mano (${intentos} intentos)`;
+        btnNueva.disabled = false;
+    }
+}
+
+function nuevaMano() {
+    bjApuesta = 10;
+    const wallet = cargarWallet();
+    document.getElementById('bj-saldo').textContent = wallet.patitas;
+    document.getElementById('bj-apuesta-display').textContent = bjApuesta;
+    document.getElementById('bj-fase-apuesta').classList.remove('oculto');
+    document.getElementById('bj-fase-juego').classList.add('oculto');
+    document.getElementById('bj-resultado').classList.add('oculto');
+}
+
+function salirBlackjack() {
+    document.querySelectorAll('.pantalla').forEach(p => p.classList.remove('activa'));
+    document.getElementById('pantalla-minijuegos').classList.add('activa');
+    mostrarMinijuegos();
+}
+
 // ── ONBOARDING ────────────────────────────────────────
 const SLIDES = [
-    {
-        emoji: '🐱',
-        titulo: '¡Bienvenido a Michi Agenda!',
-        desc: 'Tu agenda inteligente con un compañero que te motiva. Planea tu día, completa tus actividades y gana recompensas.',
-        ejemplo: null
-    },
-    {
-        emoji: '📅',
-        titulo: 'Escribe tus actividades',
-        desc: 'El formato es siempre: Actividad primero, hora después. Una actividad por línea.',
-        ejemplo: '✅ GYM 07:00\n✅ Desayuno 09:00\n✅ Trabajo 10:00\n❌ 07:00 GYM  ← incorrecto'
-    },
-    {
-        emoji: '🕐',
-        titulo: 'Formato de 24 horas',
-        desc: 'Usamos formato de 24 horas. Las 7 de la mañana son 07:00. Las 7 de la noche son 19:00.',
-        ejemplo: '☀️ 07:00 = 7am\n🌙 19:00 = 7pm\n🌙 21:30 = 9:30pm\n🌅 13:00 = 1pm'
-    },
-    {
-        emoji: '↻',
-        titulo: 'Actividades recurrentes',
-        desc: 'Agrega [días] al final para que la actividad aparezca automáticamente esos días de la semana.',
-        ejemplo: 'GYM 07:00 [lunes, miércoles, viernes]\nMedicinas 08:00 [todos los días]\nTrabajo 09:00 [entre semana]'
-    },
-    {
-        emoji: '🐾',
-        titulo: 'Gana patitas y sube de nivel',
-        desc: 'Entra cada día y completa tus actividades para ganar patitas 🐾 y experiencia ⭐. Con patitas puedes adoptar y mejorar a tu michi compañero.',
-        ejemplo: null
-    },
-    {
-        emoji: '🧶',
-        titulo: 'Bolas de pelo — divisa premium',
-        desc: 'Las bolas de pelo 🧶 se ganan por constancia o se compran. Con ellas desbloqueas michis especiales, marcos y frases personalizadas.',
-        ejemplo: null
-    },
-    {
-        emoji: '📦',
-        titulo: 'Tu michi compañero',
-        desc: 'Cuando llegues a Nivel 2 con 100 patitas, podrás abrir la caja y adoptar a tu primer michi. ¡Él te acompañará cada día!',
-        ejemplo: null
-    },
-    {
-        emoji: '✅',
-        titulo: '¡Listo para empezar!',
-        desc: 'Toca el botón + para crear tu primera agenda. Recuerda: primero la actividad, luego la hora en formato 24hrs. ¡Tu michi te espera!',
-        ejemplo: null
-    }
+    { emoji: '🐱', titulo: '¡Bienvenido a Michi Agenda!', desc: 'Tu agenda inteligente con un compañero que te motiva. Planea tu día, completa tus actividades y gana recompensas.', ejemplo: null },
+    { emoji: '📅', titulo: 'Escribe tus actividades', desc: 'El formato es siempre: Actividad primero, hora después. Una actividad por línea.', ejemplo: '✅ GYM 07:00\n✅ Desayuno 09:00\n✅ Trabajo 10:00\n❌ 07:00 GYM  ← incorrecto' },
+    { emoji: '🕐', titulo: 'Formato de 24 horas', desc: 'Usamos formato de 24 horas. Las 7 de la mañana son 07:00. Las 7 de la noche son 19:00.', ejemplo: '☀️ 07:00 = 7am\n🌙 19:00 = 7pm\n🌙 21:30 = 9:30pm\n🌅 13:00 = 1pm' },
+    { emoji: '↻', titulo: 'Actividades recurrentes', desc: 'Agrega [días] al final para que la actividad aparezca automáticamente esos días de la semana.', ejemplo: 'GYM 07:00 [lunes, miércoles, viernes]\nMedicinas 08:00 [todos los días]\nTrabajo 09:00 [entre semana]' },
+    { emoji: '🐾', titulo: 'Gana patitas y sube de nivel', desc: 'Entra cada día y completa tus actividades para ganar patitas 🐾 y experiencia ⭐. Con patitas puedes adoptar y mejorar a tu michi compañero.', ejemplo: null },
+    { emoji: '🧶', titulo: 'Bolas de pelo — divisa premium', desc: 'Las bolas de pelo 🧶 se ganan por constancia o se compran. Con ellas desbloqueas michis especiales, marcos y frases personalizadas.', ejemplo: null },
+    { emoji: '📦', titulo: 'Tu michi compañero', desc: 'Cuando llegues a Nivel 2 con 100 patitas, podrás abrir la caja y adoptar a tu primer michi. ¡Él te acompañará cada día!', ejemplo: null },
+    { emoji: '✅', titulo: '¡Listo para empezar!', desc: 'Toca el botón + para crear tu primera agenda. Recuerda: primero la actividad, luego la hora en formato 24hrs. ¡Tu michi te espera!', ejemplo: null }
 ];
 
 let slideActual = 0;
@@ -1355,14 +1471,8 @@ async function handleRecuperar() {
     const errorEl = document.getElementById('login-error');
     const exitoEl = document.getElementById('login-exito');
     if (!email) { errorEl.textContent = 'Ingresa tu correo.'; return; }
-    try {
-        await recuperarContrasena(email);
-        errorEl.textContent = '';
-        exitoEl.textContent = '✅ Correo enviado. Revisa tu bandeja de entrada.';
-    } catch (e) {
-        exitoEl.textContent = '';
-        errorEl.textContent = 'No encontramos ese correo.';
-    }
+    try { await recuperarContrasena(email); errorEl.textContent = ''; exitoEl.textContent = '✅ Correo enviado. Revisa tu bandeja de entrada.'; }
+    catch (e) { exitoEl.textContent = ''; errorEl.textContent = 'No encontramos ese correo.'; }
 }
 
 async function handleLogin() {
@@ -1627,13 +1737,10 @@ function procesarLoginDiario() {
     if (wallet.michiFreezes === undefined) wallet.michiFreezes = 0;
     if (wallet.ultimoFreezeOtorgado === undefined) wallet.ultimoFreezeOtorgado = 0;
     if (wallet.bolasDePelo === undefined) wallet.bolasDePelo = 0;
-
     if (wallet.ultimoLogin === hoyKey) { guardarWallet(wallet); renderBadgeWallet(); return; }
-
     const lunaDeMiel = enLunaDeMiel(wallet);
     const ayer = formatearFechaKey(sumarDias(new Date(), -1));
     const seRompioRacha = wallet.ultimoLogin !== null && wallet.ultimoLogin !== ayer;
-
     if (seRompioRacha && wallet.michiFreezes > 0) {
         wallet.michiFreezes -= 1;
         mostrarToastPatitas(0, '🧊 Tu michi protegió tu racha con un Michi Freeze');
@@ -1645,31 +1752,21 @@ function procesarLoginDiario() {
         wallet.rachaActual = 1;
         wallet.ultimaBolaPorRacha = 0;
     }
-
     if (wallet.rachaActual > wallet.rachaMaxima) wallet.rachaMaxima = wallet.rachaActual;
-
     const xpAntes = wallet.xp || 0;
     const nivelAntes = calcularNivelDesdeXP(xpAntes).nivel;
-
     if (wallet.ultimoLogin === null) {
         otorgarPatitas(wallet, 50, '¡Bienvenida de tu michi! 🐱', 50);
     } else {
         otorgarPatitas(wallet, lunaDeMiel ? 20 : 10, 'Por entrar hoy', 15);
     }
-
     if (wallet.rachaActual === 7) otorgarPatitas(wallet, 50, '¡7 días seguidos!', 100);
     else if (wallet.rachaActual === 30) otorgarPatitas(wallet, 100, '¡30 días seguidos!', 250);
     else if (wallet.rachaActual > 30 && wallet.rachaActual % 30 === 0) otorgarPatitas(wallet, 80, `¡${wallet.rachaActual} días seguidos!`, 200);
-
     revisarBolasRacha(wallet);
     revisarBolasQuincenales(wallet);
-
     const nivelDespues = calcularNivelDesdeXP(wallet.xp || 0).nivel;
-    if (nivelDespues > nivelAntes) {
-        sonidoNivel();
-        mostrarToastPatitas(0, `🎉 ¡Subiste al Nivel ${nivelDespues}!`);
-    }
-
+    if (nivelDespues > nivelAntes) { sonidoNivel(); mostrarToastPatitas(0, `🎉 ¡Subiste al Nivel ${nivelDespues}!`); }
     wallet.ultimoLogin = hoyKey;
     wallet.diaCompletadoHoy = false;
     guardarWallet(wallet);
@@ -1685,7 +1782,6 @@ function otorgarBonusDiaCompleto(fechaKey) {
     const nivelAntes = calcularNivelDesdeXP(xpAntes).nivel;
     wallet.diaCompletadoHoy = true;
     otorgarPatitas(wallet, enLunaDeMiel(wallet) ? 20 : 10, '¡Día 100% completado!', 25);
-
     if (!wallet.ultimaBolaPor7 || diasDesdeRegistro(wallet) - wallet.ultimaBolaPor7 >= 60) {
         if ((wallet.rachaActual || 0) >= 7) {
             wallet.bolasDePelo = (wallet.bolasDePelo || 0) + 1;
@@ -1693,12 +1789,8 @@ function otorgarBonusDiaCompleto(fechaKey) {
             mostrarToastPatitas(0, '🧶 ¡Racha de 7 días con 100%! Bola de pelo ganada');
         }
     }
-
     const nivelDespues = calcularNivelDesdeXP(wallet.xp || 0).nivel;
-    if (nivelDespues > nivelAntes) {
-        sonidoNivel();
-        mostrarToastPatitas(0, `🎉 ¡Subiste al Nivel ${nivelDespues}!`);
-    }
+    if (nivelDespues > nivelAntes) { sonidoNivel(); mostrarToastPatitas(0, `🎉 ¡Subiste al Nivel ${nivelDespues}!`); }
     guardarWallet(wallet);
     renderBadgeWallet();
     revisarLogrosNuevos();
@@ -2085,7 +2177,6 @@ function mostrarHoy() {
     const agendaHoy = agendas.find(a => a.fechaKey === fechaKey);
     document.getElementById('titulo-hoy').textContent = formatearFechaDisplay(hoy);
     const textoConRec = obtenerTextoConRecurrentes(hoy);
-
     if (agendaHoy || textoConRec) {
         agendaViendoId = agendaHoy ? agendaHoy.id : null;
         const texto = textoConRec || agendaHoy.texto;
@@ -2108,7 +2199,6 @@ function mostrarHoy() {
         document.getElementById('contenido-hoy').innerHTML = renderHorasVacias(hoy);
         document.getElementById('contenido-progreso').innerHTML = '';
     }
-
     renderMichiHome();
     renderSemanaStrip();
     renderPendientes();
@@ -2556,6 +2646,7 @@ window.mostrarConfig = mostrarConfig;
 window.mostrarWallet = mostrarWallet;
 window.mostrarTienda = mostrarTienda;
 window.mostrarInventario = mostrarInventario;
+window.mostrarMinijuegos = mostrarMinijuegos;
 window.cambiarTabInventario = cambiarTabInventario;
 window.volverAtras = volverAtras;
 window.editarHoy = editarHoy;
@@ -2594,3 +2685,12 @@ window.toggleNiveles = toggleNiveles;
 window.abrirCarta = abrirCarta;
 window.cerrarModalCarta = cerrarModalCarta;
 window.usarMarco = usarMarco;
+window.iniciarBlackjack = iniciarBlackjack;
+window.cambiarApuesta = cambiarApuesta;
+window.setApuesta = setApuesta;
+window.setApuestaMax = setApuestaMax;
+window.repartirCartas = repartirCartas;
+window.pedirCarta = pedirCarta;
+window.plantarse = plantarse;
+window.nuevaMano = nuevaMano;
+window.salirBlackjack = salirBlackjack;
