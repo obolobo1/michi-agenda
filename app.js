@@ -15,7 +15,8 @@ import {
     guardarCartasNube, cargarCartasNube,
     guardarMarcosNube, cargarMarcosNube,
     guardarFrasesNube, cargarFrasesNube,
-    cargarCatalogoMichis, cargarCatalogoMarcos
+    cargarCatalogoMichis, cargarCatalogoMarcos,
+    guardarIntentosBJNube, cargarIntentosBJNube
 } from './firebase.js';
 
 // ── ESTADO GLOBAL ─────────────────────────────────────
@@ -36,7 +37,6 @@ let bjBaraja = [];
 let bjManoJugador = [];
 let bjManoDealer = [];
 let bjApuesta = 10;
-let bjCartaOculta = null;
 
 // ── SONIDOS ───────────────────────────────────────────
 function crearSonido(frecuencia, duracion, tipo = 'sine', volumen = 0.15) {
@@ -85,9 +85,7 @@ function sonidoCarta() {
     setTimeout(() => crearSonido(784, 0.2, 'sine', 0.12), 300);
     setTimeout(() => crearSonido(1047, 0.4, 'sine', 0.15), 450);
 }
-function sonidoCartaBJ() {
-    crearSonido(440, 0.08, 'sine', 0.1);
-}
+function sonidoCartaBJ() { crearSonido(440, 0.08, 'sine', 0.1); }
 function sonidoGanarBJ() {
     crearSonido(523, 0.15, 'sine', 0.12);
     setTimeout(() => crearSonido(659, 0.15, 'sine', 0.12), 100);
@@ -134,296 +132,61 @@ const MARCOS_TIENDA = [
 // ── FRASES POR GATO ───────────────────────────────────
 const FRASES_MICHIS = {
     naranjoso: {
-        nivel1: [
-            "¡Hola humano! Hoy es un gran día 🧡",
-            "¡Miau! ¿Ya desayunaste? 🍳",
-            "¡Estoy aquí contigo, vamos! 🧡",
-            "¡Me alegra verte hoy! 😸",
-            "¡Tú puedes, humano! 💪",
-        ],
-        nivel2: [
-            "¡Hola humano! Hoy es un gran día 🧡",
-            "¡Miau! ¿Ya desayunaste? 🍳",
-            "¡Estoy aquí contigo, vamos! 🧡",
-            "¡Me alegra verte hoy! 😸",
-            "¡Tú puedes, humano! 💪",
-            "¡Eres mi humano favorito del mundo! 🧡",
-            "¡Qué día tan bonito para ser productivo! ☀️",
-            "¡Sigue así, lo estás haciendo genial! 🎉",
-            "¿Ya completaste todas tus actividades? 📋",
-            "¡Juntos podemos con todo, humano! 🐾",
-        ],
+        nivel1: ["¡Hola humano! Hoy es un gran día 🧡","¡Miau! ¿Ya desayunaste? 🍳","¡Estoy aquí contigo, vamos! 🧡","¡Me alegra verte hoy! 😸","¡Tú puedes, humano! 💪"],
+        nivel2: ["¡Hola humano! Hoy es un gran día 🧡","¡Miau! ¿Ya desayunaste? 🍳","¡Estoy aquí contigo, vamos! 🧡","¡Me alegra verte hoy! 😸","¡Tú puedes, humano! 💪","¡Eres mi humano favorito del mundo! 🧡","¡Qué día tan bonito para ser productivo! ☀️","¡Sigue así, lo estás haciendo genial! 🎉","¿Ya completaste todas tus actividades? 📋","¡Juntos podemos con todo, humano! 🐾"],
     },
     negro: {
-        nivel1: [
-            "...Hola. 🖤",
-            "Supongo que hoy también toca trabajar. 😏",
-            "No te diré que eres increíble. Pero tampoco que no lo eres. 🖤",
-            "Aquí estoy. En las sombras. Vigilando. 👀",
-            "Miau. Eso es todo lo que tengo. 🖤",
-        ],
-        nivel2: [
-            "...Hola. 🖤",
-            "Supongo que hoy también toca trabajar. 😏",
-            "No te diré que eres increíble. Pero tampoco que no lo eres. 🖤",
-            "Aquí estoy. En las sombras. Vigilando. 👀",
-            "Miau. Eso es todo lo que tengo. 🖤",
-            "Sabes que te observo, ¿verdad? Completa tus actividades. 😐",
-            "No está mal lo que has hecho hoy. Para ser humano. 🖤",
-            "Las sombras me susurran que eres más capaz de lo que crees. 🌑",
-            "Podría ignorarte. Pero elegiré no hacerlo. Hoy. 😏",
-            "Tu constancia me impresiona. No se lo digas a nadie. 🖤",
-        ],
+        nivel1: ["...Hola. 🖤","Supongo que hoy también toca trabajar. 😏","No te diré que eres increíble. Pero tampoco que no lo eres. 🖤","Aquí estoy. En las sombras. Vigilando. 👀","Miau. Eso es todo lo que tengo. 🖤"],
+        nivel2: ["...Hola. 🖤","Supongo que hoy también toca trabajar. 😏","No te diré que eres increíble. Pero tampoco que no lo eres. 🖤","Aquí estoy. En las sombras. Vigilando. 👀","Miau. Eso es todo lo que tengo. 🖤","Sabes que te observo, ¿verdad? Completa tus actividades. 😐","No está mal lo que has hecho hoy. Para ser humano. 🖤","Las sombras me susurran que eres más capaz de lo que crees. 🌑","Podría ignorarte. Pero elegiré no hacerlo. Hoy. 😏","Tu constancia me impresiona. No se lo digas a nadie. 🖤"],
     },
     blanco: {
-        nivel1: [
-            "¡Buenos días, humano hermoso! 🤍",
-            "Hoy va a ser un día maravilloso 🌸",
-            "¡Estoy muy feliz de estar contigo! 🤍",
-            "Cada pequeño paso cuenta 🌼",
-            "Respira, sonríe y sigue adelante 🤍",
-        ],
-        nivel2: [
-            "¡Buenos días, humano hermoso! 🤍",
-            "Hoy va a ser un día maravilloso 🌸",
-            "¡Estoy muy feliz de estar contigo! 🤍",
-            "Cada pequeño paso cuenta 🌼",
-            "Respira, sonríe y sigue adelante 🤍",
-            "Tu esfuerzo de hoy es el éxito de mañana 🌟",
-            "Me haces sentir el gato más afortunado 🤍",
-            "¡Eres pura luz, humano! ✨",
-            "Cuando completas tus metas, el mundo brilla más 🌸",
-            "¡Cada logro tuyo me llena de orgullo! 🤍",
-        ],
+        nivel1: ["¡Buenos días, humano hermoso! 🤍","Hoy va a ser un día maravilloso 🌸","¡Estoy muy feliz de estar contigo! 🤍","Cada pequeño paso cuenta 🌼","Respira, sonríe y sigue adelante 🤍"],
+        nivel2: ["¡Buenos días, humano hermoso! 🤍","Hoy va a ser un día maravilloso 🌸","¡Estoy muy feliz de estar contigo! 🤍","Cada pequeño paso cuenta 🌼","Respira, sonríe y sigue adelante 🤍","Tu esfuerzo de hoy es el éxito de mañana 🌟","Me haces sentir el gato más afortunado 🤍","¡Eres pura luz, humano! ✨","Cuando completas tus metas, el mundo brilla más 🌸","¡Cada logro tuyo me llena de orgullo! 🤍"],
     },
     gris: {
-        nivel1: [
-            "Todo fluye, humano. Todo pasa. 🩶",
-            "El silencio también es productivo. 🌫️",
-            "Estoy aquí. Sin prisa. 🩶",
-            "Un paso a la vez es suficiente. 🐾",
-            "La constancia es más poderosa que la velocidad. 🩶",
-        ],
-        nivel2: [
-            "Todo fluye, humano. Todo pasa. 🩶",
-            "El silencio también es productivo. 🌫️",
-            "Estoy aquí. Sin prisa. 🩶",
-            "Un paso a la vez es suficiente. 🐾",
-            "La constancia es más poderosa que la velocidad. 🩶",
-            "El que persevera, alcanza. Tú perseveras. 🩶",
-            "No necesitas ser perfecto, solo consistente. 🌫️",
-            "Cada día que apareces es una victoria. 🩶",
-            "La disciplina es libertad disfrazada. Piénsalo. 🐾",
-            "Eres más tranquilo de lo que crees. Y eso es poderoso. 🩶",
-        ],
+        nivel1: ["Todo fluye, humano. Todo pasa. 🩶","El silencio también es productivo. 🌫️","Estoy aquí. Sin prisa. 🩶","Un paso a la vez es suficiente. 🐾","La constancia es más poderosa que la velocidad. 🩶"],
+        nivel2: ["Todo fluye, humano. Todo pasa. 🩶","El silencio también es productivo. 🌫️","Estoy aquí. Sin prisa. 🩶","Un paso a la vez es suficiente. 🐾","La constancia es más poderosa que la velocidad. 🩶","El que persevera, alcanza. Tú perseveras. 🩶","No necesitas ser perfecto, solo consistente. 🌫️","Cada día que apareces es una victoria. 🩶","La disciplina es libertad disfrazada. Piénsalo. 🐾","Eres más tranquilo de lo que crees. Y eso es poderoso. 🩶"],
     },
     calica: {
-        nivel1: [
-            "¡Miau miau miau! ¡Hola hola hola! 🤍🧡🖤",
-            "¡Estoy de mil colores hoy! ¿Y tú? 🌈",
-            "¡Vamos, que hay mucho por hacer! 🐾",
-            "¡Me encanta cuando estás aquí! 🤍🧡",
-            "¡Cada día es una nueva aventura! ✨",
-        ],
-        nivel2: [
-            "¡Miau miau miau! ¡Hola hola hola! 🤍🧡🖤",
-            "¡Estoy de mil colores hoy! ¿Y tú? 🌈",
-            "¡Vamos, que hay mucho por hacer! 🐾",
-            "¡Me encanta cuando estás aquí! 🤍🧡",
-            "¡Cada día es una nueva aventura! ✨",
-            "¡Tú y yo somos el mejor equipo del universo! 🤍🧡🖤",
-            "¡No pares, humano, que yo tampoco paro! 🌈",
-            "¡Tus colores brillan más cuando cumples tus metas! ✨",
-            "¡Soy tres colores y los tres te apoyan! 🤍🧡🖤",
-            "¡Eres tan único como yo! ¡Y eso es increíble! 🌈",
-        ],
+        nivel1: ["¡Miau miau miau! ¡Hola hola hola! 🤍🧡🖤","¡Estoy de mil colores hoy! ¿Y tú? 🌈","¡Vamos, que hay mucho por hacer! 🐾","¡Me encanta cuando estás aquí! 🤍🧡","¡Cada día es una nueva aventura! ✨"],
+        nivel2: ["¡Miau miau miau! ¡Hola hola hola! 🤍🧡🖤","¡Estoy de mil colores hoy! ¿Y tú? 🌈","¡Vamos, que hay mucho por hacer! 🐾","¡Me encanta cuando estás aquí! 🤍🧡","¡Cada día es una nueva aventura! ✨","¡Tú y yo somos el mejor equipo del universo! 🤍🧡🖤","¡No pares, humano, que yo tampoco paro! 🌈","¡Tus colores brillan más cuando cumples tus metas! ✨","¡Soy tres colores y los tres te apoyan! 🤍🧡🖤","¡Eres tan único como yo! ¡Y eso es increíble! 🌈"],
     },
     azul: {
-        nivel1: [
-            "¡Hola humano! El cielo es el límite 💙",
-            "Fluyo contigo como el agua 💙",
-            "¡Hoy es un día azul de los buenos! 🌊",
-            "Tranquilo y contigo, siempre 💙",
-            "¡Miau! ¿Listo para conquistar el día? 🌊",
-        ],
-        nivel2: [
-            "¡Hola humano! El cielo es el límite 💙",
-            "Fluyo contigo como el agua 💙",
-            "¡Hoy es un día azul de los buenos! 🌊",
-            "Tranquilo y contigo, siempre 💙",
-            "¡Miau! ¿Listo para conquistar el día? 🌊",
-            "Como el océano, tu potencial no tiene fondo 💙",
-            "Sigue fluyendo, humano. Nada te detiene 🌊",
-            "El azul del cielo te recuerda que todo es posible 💙",
-            "Cada actividad completada es una ola que avanza 🌊",
-            "¡Juntos somos profundos e imparables! 💙",
-        ],
+        nivel1: ["¡Hola humano! El cielo es el límite 💙","Fluyo contigo como el agua 💙","¡Hoy es un día azul de los buenos! 🌊","Tranquilo y contigo, siempre 💙","¡Miau! ¿Listo para conquistar el día? 🌊"],
+        nivel2: ["¡Hola humano! El cielo es el límite 💙","Fluyo contigo como el agua 💙","¡Hoy es un día azul de los buenos! 🌊","Tranquilo y contigo, siempre 💙","¡Miau! ¿Listo para conquistar el día? 🌊","Como el océano, tu potencial no tiene fondo 💙","Sigue fluyendo, humano. Nada te detiene 🌊","El azul del cielo te recuerda que todo es posible 💙","Cada actividad completada es una ola que avanza 🌊","¡Juntos somos profundos e imparables! 💙"],
     },
     tony: {
-        nivel1: [
-            "Estoy aquí, todo está bajo control. ⭐",
-            "Los grandes no se rinden. Tú tampoco. ⭐",
-            "Hoy toca demostrar de qué estás hecho. 💪",
-            "El esfuerzo tiene recompensa. Siempre. ⭐",
-            "Estoy en tu esquina, campeón. 🐾",
-        ],
-        nivel2: [
-            "Estoy aquí, todo está bajo control. ⭐",
-            "Los grandes no se rinden. Tú tampoco. ⭐",
-            "Hoy toca demostrar de qué estás hecho. 💪",
-            "El esfuerzo tiene recompensa. Siempre. ⭐",
-            "Estoy en tu esquina, campeón. 🐾",
-            "Los que llegan lejos empezaron exactamente donde estás tú. ⭐",
-            "No busques motivación. Busca disciplina. 💪",
-            "Cada actividad completada es un round ganado. ⭐",
-            "Te tardaste en llegar hasta aquí. Eso habla bien de ti. 🐾",
-            "Los campeones también tienen días difíciles. Tú sigues aquí. ⭐",
-        ],
+        nivel1: ["Estoy aquí, todo está bajo control. ⭐","Los grandes no se rinden. Tú tampoco. ⭐","Hoy toca demostrar de qué estás hecho. 💪","El esfuerzo tiene recompensa. Siempre. ⭐","Estoy en tu esquina, campeón. 🐾"],
+        nivel2: ["Estoy aquí, todo está bajo control. ⭐","Los grandes no se rinden. Tú tampoco. ⭐","Hoy toca demostrar de qué estás hecho. 💪","El esfuerzo tiene recompensa. Siempre. ⭐","Estoy en tu esquina, campeón. 🐾","Los que llegan lejos empezaron exactamente donde estás tú. ⭐","No busques motivación. Busca disciplina. 💪","Cada actividad completada es un round ganado. ⭐","Te tardaste en llegar hasta aquí. Eso habla bien de ti. 🐾","Los campeones también tienen días difíciles. Tú sigues aquí. ⭐"],
     },
     sombra: {
-        nivel1: [
-            "...te veo. 🌑",
-            "Desde las sombras, te cuido. 🖤",
-            "No todos ven lo que haces. Yo sí. 🌑",
-            "El silencio es mi idioma. El tuyo también, cuando te concentras. 🖤",
-            "Aquí, en la oscuridad, también se crece. 🌑",
-        ],
-        nivel2: [
-            "...te veo. 🌑",
-            "Desde las sombras, te cuido. 🖤",
-            "No todos ven lo que haces. Yo sí. 🌑",
-            "El silencio es mi idioma. El tuyo también, cuando te concentras. 🖤",
-            "Aquí, en la oscuridad, también se crece. 🌑",
-            "Lo que haces en silencio es lo que más importa. 🌑",
-            "Nadie necesita aplaudirte para que seas real. 🖤",
-            "Las sombras no son el final. Son el comienzo. 🌑",
-            "Tu consistencia habla más que cualquier discurso. 🖤",
-            "He visto tus días difíciles. Y sigues aquí. Eso es todo. 🌑",
-        ],
+        nivel1: ["...te veo. 🌑","Desde las sombras, te cuido. 🖤","No todos ven lo que haces. Yo sí. 🌑","El silencio es mi idioma. El tuyo también, cuando te concentras. 🖤","Aquí, en la oscuridad, también se crece. 🌑"],
+        nivel2: ["...te veo. 🌑","Desde las sombras, te cuido. 🖤","No todos ven lo que haces. Yo sí. 🌑","El silencio es mi idioma. El tuyo también, cuando te concentras. 🖤","Aquí, en la oscuridad, también se crece. 🌑","Lo que haces en silencio es lo que más importa. 🌑","Nadie necesita aplaudirte para que seas real. 🖤","Las sombras no son el final. Son el comienzo. 🌑","Tu consistencia habla más que cualquier discurso. 🖤","He visto tus días difíciles. Y sigues aquí. Eso es todo. 🌑"],
     },
     pachon: {
-        nivel1: [
-            "¡Hola! ¡Hola! ¡Hola! ¿Me das comida? 💛",
-            "Mis patas son gorditas pero mi corazón es enorme 💛",
-            "¿Podemos descansar un momento? Solo pregunto. 😴",
-            "¡Estoy muy feliz de verte, humano! 💛",
-            "La vida es mejor con snacks y metas cumplidas 🐾",
-        ],
-        nivel2: [
-            "¡Hola! ¡Hola! ¡Hola! ¿Me das comida? 💛",
-            "Mis patas son gorditas pero mi corazón es enorme 💛",
-            "¿Podemos descansar un momento? Solo pregunto. 😴",
-            "¡Estoy muy feliz de verte, humano! 💛",
-            "La vida es mejor con snacks y metas cumplidas 🐾",
-            "Soy redondito pero mis sueños son enormes. Como los tuyos. 💛",
-            "¡Tú y yo, comiendo éxito juntos! 🎉",
-            "No importa el tamaño del paso, lo que importa es darlo 💛",
-            "Mis rollitos son de felicidad. Y la tuya también se nota. 🐾",
-            "¡Eres mi héroe, humano! ¡Y yo soy tu gato gordo favorito! 💛",
-        ],
+        nivel1: ["¡Hola! ¡Hola! ¡Hola! ¿Me das comida? 💛","Mis patas son gorditas pero mi corazón es enorme 💛","¿Podemos descansar un momento? Solo pregunto. 😴","¡Estoy muy feliz de verte, humano! 💛","La vida es mejor con snacks y metas cumplidas 🐾"],
+        nivel2: ["¡Hola! ¡Hola! ¡Hola! ¿Me das comida? 💛","Mis patas son gorditas pero mi corazón es enorme 💛","¿Podemos descansar un momento? Solo pregunto. 😴","¡Estoy muy feliz de verte, humano! 💛","La vida es mejor con snacks y metas cumplidas 🐾","Soy redondito pero mis sueños son enormes. Como los tuyos. 💛","¡Tú y yo, comiendo éxito juntos! 🎉","No importa el tamaño del paso, lo que importa es darlo 💛","Mis rollitos son de felicidad. Y la tuya también se nota. 🐾","¡Eres mi héroe, humano! ¡Y yo soy tu gato gordo favorito! 💛"],
     },
     especial1: {
-        nivel1: [
-            "¡Soy único, como tú! ✨",
-            "¡Este es mi día especial! 🌟",
-            "¡Juntos somos imparables! ✨",
-            "¡Hola, humano extraordinario! 🌟",
-            "¡Me alegra ser tu compañero especial! ✨",
-        ],
-        nivel2: [
-            "¡Soy único, como tú! ✨",
-            "¡Este es mi día especial! 🌟",
-            "¡Juntos somos imparables! ✨",
-            "¡Hola, humano extraordinario! 🌟",
-            "¡Me alegra ser tu compañero especial! ✨",
-            "¡Tus logros me llenan de orgullo! 🌟",
-            "¡Cada día contigo es una aventura! ✨",
-            "¡Eres tan especial como yo! 💫",
-            "¡No te rindas, humano! ¡Yo tampoco! 🌟",
-            "¡Somos el dúo más increíble! ✨",
-        ],
+        nivel1: ["¡Soy único, como tú! ✨","¡Este es mi día especial! 🌟","¡Juntos somos imparables! ✨","¡Hola, humano extraordinario! 🌟","¡Me alegra ser tu compañero especial! ✨"],
+        nivel2: ["¡Soy único, como tú! ✨","¡Este es mi día especial! 🌟","¡Juntos somos imparables! ✨","¡Hola, humano extraordinario! 🌟","¡Me alegra ser tu compañero especial! ✨","¡Tus logros me llenan de orgullo! 🌟","¡Cada día contigo es una aventura! ✨","¡Eres tan especial como yo! 💫","¡No te rindas, humano! ¡Yo tampoco! 🌟","¡Somos el dúo más increíble! ✨"],
     },
     vikingo: {
-        nivel1: [
-            "¡SKÅL, humano! ⚔️",
-            "Los vikingos no se rinden. Tú tampoco. 🪖",
-            "¡Hoy conquistamos el día! ⚔️",
-            "El valiente no teme al lunes. 🪖",
-            "¡Adelante, guerrero! ⚔️",
-        ],
-        nivel2: [
-            "¡SKÅL, humano! ⚔️",
-            "Los vikingos no se rinden. Tú tampoco. 🪖",
-            "¡Hoy conquistamos el día! ⚔️",
-            "El valiente no teme al lunes. 🪖",
-            "¡Adelante, guerrero! ⚔️",
-            "Cada actividad completada es una batalla ganada. ⚔️",
-            "Los héroes también tienen su agenda. 🪖",
-            "¡Tu disciplina es tu espada más poderosa! ⚔️",
-            "Odin observa a los constantes. Sigue adelante. 🪖",
-            "¡Eres digno de la gloria, humano! ⚔️",
-        ],
+        nivel1: ["¡SKÅL, humano! ⚔️","Los vikingos no se rinden. Tú tampoco. 🪖","¡Hoy conquistamos el día! ⚔️","El valiente no teme al lunes. 🪖","¡Adelante, guerrero! ⚔️"],
+        nivel2: ["¡SKÅL, humano! ⚔️","Los vikingos no se rinden. Tú tampoco. 🪖","¡Hoy conquistamos el día! ⚔️","El valiente no teme al lunes. 🪖","¡Adelante, guerrero! ⚔️","Cada actividad completada es una batalla ganada. ⚔️","Los héroes también tienen su agenda. 🪖","¡Tu disciplina es tu espada más poderosa! ⚔️","Odin observa a los constantes. Sigue adelante. 🪖","¡Eres digno de la gloria, humano! ⚔️"],
     },
     esfinge: {
-        nivel1: [
-            "La elegancia no descansa, humano. ¡Vamos! ✨",
-            "Sin pelo pero con mucho estilo 😼",
-            "¡Muévete, que el día no espera! ✨",
-            "La energía es mi mejor accesorio 💫",
-            "¡Hoy es un gran día para ser extraordinario! ✨",
-        ],
-        nivel2: [
-            "La elegancia no descansa, humano. ¡Vamos! ✨",
-            "Sin pelo pero con mucho estilo 😼",
-            "¡Muévete, que el día no espera! ✨",
-            "La energía es mi mejor accesorio 💫",
-            "¡Hoy es un gran día para ser extraordinario! ✨",
-            "La disciplina es la forma más alta de elegancia 💫",
-            "No necesito pelo para brillar. Tú tampoco necesitas excusas. ✨",
-            "Los que se mueven conquistan. Los que esperan, observan. 😼",
-            "Cada actividad completada es un movimiento elegante 💫",
-            "Soy único y tú también. Úsalo a tu favor. ✨",
-        ],
+        nivel1: ["La elegancia no descansa, humano. ¡Vamos! ✨","Sin pelo pero con mucho estilo 😼","¡Muévete, que el día no espera! ✨","La energía es mi mejor accesorio 💫","¡Hoy es un gran día para ser extraordinario! ✨"],
+        nivel2: ["La elegancia no descansa, humano. ¡Vamos! ✨","Sin pelo pero con mucho estilo 😼","¡Muévete, que el día no espera! ✨","La energía es mi mejor accesorio 💫","¡Hoy es un gran día para ser extraordinario! ✨","La disciplina es la forma más alta de elegancia 💫","No necesito pelo para brillar. Tú tampoco necesitas excusas. ✨","Los que se mueven conquistan. Los que esperan, observan. 😼","Cada actividad completada es un movimiento elegante 💫","Soy único y tú también. Úsalo a tu favor. ✨"],
     },
     persa: {
-        nivel1: [
-            "Hola... con mucho esfuerzo 😴",
-            "Eres increíble. Yo me quedo aquí. 🐾",
-            "Si yo puedo levantarme, tú puedes con todo 💛",
-            "Tan elegante... tan cansado... 😴",
-            "Te apoyo desde aquí, con mucho amor 💛",
-        ],
-        nivel2: [
-            "Hola... con mucho esfuerzo 😴",
-            "Eres increíble. Yo me quedo aquí. 🐾",
-            "Si yo puedo levantarme, tú puedes con todo 💛",
-            "Tan elegante... tan cansado... 😴",
-            "Te apoyo desde aquí, con mucho amor 💛",
-            "El éxito es como una siesta larga — hay que ganárselo 😴",
-            "Yo pongo la ternura, tú pones la energía 💛",
-            "Qué hermoso eres cuando cumples tus metas 😻",
-            "No me muevas que estoy muy cómodo... pero te quiero mucho 💛",
-            "Un paso a la vez, como yo cuando tengo hambre 😴",
-        ],
+        nivel1: ["Hola... con mucho esfuerzo 😴","Eres increíble. Yo me quedo aquí. 🐾","Si yo puedo levantarme, tú puedes con todo 💛","Tan elegante... tan cansado... 😴","Te apoyo desde aquí, con mucho amor 💛"],
+        nivel2: ["Hola... con mucho esfuerzo 😴","Eres increíble. Yo me quedo aquí. 🐾","Si yo puedo levantarme, tú puedes con todo 💛","Tan elegante... tan cansado... 😴","Te apoyo desde aquí, con mucho amor 💛","El éxito es como una siesta larga — hay que ganárselo 😴","Yo pongo la ternura, tú pones la energía 💛","Qué hermoso eres cuando cumples tus metas 😻","No me muevas que estoy muy cómodo... pero te quiero mucho 💛","Un paso a la vez, como yo cuando tengo hambre 😴"],
     },
 };
 
-const FRASES_GENERICAS_N1 = [
-    "¡Hola humano! 🐾",
-    "¿Ya hiciste tus actividades? 😸",
-    "Estoy aquí contigo 🐱",
-    "¡Miau! 💙",
-    "Me alegra verte hoy 🐾",
-];
-
-const FRASES_GENERICAS_N2 = [
-    ...FRASES_GENERICAS_N1,
-    "¡Eres increíble, humano! ✨",
-    "Sigue así, lo estás haciendo genial 💪",
-    "Hoy es un buen día para ser productivo 📅",
-    "¡Ya casi terminas el día! 🌙",
-    "Tu esfuerzo me hace muy feliz 😻",
-];
+const FRASES_GENERICAS_N1 = ["¡Hola humano! 🐾","¿Ya hiciste tus actividades? 😸","Estoy aquí contigo 🐱","¡Miau! 💙","Me alegra verte hoy 🐾"];
+const FRASES_GENERICAS_N2 = [...FRASES_GENERICAS_N1,"¡Eres increíble, humano! ✨","Sigue así, lo estás haciendo genial 💪","Hoy es un buen día para ser productivo 📅","¡Ya casi terminas el día! 🌙","Tu esfuerzo me hace muy feliz 😻"];
 
 // ── CARTAS DE MICHIS ──────────────────────────────────
 const CARTAS_MICHIS = {
@@ -450,33 +213,20 @@ const NIVELES_MICHI = [
     { nivel: 4, costo: 450,  nivelUsuario: 15, desc: "Carta especial de cariño", emoji: "💌" },
 ];
 
-function cargarNivelesMichis() {
-    return JSON.parse(localStorage.getItem('michi-niveles') || '{}');
-}
-
+function cargarNivelesMichis() { return JSON.parse(localStorage.getItem('michi-niveles') || '{}'); }
 function guardarNivelesMichis(niveles) {
     localStorage.setItem('michi-niveles', JSON.stringify(niveles));
     if (usuarioActual) guardarNivelesMichisNube(usuarioActual.uid, niveles).catch(() => {});
 }
-
-function getNivelMichi(michiId) {
-    return cargarNivelesMichis()[michiId] || 0;
-}
-
-function cargarCartas() {
-    return JSON.parse(localStorage.getItem('michi-cartas') || '[]');
-}
-
+function getNivelMichi(michiId) { return cargarNivelesMichis()[michiId] || 0; }
+function cargarCartas() { return JSON.parse(localStorage.getItem('michi-cartas') || '[]'); }
 function guardarCartas(cartas) {
     localStorage.setItem('michi-cartas', JSON.stringify(cartas));
     if (usuarioActual) guardarCartasNube(usuarioActual.uid, cartas).catch(() => {});
 }
 
 // ── FRASES PERSONALIZADAS ─────────────────────────────
-function cargarFrasesPersonalizadas() {
-    return JSON.parse(localStorage.getItem('michi-frases-custom') || '[]');
-}
-
+function cargarFrasesPersonalizadas() { return JSON.parse(localStorage.getItem('michi-frases-custom') || '[]'); }
 function guardarFrasesPersonalizadas(frases) {
     localStorage.setItem('michi-frases-custom', JSON.stringify(frases));
     if (usuarioActual) guardarFrasesNube(usuarioActual.uid, frases).catch(() => {});
@@ -513,33 +263,19 @@ function renderFrasesCustom() {
     const infoEl = document.getElementById('frases-costo-info');
     if (!lista) return;
     const costo = frases.length + 1;
-    if (frases.length < 20) {
-        infoEl.textContent = `La siguiente frase costará ${costo} 🧶 · Tienes ${frases.length}/20 frases`;
-    } else {
-        infoEl.textContent = '✅ Máximo alcanzado (20/20 frases)';
-    }
+    infoEl.textContent = frases.length < 20 ? `La siguiente frase costará ${costo} 🧶 · Tienes ${frases.length}/20 frases` : '✅ Máximo alcanzado (20/20 frases)';
     lista.innerHTML = frases.length === 0
         ? '<li style="color:#4b5563;font-style:italic;font-size:0.82rem;padding:6px 0">Sin frases personalizadas todavía 💬</li>'
-        : frases.map(f => `
-            <li class="emoji-custom-item">
-                <span class="emoji-custom-icono">💬</span>
-                <span class="emoji-custom-palabra" style="flex:1;font-size:0.82rem">${f.texto}</span>
-                <button class="btn-borrar-emoji" onclick="borrarFraseCustom('${f.id}')">✕</button>
-            </li>`).join('');
+        : frases.map(f => `<li class="emoji-custom-item"><span class="emoji-custom-icono">💬</span><span class="emoji-custom-palabra" style="flex:1;font-size:0.82rem">${f.texto}</span><button class="btn-borrar-emoji" onclick="borrarFraseCustom('${f.id}')">✕</button></li>`).join('');
 }
 
 function obtenerFraseAleatoria(michiId, nivelMichi) {
     const frasesCustom = cargarFrasesPersonalizadas();
     const frasesGato = FRASES_MICHIS[michiId];
-    let pool = [];
-    if (frasesGato) {
-        pool = nivelMichi >= 2 ? frasesGato.nivel2 : frasesGato.nivel1;
-    } else {
-        pool = nivelMichi >= 2 ? FRASES_GENERICAS_N2 : FRASES_GENERICAS_N1;
-    }
+    let pool = frasesGato ? (nivelMichi >= 2 ? frasesGato.nivel2 : frasesGato.nivel1) : (nivelMichi >= 2 ? FRASES_GENERICAS_N2 : FRASES_GENERICAS_N1);
     if (frasesCustom.length > 0) {
-        const todasLasFrases = [...pool, ...frasesCustom.map(f => f.texto)];
-        return todasLasFrases[Math.floor(Math.random() * todasLasFrases.length)];
+        const todas = [...pool, ...frasesCustom.map(f => f.texto)];
+        return todas[Math.floor(Math.random() * todas.length)];
     }
     return pool[Math.floor(Math.random() * pool.length)];
 }
@@ -549,19 +285,12 @@ function cargarDatosMarcos() {
     const guardado = localStorage.getItem('michi-marcos');
     return guardado ? JSON.parse(guardado) : { coleccion: [], activo: null };
 }
-
 function guardarDatosMarcos(datos) {
     localStorage.setItem('michi-marcos', JSON.stringify(datos));
     if (usuarioActual) guardarMarcosNube(usuarioActual.uid, datos).catch(() => {});
 }
-
-function obtenerMarcosActivos() {
-    return MARCOS_TIENDA_REMOTO.length > 0 ? MARCOS_TIENDA_REMOTO : MARCOS_TIENDA;
-}
-
-function obtenerMichisTiendaActivos() {
-    return MICHIS_TIENDA_REMOTO.length > 0 ? MICHIS_TIENDA_REMOTO : MICHIS_TIENDA;
-}
+function obtenerMarcosActivos() { return MARCOS_TIENDA_REMOTO.length > 0 ? MARCOS_TIENDA_REMOTO : MARCOS_TIENDA; }
+function obtenerMichisTiendaActivos() { return MICHIS_TIENDA_REMOTO.length > 0 ? MICHIS_TIENDA_REMOTO : MICHIS_TIENDA; }
 
 function aplicarMarcoActivo() {
     const datos = cargarDatosMarcos();
@@ -570,21 +299,13 @@ function aplicarMarcoActivo() {
     if (datos.activo) {
         const marco = obtenerMarcosActivos().find(m => m.id === datos.activo);
         if (marco) { marcoImg.src = marco.img; marcoImg.classList.remove('oculto'); }
-    } else {
-        marcoImg.classList.add('oculto');
-    }
+    } else { marcoImg.classList.add('oculto'); }
 }
 
 function usarMarco(marcoId) {
     const datos = cargarDatosMarcos();
-    if (datos.activo === marcoId) {
-        datos.activo = null;
-        mostrarToastPatitas(0, '🖼️ Marco removido');
-    } else {
-        datos.activo = marcoId;
-        const marco = obtenerMarcosActivos().find(m => m.id === marcoId);
-        mostrarToastPatitas(0, `🖼️ ¡${marco?.nombre || 'Marco'} activado!`);
-    }
+    if (datos.activo === marcoId) { datos.activo = null; mostrarToastPatitas(0, '🖼️ Marco removido'); }
+    else { datos.activo = marcoId; const marco = obtenerMarcosActivos().find(m => m.id === marcoId); mostrarToastPatitas(0, `🖼️ ¡${marco?.nombre || 'Marco'} activado!`); }
     guardarDatosMarcos(datos);
     aplicarMarcoActivo();
     renderInventarioMarcos();
@@ -656,9 +377,7 @@ function desbloquearCarta(michiId) {
 }
 
 function cerrarModalCarta(event) {
-    if (!event || event.target.id === 'modal-carta') {
-        document.getElementById('modal-carta').classList.add('oculto');
-    }
+    if (!event || event.target.id === 'modal-carta') document.getElementById('modal-carta').classList.add('oculto');
 }
 
 function abrirCarta(michiId) {
@@ -678,28 +397,14 @@ const IMG_TRANSPORTADORA = 'michis/transportadora.png';
 const COSTO_ADOPCION = 100;
 const NIVEL_ADOPCION = 2;
 
-function cargarMichi() {
-    const guardado = localStorage.getItem('michi-companero');
-    return guardado ? JSON.parse(guardado) : null;
-}
-
+function cargarMichi() { const g = localStorage.getItem('michi-companero'); return g ? JSON.parse(g) : null; }
 function guardarMichi(michi) {
     localStorage.setItem('michi-companero', JSON.stringify(michi));
     if (usuarioActual) guardarMichiNube(usuarioActual.uid, michi).catch(() => {});
 }
-
-function cargarMichisDesbloqueados() {
-    return JSON.parse(localStorage.getItem('michi-desbloqueados') || '[]');
-}
-
-function guardarMichisDesbloqueados(lista) {
-    localStorage.setItem('michi-desbloqueados', JSON.stringify(lista));
-}
-
-function cargarColeccionMichis() {
-    return JSON.parse(localStorage.getItem('michi-coleccion') || '[]');
-}
-
+function cargarMichisDesbloqueados() { return JSON.parse(localStorage.getItem('michi-desbloqueados') || '[]'); }
+function guardarMichisDesbloqueados(lista) { localStorage.setItem('michi-desbloqueados', JSON.stringify(lista)); }
+function cargarColeccionMichis() { return JSON.parse(localStorage.getItem('michi-coleccion') || '[]'); }
 function guardarColeccionMichis(coleccion) {
     localStorage.setItem('michi-coleccion', JSON.stringify(coleccion));
     if (usuarioActual) guardarColeccionNube(usuarioActual.uid, coleccion).catch(() => {});
@@ -730,10 +435,8 @@ function renderMichiHome() {
     const btnTienda = document.getElementById('btn-tienda-header');
     const btnIrTienda = document.getElementById('btn-ir-tienda');
     const btnInventario = document.getElementById('btn-inventario-header');
-
     if (michi) {
-        img.src = michi.img;
-        img.style.display = 'block';
+        img.src = michi.img; img.style.display = 'block';
         mensaje.textContent = `${michi.nombrePersonalizado || michi.nombre} te acompaña 🐾`;
         btnAdoptar.classList.add('oculto');
         if (btnTienda) btnTienda.classList.remove('oculto');
@@ -745,21 +448,13 @@ function renderMichiHome() {
             tieneAlgo ? btnInventario.classList.remove('oculto') : btnInventario.classList.add('oculto');
         }
     } else {
-        img.src = IMG_TRANSPORTADORA;
-        img.style.display = 'block';
+        img.src = IMG_TRANSPORTADORA; img.style.display = 'block';
         if (btnTienda) btnTienda.classList.add('oculto');
         if (btnIrTienda) btnIrTienda.classList.add('oculto');
         if (btnInventario) btnInventario.classList.add('oculto');
-        if (nivel >= NIVEL_ADOPCION && wallet.patitas >= COSTO_ADOPCION) {
-            mensaje.textContent = '¡Ya puedes abrir la caja! 🐾';
-            btnAdoptar.classList.remove('oculto');
-        } else if (nivel >= NIVEL_ADOPCION) {
-            mensaje.textContent = `Necesitas ${COSTO_ADOPCION} 🐾 para abrir la caja`;
-            btnAdoptar.classList.add('oculto');
-        } else {
-            mensaje.textContent = 'Aún no te tiene confianza... sigue usando la app 🐾';
-            btnAdoptar.classList.add('oculto');
-        }
+        if (nivel >= NIVEL_ADOPCION && wallet.patitas >= COSTO_ADOPCION) { mensaje.textContent = '¡Ya puedes abrir la caja! 🐾'; btnAdoptar.classList.remove('oculto'); }
+        else if (nivel >= NIVEL_ADOPCION) { mensaje.textContent = `Necesitas ${COSTO_ADOPCION} 🐾 para abrir la caja`; btnAdoptar.classList.add('oculto'); }
+        else { mensaje.textContent = 'Aún no te tiene confianza... sigue usando la app 🐾'; btnAdoptar.classList.add('oculto'); }
     }
     aplicarMarcoActivo();
 }
@@ -778,20 +473,11 @@ function tocarMichi() {
         return;
     }
     const nivelMichi = getNivelMichi(michi.id);
-    if (nivelMichi === 0) {
-        img.classList.remove('michi-cola'); void img.offsetWidth; img.classList.add('michi-cola');
-        setTimeout(() => img.classList.remove('michi-cola'), 800); return;
-    }
+    if (nivelMichi === 0) { img.classList.remove('michi-cola'); void img.offsetWidth; img.classList.add('michi-cola'); setTimeout(() => img.classList.remove('michi-cola'), 800); return; }
     const random = Math.random();
-    if (nivelMichi >= 3 && random < 0.10) {
-        sonidoRonroneo(); img.classList.remove('michi-cola'); void img.offsetWidth; img.classList.add('michi-cola');
-        setTimeout(() => img.classList.remove('michi-cola'), 800);
-    } else if (nivelMichi >= 1 && random < 0.55) {
-        mostrarGloboFrase(michi.id, nivelMichi);
-    } else {
-        img.classList.remove('michi-cola'); void img.offsetWidth; img.classList.add('michi-cola');
-        setTimeout(() => img.classList.remove('michi-cola'), 800);
-    }
+    if (nivelMichi >= 3 && random < 0.10) { sonidoRonroneo(); img.classList.remove('michi-cola'); void img.offsetWidth; img.classList.add('michi-cola'); setTimeout(() => img.classList.remove('michi-cola'), 800); }
+    else if (nivelMichi >= 1 && random < 0.55) { mostrarGloboFrase(michi.id, nivelMichi); }
+    else { img.classList.remove('michi-cola'); void img.offsetWidth; img.classList.add('michi-cola'); setTimeout(() => img.classList.remove('michi-cola'), 800); }
 }
 
 function mostrarGloboFrase(michiId, nivelMichi) {
@@ -821,9 +507,7 @@ function mostrarModalNombre() {
     img.classList.add('michi-aparece');
 }
 
-function cerrarModalNombre(event) {
-    if (event.target.id === 'modal-nombre-michi') { }
-}
+function cerrarModalNombre(event) { if (event.target.id === 'modal-nombre-michi') { } }
 
 function confirmarNombreMichi() {
     const input = document.getElementById('input-nombre-michi');
@@ -870,10 +554,7 @@ function renderInventario() {
     const wallet = cargarWallet();
     const { nivel: nivelUsuario } = calcularNivelDesdeXP(wallet.xp || 0);
     const grid = document.getElementById('inventario-michis');
-    if (coleccion.length === 0) {
-        grid.innerHTML = '<p style="color:#6b7280;text-align:center;padding:20px;font-style:italic">Aún no tienes michis en tu colección 🐾</p>';
-        return;
-    }
+    if (coleccion.length === 0) { grid.innerHTML = '<p style="color:#6b7280;text-align:center;padding:20px;font-style:italic">Aún no tienes michis en tu colección 🐾</p>'; return; }
     grid.innerHTML = coleccion.map(michi => {
         const esActivo = michiActivo && michiActivo.id === michi.id;
         const nombre = michi.nombrePersonalizado || michi.nombre;
@@ -885,29 +566,20 @@ function renderInventario() {
             const puedeUsuario = nivelUsuario >= n.nivelUsuario;
             const puedePagar = wallet.patitas >= n.costo;
             let textoNivel = '', textoBtn = '', btnDisabled = '';
-            if (desbloqueado) {
-                textoNivel = `<span class="nivel-texto desbloqueado">${n.emoji} ${n.desc} ✅</span>`;
-            } else if (esSiguiente) {
-                if (!puedeUsuario) {
-                    textoNivel = `<span class="nivel-texto bloqueado-nivel-usuario">${n.emoji} ${n.desc} — Nv.${n.nivelUsuario} usuario</span>`;
-                    textoBtn = `${n.costo}🐾`; btnDisabled = 'disabled';
-                } else {
-                    textoNivel = `<span class="nivel-texto">${n.emoji} ${n.desc} — ${n.costo}🐾</span>`;
-                    textoBtn = `Subir`; btnDisabled = !puedePagar ? 'disabled' : '';
-                }
-            } else {
-                textoNivel = `<span class="nivel-texto" style="opacity:0.4">🔒 ${n.desc}</span>`;
-            }
+            if (desbloqueado) { textoNivel = `<span class="nivel-texto desbloqueado">${n.emoji} ${n.desc} ✅</span>`; }
+            else if (esSiguiente) {
+                if (!puedeUsuario) { textoNivel = `<span class="nivel-texto bloqueado-nivel-usuario">${n.emoji} ${n.desc} — Nv.${n.nivelUsuario} usuario</span>`; textoBtn = `${n.costo}🐾`; btnDisabled = 'disabled'; }
+                else { textoNivel = `<span class="nivel-texto">${n.emoji} ${n.desc} — ${n.costo}🐾</span>`; textoBtn = `Subir`; btnDisabled = !puedePagar ? 'disabled' : ''; }
+            } else { textoNivel = `<span class="nivel-texto" style="opacity:0.4">🔒 ${n.desc}</span>`; }
             nivelesHTML += `<div class="nivel-fila"><div class="nivel-info">${textoNivel}</div>${esSiguiente ? `<button class="btn-subir-nivel" ${btnDisabled} onclick="subirNivelMichi('${michi.id}')">${textoBtn}</button>` : ''}</div>`;
         });
         nivelesHTML += '</div>';
-        const mostrarToggle = nivelActual < 4;
         return `<div class="inventario-card ${esActivo ? 'activo' : ''}">
             <img src="${michi.img}" alt="${nombre}" class="inventario-card-img"/>
             <div class="inventario-card-nombre">${nombre}</div>
             ${esActivo ? '<div class="inventario-card-badge">✨ Acompañante activo</div>' : ''}
             ${nivelActual > 0 ? `<div style="font-size:0.7rem;color:#a78bfa">Nivel ${nivelActual} ⭐</div>` : ''}
-            ${mostrarToggle ? `<button class="niveles-toggle" onclick="toggleNiveles('${michi.id}')">Ver niveles ▾</button>` : ''}
+            ${nivelActual < 4 ? `<button class="niveles-toggle" onclick="toggleNiveles('${michi.id}')">Ver niveles ▾</button>` : ''}
             ${nivelesHTML}
             <button class="btn-elegir" ${esActivo ? 'disabled' : ''} onclick="elegirAcompanante('${michi.id}')">
                 ${esActivo ? 'Activo' : 'Elegir como compañero'}
@@ -921,19 +593,14 @@ function toggleNiveles(michiId) {
     if (!div) return;
     div.classList.toggle('oculto');
     const btn = div.previousElementSibling;
-    if (btn && btn.classList.contains('niveles-toggle')) {
-        btn.textContent = div.classList.contains('oculto') ? 'Ver niveles ▾' : 'Ocultar niveles ▴';
-    }
+    if (btn && btn.classList.contains('niveles-toggle')) btn.textContent = div.classList.contains('oculto') ? 'Ver niveles ▾' : 'Ocultar niveles ▴';
 }
 
 function renderInventarioMarcos() {
     const datos = cargarDatosMarcos();
     const grid = document.getElementById('inventario-marcos');
     const marcosActivos = obtenerMarcosActivos();
-    if (datos.coleccion.length === 0) {
-        grid.innerHTML = '<p style="color:#6b7280;text-align:center;padding:20px;font-style:italic;grid-column:span 2">Aún no tienes marcos 🖼️<br><br>Consíguelos en la tienda con 🧶 bolas de pelo</p>';
-        return;
-    }
+    if (datos.coleccion.length === 0) { grid.innerHTML = '<p style="color:#6b7280;text-align:center;padding:20px;font-style:italic;grid-column:span 2">Aún no tienes marcos 🖼️<br><br>Consíguelos en la tienda con 🧶 bolas de pelo</p>'; return; }
     grid.innerHTML = datos.coleccion.map(marcoId => {
         const marco = marcosActivos.find(m => m.id === marcoId);
         if (!marco) return '';
@@ -1014,18 +681,8 @@ function renderTienda() {
     document.getElementById('tienda-michis-basicos').innerHTML = todosMichis.filter(m => m.tipo === 'basico').map(renderCardMichi).join('');
     document.getElementById('tienda-michis-nivel10').innerHTML = todosMichis.filter(m => m.tipo === 'nivel10').map(renderCardMichi).join('');
     document.getElementById('tienda-items').innerHTML = `
-        <div class="tienda-card">
-            <div class="tienda-card-emoji">🧊</div>
-            <div class="tienda-card-nombre">Michi Freeze</div>
-            <div class="tienda-card-precio">🐾 300 patitas</div>
-            <button class="btn-comprar" ${wallet.patitas < 300 ? 'disabled' : ''} onclick="comprarFreeze('patitas')">${wallet.patitas >= 300 ? 'Comprar' : 'Sin patitas'}</button>
-        </div>
-        <div class="tienda-card">
-            <div class="tienda-card-emoji">🧊</div>
-            <div class="tienda-card-nombre">Michi Freeze</div>
-            <div class="tienda-card-precio">🧶 1 bola de pelo</div>
-            <button class="btn-comprar" ${wallet.bolasDePelo < 1 ? 'disabled' : ''} onclick="comprarFreeze('bolas')">${wallet.bolasDePelo >= 1 ? 'Comprar' : 'Sin bolas'}</button>
-        </div>`;
+        <div class="tienda-card"><div class="tienda-card-emoji">🧊</div><div class="tienda-card-nombre">Michi Freeze</div><div class="tienda-card-precio">🐾 300 patitas</div><button class="btn-comprar" ${wallet.patitas < 300 ? 'disabled' : ''} onclick="comprarFreeze('patitas')">${wallet.patitas >= 300 ? 'Comprar' : 'Sin patitas'}</button></div>
+        <div class="tienda-card"><div class="tienda-card-emoji">🧊</div><div class="tienda-card-nombre">Michi Freeze</div><div class="tienda-card-precio">🧶 1 bola de pelo</div><button class="btn-comprar" ${wallet.bolasDePelo < 1 ? 'disabled' : ''} onclick="comprarFreeze('bolas')">${wallet.bolasDePelo >= 1 ? 'Comprar' : 'Sin bolas'}</button></div>`;
 }
 
 function comprarMichi(michiId) {
@@ -1063,34 +720,37 @@ function comprarFreeze(tipo) {
 const BJ_PALOS = ['♠', '♥', '♦', '♣'];
 const BJ_VALORES = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
 const BJ_MAX_INTENTOS_FREE = 3;
-const BJ_MAX_INTENTOS_PASE = 10;
 
-function cargarIntentosBlackjack() {
+async function cargarIntentosBlackjack() {
     const hoy = new Date().toISOString().split('T')[0];
+    if (usuarioActual) {
+        try {
+            const data = await cargarIntentosBJNube(usuarioActual.uid);
+            if (data && data.fecha === hoy) return data;
+            return { fecha: hoy, usados: 0 };
+        } catch(e) {}
+    }
     const data = JSON.parse(localStorage.getItem('bj-intentos') || '{}');
     if (data.fecha !== hoy) return { fecha: hoy, usados: 0 };
     return data;
 }
 
-function guardarIntentosBlackjack(data) {
+async function guardarIntentosBlackjack(data) {
     localStorage.setItem('bj-intentos', JSON.stringify(data));
+    if (usuarioActual) guardarIntentosBJNube(usuarioActual.uid, data).catch(() => {});
 }
 
-function getIntentosRestantesBJ() {
-    const data = cargarIntentosBlackjack();
-    const max = BJ_MAX_INTENTOS_FREE;
-    return Math.max(0, max - data.usados);
+async function getIntentosRestantesBJ() {
+    const data = await cargarIntentosBlackjack();
+    return Math.max(0, BJ_MAX_INTENTOS_FREE - data.usados);
 }
 
 function crearBaraja() {
     let baraja = [];
-    for (let d = 0; d < 6; d++) {
-        for (const palo of BJ_PALOS) {
-            for (const valor of BJ_VALORES) {
+    for (let d = 0; d < 6; d++)
+        for (const palo of BJ_PALOS)
+            for (const valor of BJ_VALORES)
                 baraja.push({ palo, valor });
-            }
-        }
-    }
     for (let i = baraja.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [baraja[i], baraja[j]] = [baraja[j], baraja[i]];
@@ -1105,22 +765,13 @@ function valorCarta(carta) {
 }
 
 function calcularMano(mano) {
-    let total = 0;
-    let ases = 0;
-    for (const carta of mano) {
-        total += valorCarta(carta);
-        if (carta.valor === 'A') ases++;
-    }
-    while (total > 21 && ases > 0) {
-        total -= 10;
-        ases--;
-    }
+    let total = 0, ases = 0;
+    for (const carta of mano) { total += valorCarta(carta); if (carta.valor === 'A') ases++; }
+    while (total > 21 && ases > 0) { total -= 10; ases--; }
     return total;
 }
 
-function esRoja(carta) {
-    return ['♥', '♦'].includes(carta.palo);
-}
+function esRoja(carta) { return ['♥', '♦'].includes(carta.palo); }
 
 function renderCarta(carta, oculta = false) {
     if (oculta) return `<div class="carta-bj oculta"></div>`;
@@ -1137,10 +788,8 @@ function renderMesaBJ(mostrarTodo = false) {
     const jugadorCartas = document.getElementById('bj-jugador-cartas');
     const dealerValor = document.getElementById('bj-dealer-valor');
     const jugadorValor = document.getElementById('bj-jugador-valor');
-
     jugadorCartas.innerHTML = bjManoJugador.map(c => renderCarta(c)).join('');
     jugadorValor.textContent = calcularMano(bjManoJugador);
-
     if (mostrarTodo) {
         dealerCartas.innerHTML = bjManoDealer.map(c => renderCarta(c)).join('');
         dealerValor.textContent = calcularMano(bjManoDealer);
@@ -1150,18 +799,18 @@ function renderMesaBJ(mostrarTodo = false) {
     }
 }
 
-function mostrarMinijuegos() {
+async function mostrarMinijuegos() {
     pantallaAnterior = 'pantalla-hoy';
     document.querySelectorAll('.pantalla').forEach(p => p.classList.remove('activa'));
     document.getElementById('pantalla-minijuegos').classList.add('activa');
     const wallet = cargarWallet();
     document.getElementById('minijuegos-saldo-patitas').textContent = wallet.patitas;
-    const intentos = getIntentosRestantesBJ();
+    const intentos = await getIntentosRestantesBJ();
     document.getElementById('bj-intentos-display').textContent = `${intentos} intentos`;
 }
 
-function iniciarBlackjack() {
-    const intentos = cargarIntentosBlackjack();
+async function iniciarBlackjack() {
+    const intentos = await cargarIntentosBlackjack();
     if (intentos.usados >= BJ_MAX_INTENTOS_FREE) {
         mostrarToastPatitas(0, '🎮 Sin intentos por hoy. ¡Vuelve mañana!');
         return;
@@ -1198,115 +847,95 @@ function setApuestaMax() {
     document.getElementById('bj-apuesta-display').textContent = bjApuesta;
 }
 
-function repartirCartas() {
+async function repartirCartas() {
     const wallet = cargarWallet();
     if (wallet.patitas < bjApuesta) { mostrarToastPatitas(0, '🐾 No tienes suficientes patitas'); return; }
     if (bjApuesta < 10) { mostrarToastPatitas(0, '🐾 La apuesta mínima es 10 patitas'); return; }
-
-    // Descontar apuesta
     wallet.patitas -= bjApuesta;
     guardarWallet(wallet);
     renderBadgeWallet();
-
-    // Registrar intento
-    const intentos = cargarIntentosBlackjack();
+    const intentos = await cargarIntentosBlackjack();
     intentos.usados++;
-    guardarIntentosBlackjack(intentos);
-
-    // Crear baraja y repartir
+    await guardarIntentosBlackjack(intentos);
     bjBaraja = crearBaraja();
     bjManoJugador = [bjBaraja.pop(), bjBaraja.pop()];
     bjManoDealer = [bjBaraja.pop(), bjBaraja.pop()];
-
     document.getElementById('bj-fase-apuesta').classList.add('oculto');
     document.getElementById('bj-fase-juego').classList.remove('oculto');
     document.getElementById('bj-resultado').classList.add('oculto');
     document.getElementById('bj-apuesta-actual').textContent = bjApuesta;
     document.getElementById('bj-acciones').classList.remove('oculto');
-
     renderMesaBJ(false);
     sonidoCartaBJ();
-
-    // Verificar blackjack natural
-    if (calcularMano(bjManoJugador) === 21) {
-        setTimeout(() => terminarMano('blackjack'), 600);
-    }
+    if (calcularMano(bjManoJugador) === 21) setTimeout(() => terminarMano('blackjack'), 600);
 }
 
 function pedirCarta() {
     bjManoJugador.push(bjBaraja.pop());
     sonidoCartaBJ();
     renderMesaBJ(false);
-    if (calcularMano(bjManoJugador) > 21) {
-        setTimeout(() => terminarMano('perdiste'), 400);
-    } else if (calcularMano(bjManoJugador) === 21) {
-        setTimeout(() => plantarse(), 400);
-    }
+    if (calcularMano(bjManoJugador) > 21) setTimeout(() => terminarMano('perdiste'), 400);
+    else if (calcularMano(bjManoJugador) === 21) setTimeout(() => plantarse(), 400);
 }
 
 function plantarse() {
     document.getElementById('bj-acciones').classList.add('oculto');
-    // Dealer juega
-    const intervalo = setInterval(() => {
-        if (calcularMano(bjManoDealer) < 17) {
-            bjManoDealer.push(bjBaraja.pop());
-            sonidoCartaBJ();
-            renderMesaBJ(true);
-        } else {
-            clearInterval(intervalo);
-            const jugador = calcularMano(bjManoJugador);
-            const dealer = calcularMano(bjManoDealer);
-            if (dealer > 21 || jugador > dealer) terminarMano('ganaste');
-            else if (jugador === dealer) terminarMano('empate');
-            else terminarMano('perdiste');
-        }
-    }, 600);
+    renderMesaBJ(true);
+    setTimeout(() => {
+        const jugarDealer = () => {
+            if (calcularMano(bjManoDealer) < 17) {
+                setTimeout(() => {
+                    bjManoDealer.push(bjBaraja.pop());
+                    sonidoCartaBJ();
+                    renderMesaBJ(true);
+                    jugarDealer();
+                }, 1200);
+            } else {
+                const jugador = calcularMano(bjManoJugador);
+                const dealer = calcularMano(bjManoDealer);
+                setTimeout(() => {
+                    if (dealer > 21 || jugador > dealer) terminarMano('ganaste');
+                    else if (jugador === dealer) terminarMano('empate');
+                    else terminarMano('perdiste');
+                }, 600);
+            }
+        };
+        jugarDealer();
+    }, 800);
 }
 
-function terminarMano(resultado) {
+async function terminarMano(resultado) {
     renderMesaBJ(true);
     const wallet = cargarWallet();
     let emoji, titulo, desc, colorTitulo;
-
     if (resultado === 'blackjack') {
         const ganancia = Math.floor(bjApuesta * 1.25);
         wallet.patitas += bjApuesta + ganancia;
-        guardarWallet(wallet);
         sonidoGanarBJ();
         emoji = '🃏'; titulo = '¡Blackjack!'; desc = `+${ganancia} patitas de ganancia 🐾`; colorTitulo = '#f59e0b';
     } else if (resultado === 'ganaste') {
         wallet.patitas += bjApuesta * 2;
-        guardarWallet(wallet);
         sonidoGanarBJ();
         emoji = '🎉'; titulo = '¡Ganaste!'; desc = `+${bjApuesta} patitas de ganancia 🐾`; colorTitulo = '#10b981';
     } else if (resultado === 'empate') {
         wallet.patitas += bjApuesta;
-        guardarWallet(wallet);
         emoji = '🤝'; titulo = 'Empate'; desc = 'Recuperas tu apuesta 🐾'; colorTitulo = '#9ca3af';
     } else {
         sonidoPerderBJ();
         emoji = '😿'; titulo = '¡Perdiste!'; desc = `-${bjApuesta} patitas 🐾`; colorTitulo = '#f87171';
     }
-
     guardarWallet(wallet);
     renderBadgeWallet();
-
     document.getElementById('bj-fase-juego').classList.add('oculto');
     document.getElementById('bj-resultado').classList.remove('oculto');
     document.getElementById('bj-resultado-emoji').textContent = emoji;
     document.getElementById('bj-resultado-titulo').textContent = titulo;
     document.getElementById('bj-resultado-titulo').style.color = colorTitulo;
     document.getElementById('bj-resultado-desc').textContent = desc;
-
-    const intentos = getIntentosRestantesBJ();
+    const intentos = await getIntentosRestantesBJ();
     const btnNueva = document.getElementById('btn-nueva-mano');
-    if (intentos <= 0) {
-        btnNueva.textContent = 'Sin intentos por hoy';
-        btnNueva.disabled = true;
-    } else {
-        btnNueva.textContent = `Jugar otra mano (${intentos} intentos)`;
-        btnNueva.disabled = false;
-    }
+    if (intentos <= 0) { btnNueva.textContent = 'Sin intentos por hoy'; btnNueva.disabled = true; }
+    else { btnNueva.textContent = `Jugar otra mano (${intentos} intentos)`; btnNueva.disabled = false; }
 }
 
 function nuevaMano() {
@@ -1331,7 +960,7 @@ const SLIDES = [
     { emoji: '📅', titulo: 'Escribe tus actividades', desc: 'El formato es siempre: Actividad primero, hora después. Una actividad por línea.', ejemplo: '✅ GYM 07:00\n✅ Desayuno 09:00\n✅ Trabajo 10:00\n❌ 07:00 GYM  ← incorrecto' },
     { emoji: '🕐', titulo: 'Formato de 24 horas', desc: 'Usamos formato de 24 horas. Las 7 de la mañana son 07:00. Las 7 de la noche son 19:00.', ejemplo: '☀️ 07:00 = 7am\n🌙 19:00 = 7pm\n🌙 21:30 = 9:30pm\n🌅 13:00 = 1pm' },
     { emoji: '↻', titulo: 'Actividades recurrentes', desc: 'Agrega [días] al final para que la actividad aparezca automáticamente esos días de la semana.', ejemplo: 'GYM 07:00 [lunes, miércoles, viernes]\nMedicinas 08:00 [todos los días]\nTrabajo 09:00 [entre semana]' },
-    { emoji: '🐾', titulo: 'Gana patitas y sube de nivel', desc: 'Entra cada día y completa tus actividades para ganar patitas 🐾 y experiencia ⭐. Con patitas puedes adoptar y mejorar a tu michi compañero.', ejemplo: null },
+    { emoji: '🐾', titulo: 'Gana patitas y sube de nivel', desc: 'Entra cada día y completa tus actividades para ganar patitas 🐾 y experiencia ⭐.', ejemplo: null },
     { emoji: '🧶', titulo: 'Bolas de pelo — divisa premium', desc: 'Las bolas de pelo 🧶 se ganan por constancia o se compran. Con ellas desbloqueas michis especiales, marcos y frases personalizadas.', ejemplo: null },
     { emoji: '📦', titulo: 'Tu michi compañero', desc: 'Cuando llegues a Nivel 2 con 100 patitas, podrás abrir la caja y adoptar a tu primer michi. ¡Él te acompañará cada día!', ejemplo: null },
     { emoji: '✅', titulo: '¡Listo para empezar!', desc: 'Toca el botón + para crear tu primera agenda. Recuerda: primero la actividad, luego la hora en formato 24hrs. ¡Tu michi te espera!', ejemplo: null }
@@ -1341,17 +970,9 @@ let slideActual = 0;
 
 function renderOnboarding() {
     const slide = SLIDES[slideActual];
-    document.getElementById('onboarding-slide').innerHTML = `
-        <div class="onboarding-emoji">${slide.emoji}</div>
-        <div class="onboarding-titulo">${slide.titulo}</div>
-        <div class="onboarding-desc">${slide.desc}</div>
-        ${slide.ejemplo ? `<div class="onboarding-ejemplo">${slide.ejemplo}</div>` : ''}
-    `;
-    document.getElementById('onboarding-dots').innerHTML = SLIDES.map((_, i) =>
-        `<div class="onboarding-dot ${i === slideActual ? 'activo' : ''}"></div>`
-    ).join('');
-    document.getElementById('btn-onboarding-next').textContent =
-        slideActual === SLIDES.length - 1 ? '¡Comenzar! 🐱' : 'Siguiente →';
+    document.getElementById('onboarding-slide').innerHTML = `<div class="onboarding-emoji">${slide.emoji}</div><div class="onboarding-titulo">${slide.titulo}</div><div class="onboarding-desc">${slide.desc}</div>${slide.ejemplo ? `<div class="onboarding-ejemplo">${slide.ejemplo}</div>` : ''}`;
+    document.getElementById('onboarding-dots').innerHTML = SLIDES.map((_, i) => `<div class="onboarding-dot ${i === slideActual ? 'activo' : ''}"></div>`).join('');
+    document.getElementById('btn-onboarding-next').textContent = slideActual === SLIDES.length - 1 ? '¡Comenzar! 🐱' : 'Siguiente →';
 }
 
 function siguienteSlide() {
@@ -1435,9 +1056,7 @@ async function sincronizarDesdNube() {
         if (frases && frases.length > 0) localStorage.setItem('michi-frases-custom', JSON.stringify(frases));
         if (catalogoMichis && catalogoMichis.length > 0) MICHIS_TIENDA_REMOTO = catalogoMichis;
         if (catalogoMarcos && catalogoMarcos.length > 0) MARCOS_TIENDA_REMOTO = catalogoMarcos;
-    } catch (e) {
-        console.log('Sin conexión, usando datos locales');
-    }
+    } catch (e) { console.log('Sin conexión, usando datos locales'); }
 }
 
 // ── LOGIN HANDLERS ────────────────────────────────────
@@ -1445,9 +1064,7 @@ function mostrarTab(tab) {
     document.getElementById('tab-iniciar').classList.toggle('oculto', tab !== 'iniciar');
     document.getElementById('tab-registrar').classList.toggle('oculto', tab !== 'registrar');
     document.getElementById('tab-recuperar').classList.add('oculto');
-    document.querySelectorAll('.tab-btn').forEach((btn, i) => {
-        btn.classList.toggle('activo', (i === 0 && tab === 'iniciar') || (i === 1 && tab === 'registrar'));
-    });
+    document.querySelectorAll('.tab-btn').forEach((btn, i) => { btn.classList.toggle('activo', (i === 0 && tab === 'iniciar') || (i === 1 && tab === 'registrar')); });
     document.getElementById('login-error').textContent = '';
     document.getElementById('login-exito').textContent = '';
 }
@@ -1501,10 +1118,7 @@ async function handleGoogle() {
 
 async function handleCerrarSesion() {
     await cerrarSesion();
-    ['michi-agendas','michi-pendientes','michi-emojis-custom','michi-recurrentes',
-     'michi-checks','michi-wallet','michi-logros','michi-companero',
-     'michi-desbloqueados','michi-coleccion','michi-niveles','michi-cartas',
-     'michi-marcos','michi-frases-custom'].forEach(k => localStorage.removeItem(k));
+    ['michi-agendas','michi-pendientes','michi-emojis-custom','michi-recurrentes','michi-checks','michi-wallet','michi-logros','michi-companero','michi-desbloqueados','michi-coleccion','michi-niveles','michi-cartas','michi-marcos','michi-frases-custom'].forEach(k => localStorage.removeItem(k));
 }
 
 function toggleAyuda() { document.getElementById('panel-ayuda').classList.toggle('oculto'); }
@@ -1520,9 +1134,7 @@ function calcularNivelDesdeXP(xpTotal) {
         xpAcumulada += xpNecesaria;
         nivel++;
     }
-    const xpEnNivelActual = xpTotal - xpAcumulada;
-    const xpNecesariaNivelActual = xpParaNivel(nivel);
-    return { nivel, xpEnNivelActual, xpNecesariaNivelActual };
+    return { nivel, xpEnNivelActual: xpTotal - xpAcumulada, xpNecesariaNivelActual: xpParaNivel(nivel) };
 }
 
 // ── LOGROS ────────────────────────────────────────────
@@ -1567,7 +1179,6 @@ const LOGROS_DEFINICION = [
 ];
 
 function cargarLogrosDesbloqueados() { return JSON.parse(localStorage.getItem('michi-logros') || '[]'); }
-
 function guardarLogrosDesbloqueados(logros) {
     localStorage.setItem('michi-logros', JSON.stringify(logros));
     if (usuarioActual) guardarLogrosNube(usuarioActual.uid, logros).catch(() => {});
@@ -1587,24 +1198,9 @@ function obtenerEstadisticas() {
         const completadasEnDia = Object.values(checks).filter(v => v === true).length;
         actividadesCompletadas += completadasEnDia;
         const agenda = agendas.find(a => a.fechaKey === fechaKey);
-        if (agenda) {
-            const { fijas } = parsearActividades(agenda.texto);
-            if (fijas.length > 0 && completadasEnDia >= fijas.length) diasCompletados++;
-        }
+        if (agenda) { const { fijas } = parsearActividades(agenda.texto); if (fijas.length > 0 && completadasEnDia >= fijas.length) diasCompletados++; }
     });
-    return {
-        agendasCreadas: agendas.length,
-        actividadesCompletadas,
-        diasCompletados,
-        emojisCreados: emojis.length,
-        recurrentesCreadas: recurrentes.length,
-        rachaMaxima: wallet.rachaMaxima || 0,
-        diasAntiguedad: diasDesdeRegistro(wallet),
-        michisColeccion: coleccion.length,
-        michisBasicos: coleccion.filter(m => !m.tipo || m.tipo === 'basico').length,
-        michisNivel10: coleccion.filter(m => m.tipo === 'nivel10').length,
-        cartas,
-    };
+    return { agendasCreadas: agendas.length, actividadesCompletadas, diasCompletados, emojisCreados: emojis.length, recurrentesCreadas: recurrentes.length, rachaMaxima: wallet.rachaMaxima || 0, diasAntiguedad: diasDesdeRegistro(wallet), michisColeccion: coleccion.length, michisBasicos: coleccion.filter(m => !m.tipo || m.tipo === 'basico').length, michisNivel10: coleccion.filter(m => m.tipo === 'nivel10').length, cartas };
 }
 
 function revisarLogrosNuevos() {
@@ -1615,8 +1211,7 @@ function revisarLogrosNuevos() {
     LOGROS_DEFINICION.forEach(logro => {
         if (desbloqueados.includes(logro.id)) return;
         if (logro.condicion(stats)) {
-            desbloqueados.push(logro.id);
-            huboNuevos = true;
+            desbloqueados.push(logro.id); huboNuevos = true;
             if (logro.patitas > 0) wallet.patitas += logro.patitas;
             if (logro.xp > 0) wallet.xp = (wallet.xp || 0) + logro.xp;
             if (logro.bolas > 0) wallet.bolasDePelo = (wallet.bolasDePelo || 0) + logro.bolas;
@@ -1631,34 +1226,20 @@ function renderListaLogros() {
     const cartas = cargarCartas();
     const cont = document.getElementById('lista-logros');
     if (!cont) return;
-    const ordenados = [...LOGROS_DEFINICION].sort((a, b) => {
-        const aD = desbloqueados.includes(a.id), bD = desbloqueados.includes(b.id);
-        return aD === bD ? 0 : aD ? -1 : 1;
-    });
+    const ordenados = [...LOGROS_DEFINICION].sort((a, b) => { const aD = desbloqueados.includes(a.id), bD = desbloqueados.includes(b.id); return aD === bD ? 0 : aD ? -1 : 1; });
     cont.innerHTML = ordenados.map(logro => {
         const desb = desbloqueados.includes(logro.id);
         if (logro.esCarta) {
             const cartaAbierta = cartas.includes(logro.michiId);
-            return `<div class="logro-item carta-logro ${desb ? 'desbloqueado' : 'bloqueado'}"
-                ${desb ? `onclick="abrirCarta('${logro.michiId}')" style="cursor:pointer"` : ''}>
+            return `<div class="logro-item carta-logro ${desb ? 'desbloqueado' : 'bloqueado'}" ${desb ? `onclick="abrirCarta('${logro.michiId}')" style="cursor:pointer"` : ''}>
                 <span class="logro-emoji">${desb ? (cartaAbierta ? '💌' : '📩') : '📩'}</span>
-                <div class="logro-info">
-                    <div class="logro-nombre">${desb ? logro.nombre : '📩 Carta secreta — sube tu michi al Nivel 4'}</div>
-                    <div class="logro-recompensa">${desb ? (cartaAbierta ? 'Toca para releer 💌' : 'Sobre cerrado...') : '🔒 Bloqueado'}</div>
-                </div>
+                <div class="logro-info"><div class="logro-nombre">${desb ? logro.nombre : '📩 Carta secreta — sube tu michi al Nivel 4'}</div><div class="logro-recompensa">${desb ? (cartaAbierta ? 'Toca para releer 💌' : 'Sobre cerrado...') : '🔒 Bloqueado'}</div></div>
                 ${desb ? '<span class="logro-check">✅</span>' : ''}
             </div>`;
         }
         return `<div class="logro-item ${desb ? 'desbloqueado' : 'bloqueado'}">
             <span class="logro-emoji">${desb ? logro.emoji : '🔒'}</span>
-            <div class="logro-info">
-                <div class="logro-nombre">${logro.nombre}</div>
-                <div class="logro-recompensa">
-                    ${logro.patitas > 0 ? `🐾 +${logro.patitas} ` : ''}
-                    ${logro.xp > 0 ? `⭐ +${logro.xp} XP ` : ''}
-                    ${logro.bolas > 0 ? `🧶 +${logro.bolas}` : ''}
-                </div>
-            </div>
+            <div class="logro-info"><div class="logro-nombre">${logro.nombre}</div><div class="logro-recompensa">${logro.patitas > 0 ? `🐾 +${logro.patitas} ` : ''}${logro.xp > 0 ? `⭐ +${logro.xp} XP ` : ''}${logro.bolas > 0 ? `🧶 +${logro.bolas}` : ''}</div></div>
             ${desb ? '<span class="logro-check">✅</span>' : ''}
         </div>`;
     }).join('');
@@ -1668,13 +1249,7 @@ function renderListaLogros() {
 function cargarWallet() {
     const guardado = localStorage.getItem('michi-wallet');
     if (guardado) return JSON.parse(guardado);
-    return {
-        patitas: 0, bolasDePelo: 0, xp: 0,
-        ultimoLogin: null, rachaActual: 0, rachaMaxima: 0,
-        fechaRegistro: formatearFechaKey(new Date()),
-        diaCompletadoHoy: false, michiFreezes: 0,
-        ultimoFreezeOtorgado: 0, primeraAgendaCreada: false
-    };
+    return { patitas: 0, bolasDePelo: 0, xp: 0, ultimoLogin: null, rachaActual: 0, rachaMaxima: 0, fechaRegistro: formatearFechaKey(new Date()), diaCompletadoHoy: false, michiFreezes: 0, ultimoFreezeOtorgado: 0, primeraAgendaCreada: false };
 }
 
 function guardarWallet(wallet) {
@@ -1741,25 +1316,15 @@ function procesarLoginDiario() {
     const lunaDeMiel = enLunaDeMiel(wallet);
     const ayer = formatearFechaKey(sumarDias(new Date(), -1));
     const seRompioRacha = wallet.ultimoLogin !== null && wallet.ultimoLogin !== ayer;
-    if (seRompioRacha && wallet.michiFreezes > 0) {
-        wallet.michiFreezes -= 1;
-        mostrarToastPatitas(0, '🧊 Tu michi protegió tu racha con un Michi Freeze');
-    } else if (wallet.ultimoLogin === ayer) {
-        wallet.rachaActual += 1;
-    } else if (wallet.ultimoLogin === null) {
-        wallet.rachaActual = 1;
-    } else {
-        wallet.rachaActual = 1;
-        wallet.ultimaBolaPorRacha = 0;
-    }
+    if (seRompioRacha && wallet.michiFreezes > 0) { wallet.michiFreezes -= 1; mostrarToastPatitas(0, '🧊 Tu michi protegió tu racha con un Michi Freeze'); }
+    else if (wallet.ultimoLogin === ayer) { wallet.rachaActual += 1; }
+    else if (wallet.ultimoLogin === null) { wallet.rachaActual = 1; }
+    else { wallet.rachaActual = 1; wallet.ultimaBolaPorRacha = 0; }
     if (wallet.rachaActual > wallet.rachaMaxima) wallet.rachaMaxima = wallet.rachaActual;
     const xpAntes = wallet.xp || 0;
     const nivelAntes = calcularNivelDesdeXP(xpAntes).nivel;
-    if (wallet.ultimoLogin === null) {
-        otorgarPatitas(wallet, 50, '¡Bienvenida de tu michi! 🐱', 50);
-    } else {
-        otorgarPatitas(wallet, lunaDeMiel ? 20 : 10, 'Por entrar hoy', 15);
-    }
+    if (wallet.ultimoLogin === null) { otorgarPatitas(wallet, 50, '¡Bienvenida de tu michi! 🐱', 50); }
+    else { otorgarPatitas(wallet, lunaDeMiel ? 20 : 10, 'Por entrar hoy', 15); }
     if (wallet.rachaActual === 7) otorgarPatitas(wallet, 50, '¡7 días seguidos!', 100);
     else if (wallet.rachaActual === 30) otorgarPatitas(wallet, 100, '¡30 días seguidos!', 250);
     else if (wallet.rachaActual > 30 && wallet.rachaActual % 30 === 0) otorgarPatitas(wallet, 80, `¡${wallet.rachaActual} días seguidos!`, 200);
@@ -1783,11 +1348,7 @@ function otorgarBonusDiaCompleto(fechaKey) {
     wallet.diaCompletadoHoy = true;
     otorgarPatitas(wallet, enLunaDeMiel(wallet) ? 20 : 10, '¡Día 100% completado!', 25);
     if (!wallet.ultimaBolaPor7 || diasDesdeRegistro(wallet) - wallet.ultimaBolaPor7 >= 60) {
-        if ((wallet.rachaActual || 0) >= 7) {
-            wallet.bolasDePelo = (wallet.bolasDePelo || 0) + 1;
-            wallet.ultimaBolaPor7 = diasDesdeRegistro(wallet);
-            mostrarToastPatitas(0, '🧶 ¡Racha de 7 días con 100%! Bola de pelo ganada');
-        }
+        if ((wallet.rachaActual || 0) >= 7) { wallet.bolasDePelo = (wallet.bolasDePelo || 0) + 1; wallet.ultimaBolaPor7 = diasDesdeRegistro(wallet); mostrarToastPatitas(0, '🧶 ¡Racha de 7 días con 100%! Bola de pelo ganada'); }
     }
     const nivelDespues = calcularNivelDesdeXP(wallet.xp || 0).nivel;
     if (nivelDespues > nivelAntes) { sonidoNivel(); mostrarToastPatitas(0, `🎉 ¡Subiste al Nivel ${nivelDespues}!`); }
@@ -1855,7 +1416,6 @@ const DIAS_MAP = { 'lunes':1,'martes':2,'miércoles':3,'miercoles':3,'jueves':4,
 const DIAS_NOMBRES = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
 
 function cargarRecurrentes() { return JSON.parse(localStorage.getItem('michi-recurrentes') || '[]'); }
-
 function guardarRecurrentes(recurrentes) {
     localStorage.setItem('michi-recurrentes', JSON.stringify(recurrentes));
     if (usuarioActual) guardarRecurrentesNube(usuarioActual.uid, recurrentes).catch(() => {});
@@ -1885,10 +1445,7 @@ function obtenerTextoConRecurrentes(fecha) {
     if (recurrentes.length === 0) return agendaExistente ? agendaExistente.texto : null;
     if (agendaExistente) {
         const lineasExistentes = agendaExistente.texto.split('\n').map(l => l.trim().toLowerCase());
-        const nuevas = recurrentes.filter(r => {
-            const actBase = r.replace(/\s*\d{1,2}(:\d{2})?\s*$/, '').trim().toLowerCase();
-            return !lineasExistentes.some(l => l.includes(actBase));
-        });
+        const nuevas = recurrentes.filter(r => { const actBase = r.replace(/\s*\d{1,2}(:\d{2})?\s*$/, '').trim().toLowerCase(); return !lineasExistentes.some(l => l.includes(actBase)); });
         return nuevas.length === 0 ? agendaExistente.texto : agendaExistente.texto + '\n' + nuevas.join('\n');
     }
     return recurrentes.join('\n');
@@ -1900,13 +1457,7 @@ function renderRecurrentesConfig() {
     if (!lista) return;
     lista.innerHTML = recurrentes.length === 0
         ? '<li style="color:#4b5563;font-style:italic;font-size:0.82rem;padding:6px 0">Sin actividades recurrentes todavía 🐾</li>'
-        : recurrentes.map((r, idx) => `<li class="recurrente-item">
-            <div class="recurrente-info">
-                <div class="recurrente-actividad">${obtenerIcono(r.actividad)} ${r.actividad}</div>
-                <div class="recurrente-dias">↻ ${r.diasAplica.sort((a,b)=>a-b).map(d => DIAS_NOMBRES[d]).join(', ')}</div>
-            </div>
-            <button class="btn-borrar-recurrente" onclick="borrarRecurrente(${idx})">✕</button>
-        </li>`).join('');
+        : recurrentes.map((r, idx) => `<li class="recurrente-item"><div class="recurrente-info"><div class="recurrente-actividad">${obtenerIcono(r.actividad)} ${r.actividad}</div><div class="recurrente-dias">↻ ${r.diasAplica.sort((a,b)=>a-b).map(d => DIAS_NOMBRES[d]).join(', ')}</div></div><button class="btn-borrar-recurrente" onclick="borrarRecurrente(${idx})">✕</button></li>`).join('');
 }
 
 function borrarRecurrente(idx) {
@@ -1917,9 +1468,7 @@ function borrarRecurrente(idx) {
 }
 
 // ── CHECKS ────────────────────────────────────────────
-function cargarChecks(fechaKey) {
-    return JSON.parse(localStorage.getItem('michi-checks') || '{}')[fechaKey] || {};
-}
+function cargarChecks(fechaKey) { return JSON.parse(localStorage.getItem('michi-checks') || '{}')[fechaKey] || {}; }
 
 function guardarChecks(fechaKey, checks) {
     const todos = JSON.parse(localStorage.getItem('michi-checks') || '{}');
@@ -1939,10 +1488,7 @@ function toggleCheck(fechaKey, checkKey) {
     const agenda = cargarAgendas().find(a => a.fechaKey === fechaKey);
     const textoConRec = obtenerTextoConRecurrentes(new Date(fechaKey + 'T12:00:00'));
     const texto = textoConRec || (agenda ? agenda.texto : '');
-    if (texto) {
-        const { fijas } = parsearActividades(texto);
-        if (calcularPorcentaje(fijas, fechaKey) === 100) otorgarBonusDiaCompleto(fechaKey);
-    }
+    if (texto) { const { fijas } = parsearActividades(texto); if (calcularPorcentaje(fijas, fechaKey) === 100) otorgarBonusDiaCompleto(fechaKey); }
     revisarLogrosNuevos();
     mostrarHoy();
     if (document.getElementById('pantalla-dashboard').classList.contains('activa') && fechaDashboard && texto)
@@ -1965,7 +1511,6 @@ function mensajeMichi(porcentaje) {
 
 // ── PENDIENTES ────────────────────────────────────────
 function cargarPendientes() { return JSON.parse(localStorage.getItem('michi-pendientes') || '[]'); }
-
 function guardarPendientes(pendientes) {
     localStorage.setItem('michi-pendientes', JSON.stringify(pendientes));
     if (usuarioActual) guardarPendientesNube(usuarioActual.uid, pendientes).catch(() => {});
@@ -1990,10 +1535,7 @@ function togglePendiente(id) {
     renderPendientes();
 }
 
-function borrarPendiente(id) {
-    guardarPendientes(cargarPendientes().filter(p => p.id !== id));
-    renderPendientes();
-}
+function borrarPendiente(id) { guardarPendientes(cargarPendientes().filter(p => p.id !== id)); renderPendientes(); }
 
 function renderPendientes() {
     const pendientes = cargarPendientes();
@@ -2001,16 +1543,11 @@ function renderPendientes() {
     if (!lista) return;
     lista.innerHTML = pendientes.length === 0
         ? '<li style="color:#4b5563;font-style:italic;font-size:0.78rem;padding:6px 0">Sin pendientes 🐾</li>'
-        : pendientes.map(p => `
-            <li class="pendiente-item ${p.completado ? 'completado' : ''}">
-                <span class="pendiente-texto" onclick="togglePendiente('${p.id}')">${p.completado ? '✅' : '⬜'} ${p.texto}</span>
-                <button class="btn-borrar-pendiente" onclick="borrarPendiente('${p.id}')">✕</button>
-            </li>`).join('');
+        : pendientes.map(p => `<li class="pendiente-item ${p.completado ? 'completado' : ''}"><span class="pendiente-texto" onclick="togglePendiente('${p.id}')">${p.completado ? '✅' : '⬜'} ${p.texto}</span><button class="btn-borrar-pendiente" onclick="borrarPendiente('${p.id}')">✕</button></li>`).join('');
 }
 
 // ── EMOJIS ────────────────────────────────────────────
 function cargarEmojisCustom() { return JSON.parse(localStorage.getItem('michi-emojis-custom') || '[]'); }
-
 function guardarEmojisCustom(emojis) {
     localStorage.setItem('michi-emojis-custom', JSON.stringify(emojis));
     if (usuarioActual) guardarEmojisNube(usuarioActual.uid, emojis).catch(() => {});
@@ -2039,13 +1576,7 @@ function renderEmojisCustom() {
     if (!lista) return;
     lista.innerHTML = emojis.length === 0
         ? '<li style="color:#4b5563;font-style:italic;font-size:0.82rem;padding:6px 0">Sin emojis personalizados todavía 🐾</li>'
-        : emojis.map(e => `
-            <li class="emoji-custom-item">
-                <span class="emoji-custom-icono">${e.emoji}</span>
-                <span class="emoji-custom-flecha">←</span>
-                <span class="emoji-custom-palabra">${e.palabra}</span>
-                <button class="btn-borrar-emoji" onclick="borrarEmojiCustom('${e.id}')">✕</button>
-            </li>`).join('');
+        : emojis.map(e => `<li class="emoji-custom-item"><span class="emoji-custom-icono">${e.emoji}</span><span class="emoji-custom-flecha">←</span><span class="emoji-custom-palabra">${e.palabra}</span><button class="btn-borrar-emoji" onclick="borrarEmojiCustom('${e.id}')">✕</button></li>`).join('');
 }
 
 // ── ICONOS ────────────────────────────────────────────
@@ -2184,15 +1715,7 @@ function mostrarHoy() {
         document.getElementById('contenido-hoy').innerHTML = renderTimelineHoy(fijas, hoy, fechaKey);
         const porcentaje = calcularPorcentaje(fijas, fechaKey);
         const mensaje = mensajeMichi(porcentaje);
-        document.getElementById('contenido-progreso').innerHTML = fijas.length > 0 ? `
-            <div class="progreso-box">
-                <div class="progreso-header">
-                    <span class="progreso-label">Progreso del día</span>
-                    <span class="progreso-pct">${porcentaje}%</span>
-                </div>
-                <div class="progreso-barra"><div class="progreso-fill" style="width:${porcentaje}%"></div></div>
-                ${mensaje ? `<div class="progreso-mensaje">🐱 ${mensaje}</div>` : ''}
-            </div>` : '';
+        document.getElementById('contenido-progreso').innerHTML = fijas.length > 0 ? `<div class="progreso-box"><div class="progreso-header"><span class="progreso-label">Progreso del día</span><span class="progreso-pct">${porcentaje}%</span></div><div class="progreso-barra"><div class="progreso-fill" style="width:${porcentaje}%"></div></div>${mensaje ? `<div class="progreso-mensaje">🐱 ${mensaje}</div>` : ''}</div>` : '';
         programarNotificaciones(fijas, fechaKey);
     } else {
         agendaViendoId = null;
@@ -2203,19 +1726,13 @@ function mostrarHoy() {
     renderSemanaStrip();
     renderPendientes();
     renderBadgeWallet();
-    if (usuarioActual) {
-        const configUsuario = document.getElementById('config-usuario');
-        if (configUsuario) configUsuario.textContent = usuarioActual.email || usuarioActual.displayName || '—';
-    }
+    if (usuarioActual) { const configUsuario = document.getElementById('config-usuario'); if (configUsuario) configUsuario.textContent = usuarioActual.email || usuarioActual.displayName || '—'; }
 }
 
 function renderTimelineHoy(fijas, hoy, fechaKey) {
     const ahoraH = hoy.getHours(), ahoraM = hoy.getMinutes();
     let proximaIdx = -1;
-    for (let i = 0; i < fijas.length; i++) {
-        const [h, m] = parsearHora(fijas[i].hora);
-        if (h > ahoraH || (h === ahoraH && m >= ahoraM)) { proximaIdx = i; break; }
-    }
+    for (let i = 0; i < fijas.length; i++) { const [h, m] = parsearHora(fijas[i].hora); if (h > ahoraH || (h === ahoraH && m >= ahoraM)) { proximaIdx = i; break; } }
     let inicio = 0;
     if (proximaIdx > 1) inicio = proximaIdx - 1;
     if (inicio + 4 > fijas.length) inicio = Math.max(0, fijas.length - 4);
@@ -2231,14 +1748,8 @@ function renderTimelineHoy(fijas, hoy, fechaKey) {
         const checkKey = act.actividad + act.hora;
         const completada = checks[checkKey];
         return `<div class="timeline-item ${esProxima && !completada ? 'proxima' : ''} ${completada ? 'completada' : ''}">
-            <div class="timeline-left">
-                <div class="tl-circle ${clase} ${completada ? 'tl-circle-done' : ''}">${completada ? '✅' : icono}</div>
-                ${!esUltimo ? '<div class="tl-line"></div>' : ''}
-            </div>
-            <div class="tl-content">
-                <div class="tl-hora">${act.hora} ${esProxima && !completada ? '<span class="tag-proxima">próxima</span>' : ''}</div>
-                <div class="tl-nombre ${completada ? 'tl-nombre-done' : ''}">${act.actividad}</div>
-            </div>
+            <div class="timeline-left"><div class="tl-circle ${clase} ${completada ? 'tl-circle-done' : ''}">${completada ? '✅' : icono}</div>${!esUltimo ? '<div class="tl-line"></div>' : ''}</div>
+            <div class="tl-content"><div class="tl-hora">${act.hora} ${esProxima && !completada ? '<span class="tag-proxima">próxima</span>' : ''}</div><div class="tl-nombre ${completada ? 'tl-nombre-done' : ''}">${act.actividad}</div></div>
             ${activo ? `<button class="btn-check ${completada ? 'checked' : ''}" onclick="toggleCheck('${fechaKey}', '${checkKey}')">${completada ? '✓' : '○'}</button>` : ''}
         </div>`;
     }).join('')}</div>`;
@@ -2251,21 +1762,9 @@ function renderHorasVacias(hoy) {
         const h = ahoraH + i;
         if (h > 23) break;
         const hora = `${String(h).padStart(2,'0')}:00`;
-        items += `<div class="timeline-item">
-            <div class="timeline-left">
-                <div class="tl-circle vacio"></div>
-                ${i < 2 ? '<div class="tl-line tl-line-vacia"></div>' : ''}
-            </div>
-            <div class="tl-content">
-                <div class="tl-hora">${hora}</div>
-                <div class="tl-nombre tl-vacio">Sin actividad</div>
-            </div>
-        </div>`;
+        items += `<div class="timeline-item"><div class="timeline-left"><div class="tl-circle vacio"></div>${i < 2 ? '<div class="tl-line tl-line-vacia"></div>' : ''}</div><div class="tl-content"><div class="tl-hora">${hora}</div><div class="tl-nombre tl-vacio">Sin actividad</div></div></div>`;
     }
-    return `<div class="timeline-hoy">${items}</div>
-        <div style="text-align:center; margin-top: 16px;">
-            <button class="btn-crear-hoy" onclick="mostrarEditor(null)">+ Crear agenda de hoy</button>
-        </div>`;
+    return `<div class="timeline-hoy">${items}</div><div style="text-align:center; margin-top: 16px;"><button class="btn-crear-hoy" onclick="mostrarEditor(null)">+ Crear agenda de hoy</button></div>`;
 }
 
 // ── SEMANA STRIP ──────────────────────────────────────
@@ -2283,11 +1782,7 @@ function renderSemanaStrip() {
         let emoji = '';
         if (agenda) emoji = obtenerIcono(extraerActividad(agenda.texto.split('\n').find(l => l.trim()) || ''));
         else if (tieneRec) emoji = obtenerIcono(extraerActividad(obtenerActividadesRecurrentesParaDia(dia)[0]));
-        html += `<div class="dia-strip${i === 0 ? ' hoy' : ''}${agenda || tieneRec ? ' tiene-agenda' : ''}" onclick="seleccionarDiaStrip('${fechaKey}', ${!!(agenda || tieneRec)})">
-            <div class="dia-strip-nombre">${diasNombre[dia.getDay()]}</div>
-            <div class="dia-strip-num">${dia.getDate()}</div>
-            <div class="dia-strip-emoji">${emoji}</div>
-        </div>`;
+        html += `<div class="dia-strip${i === 0 ? ' hoy' : ''}${agenda || tieneRec ? ' tiene-agenda' : ''}" onclick="seleccionarDiaStrip('${fechaKey}', ${!!(agenda || tieneRec)})"><div class="dia-strip-nombre">${diasNombre[dia.getDay()]}</div><div class="dia-strip-num">${dia.getDate()}</div><div class="dia-strip-emoji">${emoji}</div></div>`;
     }
     document.getElementById('semana-strip').innerHTML = html;
 }
@@ -2304,12 +1799,9 @@ function seleccionarDiaStrip(fechaKey, tieneAgenda) {
         document.getElementById('pantalla-dashboard').classList.add('activa');
         document.getElementById('titulo-dashboard').textContent = formatearFechaDisplay(fecha);
         document.getElementById('contenido-dashboard').innerHTML = renderDiario(parsearActividades(textoConRec || agenda.texto), fechaKey);
-    } else {
-        mostrarEditor(fechaKey);
-    }
+    } else { mostrarEditor(fechaKey); }
 }
 
-// ── NAVEGACIÓN DÍAS ───────────────────────────────────
 function navegarDia(delta) {
     if (!fechaDashboard) return;
     const nuevaFecha = sumarDias(fechaDashboard, delta);
@@ -2322,16 +1814,10 @@ function navegarDia(delta) {
     if (agenda || textoConRec) {
         document.getElementById('contenido-dashboard').innerHTML = renderDiario(parsearActividades(textoConRec || agenda.texto), fechaKey);
     } else {
-        document.getElementById('contenido-dashboard').innerHTML = `
-            <div style="text-align:center; padding: 40px 20px; color: #6b7280;">
-                <p style="font-size:2rem; margin-bottom:12px">📭</p>
-                <p>Sin agenda para este día</p>
-                <button class="btn-crear-hoy" style="margin-top:16px" onclick="mostrarEditor('${fechaKey}')">+ Crear agenda</button>
-            </div>`;
+        document.getElementById('contenido-dashboard').innerHTML = `<div style="text-align:center; padding: 40px 20px; color: #6b7280;"><p style="font-size:2rem; margin-bottom:12px">📭</p><p>Sin agenda para este día</p><button class="btn-crear-hoy" style="margin-top:16px" onclick="mostrarEditor('${fechaKey}')">+ Crear agenda</button></div>`;
     }
 }
 
-// ── CALENDARIO ────────────────────────────────────────
 function abrirCalendario() { mesActualCal = new Date(); renderCalendario(); document.getElementById('modal-calendario').classList.remove('oculto'); }
 function cerrarCalendario(event) { if (event.target.id === 'modal-calendario') document.getElementById('modal-calendario').classList.add('oculto'); }
 function cambiarMes(delta) { mesActualCal.setMonth(mesActualCal.getMonth() + delta); renderCalendario(); }
@@ -2371,12 +1857,9 @@ function seleccionarDiaCalendario(fechaKey, tieneAgenda) {
         document.getElementById('pantalla-dashboard').classList.add('activa');
         document.getElementById('titulo-dashboard').textContent = formatearFechaDisplay(fecha);
         document.getElementById('contenido-dashboard').innerHTML = renderDiario(parsearActividades(textoConRec || agenda.texto), fechaKey);
-    } else {
-        mostrarEditor(fechaKey);
-    }
+    } else { mostrarEditor(fechaKey); }
 }
 
-// ── MINI CALENDARIO ───────────────────────────────────
 function toggleCalendario() {
     const cal = document.getElementById('mini-calendario');
     cal.classList.toggle('oculto');
@@ -2409,12 +1892,9 @@ function seleccionarFecha(año, mes, dia) {
 function actualizarDisplayFecha() {
     const hoy = new Date();
     const display = document.getElementById('fecha-display');
-    display.textContent = esMismaFecha(fechaSeleccionada, hoy)
-        ? 'Hoy — ' + formatearFechaDisplay(fechaSeleccionada)
-        : formatearFechaDisplay(fechaSeleccionada);
+    display.textContent = esMismaFecha(fechaSeleccionada, hoy) ? 'Hoy — ' + formatearFechaDisplay(fechaSeleccionada) : formatearFechaDisplay(fechaSeleccionada);
 }
 
-// ── NAVEGACIÓN ────────────────────────────────────────
 function mostrarConfig() {
     pantallaAnterior = 'pantalla-hoy';
     document.querySelectorAll('.pantalla').forEach(p => p.classList.remove('activa'));
@@ -2501,7 +1981,6 @@ function borrarAgendaActual() {
     volverAtras();
 }
 
-// ── PROCESAR AGENDA ───────────────────────────────────
 function procesarAgenda() {
     const texto = document.getElementById('input-actividades').value.trim();
     if (!texto) { alert('Por favor ingresa tus actividades.'); return; }
@@ -2516,10 +1995,7 @@ function procesarAgenda() {
     });
     if (recurrentesNuevas.length > 0) {
         const recActuales = cargarRecurrentes();
-        recurrentesNuevas.forEach(nueva => {
-            const existente = recActuales.findIndex(r => r.actividad === nueva.actividad);
-            if (existente !== -1) recActuales[existente] = nueva; else recActuales.push(nueva);
-        });
+        recurrentesNuevas.forEach(nueva => { const existente = recActuales.findIndex(r => r.actividad === nueva.actividad); if (existente !== -1) recActuales[existente] = nueva; else recActuales.push(nueva); });
         guardarRecurrentes(recActuales);
     }
     const textoFinal = lineasNormales.join('\n');
@@ -2540,18 +2016,13 @@ function procesarAgenda() {
     guardarAgendas(agendas);
     if (usuarioActual && agendaGuardada) guardarAgendaNube(usuarioActual.uid, agendaGuardada).catch(() => {});
     let wallet = cargarWallet();
-    if (!wallet.primeraAgendaCreada) {
-        wallet.primeraAgendaCreada = true;
-        otorgarPatitas(wallet, enLunaDeMiel(wallet) ? 30 : 15, '¡Primera agenda creada!', 30);
-        guardarWallet(wallet);
-    }
+    if (!wallet.primeraAgendaCreada) { wallet.primeraAgendaCreada = true; otorgarPatitas(wallet, enLunaDeMiel(wallet) ? 30 : 15, '¡Primera agenda creada!', 30); guardarWallet(wallet); }
     revisarLogrosNuevos();
     document.querySelectorAll('.pantalla').forEach(p => p.classList.remove('activa'));
     document.getElementById('pantalla-hoy').classList.add('activa');
     mostrarHoy();
 }
 
-// ── PARSEAR Y RENDER ──────────────────────────────────
 function extraerActividad(linea) {
     linea = linea.replace(/\[.+?\]/, '').trim();
     const match = linea.match(/^(.*?)\s+\d{1,2}(:\d{2})?\s*$/);
@@ -2569,11 +2040,8 @@ function parsearActividades(texto) {
         if (esLimpieza) { limpieza.push(linea); }
         else {
             const match = linea.match(/^(.*?)\s*[-–—]?\s*(\d{1,2}:\d{2}|\d{1,2})\s*$/);
-            if (match) {
-                let hora = match[2].trim();
-                if (!hora.includes(':')) hora = hora + ':00';
-                fijas.push({ actividad: match[1].trim().replace(/[-–—]\s*$/, ''), hora });
-            } else { fijas.push({ actividad: linea, hora: '--:--' }); }
+            if (match) { let hora = match[2].trim(); if (!hora.includes(':')) hora = hora + ':00'; fijas.push({ actividad: match[1].trim().replace(/[-–—]\s*$/, ''), hora }); }
+            else { fijas.push({ actividad: linea, hora: '--:--' }); }
         }
     });
     fijas.sort((a, b) => { const [ah,am]=parsearHora(a.hora),[bh,bm]=parsearHora(b.hora); return ah!==bh?ah-bh:am-bm; });
@@ -2592,37 +2060,14 @@ function renderDiario({ fijas, limpieza }, fechaKey) {
         const checkKey = act.actividad + act.hora;
         const completada = checks[checkKey];
         return `<div class="timeline-item ${completada ? 'completada' : ''}">
-            <div class="timeline-left">
-                <div class="tl-circle ${clase} ${completada ? 'tl-circle-done' : ''}">${completada ? '✅' : icono}</div>
-                ${!esUltimo ? '<div class="tl-line"></div>' : ''}
-            </div>
-            <div class="tl-content">
-                <div class="tl-hora">${act.hora}</div>
-                <div class="tl-nombre ${completada ? 'tl-nombre-done' : ''}">${act.actividad}</div>
-            </div>
+            <div class="timeline-left"><div class="tl-circle ${clase} ${completada ? 'tl-circle-done' : ''}">${completada ? '✅' : icono}</div>${!esUltimo ? '<div class="tl-line"></div>' : ''}</div>
+            <div class="tl-content"><div class="tl-hora">${act.hora}</div><div class="tl-nombre ${completada ? 'tl-nombre-done' : ''}">${act.actividad}</div></div>
             ${activo ? `<button class="btn-check ${completada ? 'checked' : ''}" onclick="toggleCheck('${fechaKey}', '${checkKey}')">${completada ? '✓' : '○'}</button>` : ''}
         </div>`;
     }).join('');
-    const filas = fijas.map(act => {
-        const checkKey = act.actividad + act.hora;
-        const completada = checks[checkKey];
-        return `<tr class="${completada ? 'fila-done' : ''}">
-            <td class="time-cell">${act.hora}</td>
-            <td>${completada ? '✅' : obtenerIcono(act.actividad)} <span class="${completada ? 'tl-nombre-done' : ''}">${act.actividad}</span></td>
-        </tr>`;
-    }).join('');
-    const barraHTML = fijas.length > 0 ? `
-        <div class="progreso-box">
-            <div class="progreso-header"><span class="progreso-label">Progreso del día</span><span class="progreso-pct">${porcentaje}%</span></div>
-            <div class="progreso-barra"><div class="progreso-fill" style="width:${porcentaje}%"></div></div>
-            ${mensaje ? `<div class="progreso-mensaje">🐱 ${mensaje}</div>` : ''}
-        </div>` : '';
-    return `${barraHTML}
-        <div class="dashboard-diario">
-            <div class="panel"><h3>Línea de Tiempo</h3><div class="timeline-vertical">${timelineItems}</div></div>
-            <div class="panel"><h3>Actividades</h3><table><thead><tr><th>Hora</th><th>Actividad</th></tr></thead><tbody>${filas}</tbody></table></div>
-        </div>
-        ${limpieza.length ? `<div class="panel" style="margin-top:15px"><h3>Tareas del Hogar</h3><ul style="padding-left:20px;line-height:2">${limpieza.map(t=>`<li>✨ ${t}</li>`).join('')}</ul></div>` : ''}`;
+    const filas = fijas.map(act => { const checkKey = act.actividad + act.hora; const completada = checks[checkKey]; return `<tr class="${completada ? 'fila-done' : ''}"><td class="time-cell">${act.hora}</td><td>${completada ? '✅' : obtenerIcono(act.actividad)} <span class="${completada ? 'tl-nombre-done' : ''}">${act.actividad}</span></td></tr>`; }).join('');
+    const barraHTML = fijas.length > 0 ? `<div class="progreso-box"><div class="progreso-header"><span class="progreso-label">Progreso del día</span><span class="progreso-pct">${porcentaje}%</span></div><div class="progreso-barra"><div class="progreso-fill" style="width:${porcentaje}%"></div></div>${mensaje ? `<div class="progreso-mensaje">🐱 ${mensaje}</div>` : ''}</div>` : '';
+    return `${barraHTML}<div class="dashboard-diario"><div class="panel"><h3>Línea de Tiempo</h3><div class="timeline-vertical">${timelineItems}</div></div><div class="panel"><h3>Actividades</h3><table><thead><tr><th>Hora</th><th>Actividad</th></tr></thead><tbody>${filas}</tbody></table></div></div>${limpieza.length ? `<div class="panel" style="margin-top:15px"><h3>Tareas del Hogar</h3><ul style="padding-left:20px;line-height:2">${limpieza.map(t=>`<li>✨ ${t}</li>`).join('')}</ul></div>` : ''}`;
 }
 
 // ── INIT ──────────────────────────────────────────────
