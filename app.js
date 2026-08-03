@@ -37,6 +37,8 @@ let bjBaraja = [];
 let bjManoJugador = [];
 let bjManoDealer = [];
 let bjApuesta = 10;
+let bjFaseDealer = false;
+let bjDealerTerminado = false;
 
 // ── SONIDOS ───────────────────────────────────────────
 function crearSonido(frecuencia, duracion, tipo = 'sine', volumen = 0.15) {
@@ -55,47 +57,16 @@ function crearSonido(frecuencia, duracion, tipo = 'sine', volumen = 0.15) {
     } catch(e) {}
 }
 
-function sonidoPatitas() {
-    crearSonido(880, 0.15, 'sine', 0.12);
-    setTimeout(() => crearSonido(1100, 0.15, 'sine', 0.1), 100);
-}
+function sonidoPatitas() { crearSonido(880, 0.15, 'sine', 0.12); setTimeout(() => crearSonido(1100, 0.15, 'sine', 0.1), 100); }
 function sonidoCheck() { crearSonido(600, 0.1, 'sine', 0.1); }
-function sonidoNivel() {
-    crearSonido(523, 0.15, 'sine', 0.12);
-    setTimeout(() => crearSonido(659, 0.15, 'sine', 0.12), 120);
-    setTimeout(() => crearSonido(784, 0.25, 'sine', 0.15), 240);
-}
-function sonidoLogro() {
-    crearSonido(784, 0.15, 'sine', 0.12);
-    setTimeout(() => crearSonido(988, 0.3, 'sine', 0.15), 150);
-}
-function sonidoAdopcion() {
-    crearSonido(400, 0.1, 'sine', 0.1);
-    setTimeout(() => crearSonido(600, 0.1, 'sine', 0.12), 100);
-    setTimeout(() => crearSonido(800, 0.2, 'sine', 0.15), 200);
-}
-function sonidoRonroneo() {
-    crearSonido(120, 0.4, 'sine', 0.08);
-    setTimeout(() => crearSonido(100, 0.4, 'sine', 0.06), 200);
-    setTimeout(() => crearSonido(120, 0.4, 'sine', 0.08), 400);
-}
-function sonidoCarta() {
-    crearSonido(523, 0.2, 'sine', 0.1);
-    setTimeout(() => crearSonido(659, 0.2, 'sine', 0.12), 150);
-    setTimeout(() => crearSonido(784, 0.2, 'sine', 0.12), 300);
-    setTimeout(() => crearSonido(1047, 0.4, 'sine', 0.15), 450);
-}
+function sonidoNivel() { crearSonido(523, 0.15, 'sine', 0.12); setTimeout(() => crearSonido(659, 0.15, 'sine', 0.12), 120); setTimeout(() => crearSonido(784, 0.25, 'sine', 0.15), 240); }
+function sonidoLogro() { crearSonido(784, 0.15, 'sine', 0.12); setTimeout(() => crearSonido(988, 0.3, 'sine', 0.15), 150); }
+function sonidoAdopcion() { crearSonido(400, 0.1, 'sine', 0.1); setTimeout(() => crearSonido(600, 0.1, 'sine', 0.12), 100); setTimeout(() => crearSonido(800, 0.2, 'sine', 0.15), 200); }
+function sonidoRonroneo() { crearSonido(120, 0.4, 'sine', 0.08); setTimeout(() => crearSonido(100, 0.4, 'sine', 0.06), 200); setTimeout(() => crearSonido(120, 0.4, 'sine', 0.08), 400); }
+function sonidoCarta() { crearSonido(523, 0.2, 'sine', 0.1); setTimeout(() => crearSonido(659, 0.2, 'sine', 0.12), 150); setTimeout(() => crearSonido(784, 0.2, 'sine', 0.12), 300); setTimeout(() => crearSonido(1047, 0.4, 'sine', 0.15), 450); }
 function sonidoCartaBJ() { crearSonido(440, 0.08, 'sine', 0.1); }
-function sonidoGanarBJ() {
-    crearSonido(523, 0.15, 'sine', 0.12);
-    setTimeout(() => crearSonido(659, 0.15, 'sine', 0.12), 100);
-    setTimeout(() => crearSonido(784, 0.15, 'sine', 0.12), 200);
-    setTimeout(() => crearSonido(1047, 0.3, 'sine', 0.15), 300);
-}
-function sonidoPerderBJ() {
-    crearSonido(300, 0.2, 'sine', 0.1);
-    setTimeout(() => crearSonido(250, 0.3, 'sine', 0.1), 200);
-}
+function sonidoGanarBJ() { crearSonido(523, 0.15, 'sine', 0.12); setTimeout(() => crearSonido(659, 0.15, 'sine', 0.12), 100); setTimeout(() => crearSonido(784, 0.15, 'sine', 0.12), 200); setTimeout(() => crearSonido(1047, 0.3, 'sine', 0.15), 300); }
+function sonidoPerderBJ() { crearSonido(300, 0.2, 'sine', 0.1); setTimeout(() => crearSonido(250, 0.3, 'sine', 0.1), 200); }
 
 // ── CATÁLOGO LOCAL (fallback) ─────────────────────────
 const MICHIS_DISPONIBLES = [
@@ -117,8 +88,10 @@ const MICHIS_TIENDA = [
     { id: 'tony',      nombre: 'Tony',      img: 'michis/tony.png',      tipo: 'nivel10',  precioPatitas: 500, nivelRequerido: 10, precioBolas: 0 },
     { id: 'sombra',    nombre: 'Sombra',    img: 'michis/sombra.png',    tipo: 'nivel10',  precioPatitas: 500, nivelRequerido: 10, precioBolas: 0 },
     { id: 'pachon',    nombre: 'Pachón',    img: 'michis/pachon.png',    tipo: 'nivel10',  precioPatitas: 500, nivelRequerido: 10, precioBolas: 0 },
+    { id: 'persa',     nombre: 'Persa',     img: 'michis/persa.png',     tipo: 'nivel10',  precioPatitas: 500, nivelRequerido: 10, precioBolas: 0 },
     { id: 'especial1', nombre: 'Michi Especial', img: 'michis/especial1.png', tipo: 'especial', precioPatitas: 0, nivelRequerido: 0, precioBolas: 2 },
-    { id: 'vikingo',   nombre: 'Vikingo',   img: 'michis/vikingo.png',   tipo: 'especial', precioPatitas: 0, nivelRequerido: 0,  precioBolas: 2 },
+    { id: 'vikingo',   nombre: 'Vikingo',   img: 'michis/vikingo.png',   tipo: 'especial', precioPatitas: 0, nivelRequerido: 0, precioBolas: 2 },
+    { id: 'esfinge',   nombre: 'Esfinge',   img: 'michis/esfinge.png',   tipo: 'especial', precioPatitas: 0, nivelRequerido: 0, precioBolas: 3 },
 ];
 
 const MARCOS_TIENDA = [
@@ -283,14 +256,28 @@ function obtenerFraseAleatoria(michiId, nivelMichi) {
 // ── MARCOS ────────────────────────────────────────────
 function cargarDatosMarcos() {
     const guardado = localStorage.getItem('michi-marcos');
-    return guardado ? JSON.parse(guardado) : { coleccion: [], activo: null };
+    if (!guardado) return { coleccion: [], activo: null };
+    try {
+        const datos = JSON.parse(guardado);
+        if (!datos || !Array.isArray(datos.coleccion)) return { coleccion: [], activo: null };
+        return datos;
+    } catch(e) {
+        return { coleccion: [], activo: null };
+    }
 }
+
 function guardarDatosMarcos(datos) {
     localStorage.setItem('michi-marcos', JSON.stringify(datos));
     if (usuarioActual) guardarMarcosNube(usuarioActual.uid, datos).catch(() => {});
 }
-function obtenerMarcosActivos() { return MARCOS_TIENDA_REMOTO.length > 0 ? MARCOS_TIENDA_REMOTO : MARCOS_TIENDA; }
-function obtenerMichisTiendaActivos() { return MICHIS_TIENDA_REMOTO.length > 0 ? MICHIS_TIENDA_REMOTO : MICHIS_TIENDA; }
+
+function obtenerMarcosActivos() {
+    return (MARCOS_TIENDA_REMOTO && MARCOS_TIENDA_REMOTO.length > 0) ? MARCOS_TIENDA_REMOTO : MARCOS_TIENDA;
+}
+
+function obtenerMichisTiendaActivos() {
+    return (MICHIS_TIENDA_REMOTO && MICHIS_TIENDA_REMOTO.length > 0) ? MICHIS_TIENDA_REMOTO : MICHIS_TIENDA;
+}
 
 function aplicarMarcoActivo() {
     const datos = cargarDatosMarcos();
@@ -600,7 +587,10 @@ function renderInventarioMarcos() {
     const datos = cargarDatosMarcos();
     const grid = document.getElementById('inventario-marcos');
     const marcosActivos = obtenerMarcosActivos();
-    if (datos.coleccion.length === 0) { grid.innerHTML = '<p style="color:#6b7280;text-align:center;padding:20px;font-style:italic;grid-column:span 2">Aún no tienes marcos 🖼️<br><br>Consíguelos en la tienda con 🧶 bolas de pelo</p>'; return; }
+    if (!datos.coleccion || datos.coleccion.length === 0) {
+        grid.innerHTML = '<p style="color:#6b7280;text-align:center;padding:20px;font-style:italic;grid-column:span 2">Aún no tienes marcos 🖼️<br><br>Consíguelos en la tienda con 🧶 bolas de pelo</p>';
+        return;
+    }
     grid.innerHTML = datos.coleccion.map(marcoId => {
         const marco = marcosActivos.find(m => m.id === marcoId);
         if (!marco) return '';
@@ -646,7 +636,7 @@ function renderTienda() {
     document.getElementById('tienda-saldo-bolas').textContent = wallet.bolasDePelo;
     const renderCardMichi = (m) => {
         const yaDesbloqueado = coleccion.some(c => c.id === m.id);
-        const nivelOk = nivelUsuario >= m.nivelRequerido;
+        const nivelOk = nivelUsuario >= (m.nivelRequerido || 0);
         const bloqueadoPorNivel = !nivelOk && !yaDesbloqueado && m.nivelRequerido > 0;
         const usaBolas = m.precioBolas > 0;
         const puedePagar = usaBolas ? wallet.bolasDePelo >= m.precioBolas : wallet.patitas >= m.precioPatitas;
@@ -816,6 +806,8 @@ async function iniciarBlackjack() {
         return;
     }
     bjApuesta = 10;
+    bjFaseDealer = false;
+    bjDealerTerminado = false;
     const wallet = cargarWallet();
     document.getElementById('bj-saldo').textContent = wallet.patitas;
     document.getElementById('bj-apuesta-display').textContent = bjApuesta;
@@ -860,48 +852,70 @@ async function repartirCartas() {
     bjBaraja = crearBaraja();
     bjManoJugador = [bjBaraja.pop(), bjBaraja.pop()];
     bjManoDealer = [bjBaraja.pop(), bjBaraja.pop()];
+    bjFaseDealer = false;
+    bjDealerTerminado = false;
     document.getElementById('bj-fase-apuesta').classList.add('oculto');
     document.getElementById('bj-fase-juego').classList.remove('oculto');
     document.getElementById('bj-resultado').classList.add('oculto');
     document.getElementById('bj-apuesta-actual').textContent = bjApuesta;
     document.getElementById('bj-acciones').classList.remove('oculto');
+    // Cambiar botones a modo jugador
+    actualizarBotonesBJ();
     renderMesaBJ(false);
     sonidoCartaBJ();
     if (calcularMano(bjManoJugador) === 21) setTimeout(() => terminarMano('blackjack'), 600);
+}
+
+function actualizarBotonesBJ() {
+    const acciones = document.getElementById('bj-acciones');
+    if (bjFaseDealer) {
+        // Fase dealer — mostrar botón "Ver siguiente carta"
+        const dealerTotal = calcularMano(bjManoDealer);
+        if (dealerTotal < 17) {
+            acciones.innerHTML = `<button class="btn-bj-accion pedir" onclick="dealerSiguienteCarta()">Ver carta del dealer 🃏</button>`;
+        } else {
+            acciones.innerHTML = `<button class="btn-bj-accion pedir" onclick="resolverMano()">Ver resultado 🎯</button>`;
+        }
+    } else {
+        // Fase jugador
+        acciones.innerHTML = `
+            <button class="btn-bj-accion pedir" onclick="pedirCarta()">Pedir carta</button>
+            <button class="btn-bj-accion plantarse" onclick="plantarse()">Plantarse</button>`;
+    }
 }
 
 function pedirCarta() {
     bjManoJugador.push(bjBaraja.pop());
     sonidoCartaBJ();
     renderMesaBJ(false);
-    if (calcularMano(bjManoJugador) > 21) setTimeout(() => terminarMano('perdiste'), 400);
-    else if (calcularMano(bjManoJugador) === 21) setTimeout(() => plantarse(), 400);
+    if (calcularMano(bjManoJugador) > 21) {
+        setTimeout(() => terminarMano('perdiste'), 400);
+    } else if (calcularMano(bjManoJugador) === 21) {
+        setTimeout(() => plantarse(), 400);
+    }
 }
 
 function plantarse() {
-    document.getElementById('bj-acciones').classList.add('oculto');
+    // Revelar carta oculta del dealer y entrar en fase dealer
+    bjFaseDealer = true;
     renderMesaBJ(true);
-    setTimeout(() => {
-        const jugarDealer = () => {
-            if (calcularMano(bjManoDealer) < 17) {
-                setTimeout(() => {
-                    bjManoDealer.push(bjBaraja.pop());
-                    sonidoCartaBJ();
-                    renderMesaBJ(true);
-                    jugarDealer();
-                }, 1200);
-            } else {
-                const jugador = calcularMano(bjManoJugador);
-                const dealer = calcularMano(bjManoDealer);
-                setTimeout(() => {
-                    if (dealer > 21 || jugador > dealer) terminarMano('ganaste');
-                    else if (jugador === dealer) terminarMano('empate');
-                    else terminarMano('perdiste');
-                }, 600);
-            }
-        };
-        jugarDealer();
-    }, 800);
+    sonidoCartaBJ();
+    actualizarBotonesBJ();
+}
+
+function dealerSiguienteCarta() {
+    bjManoDealer.push(bjBaraja.pop());
+    sonidoCartaBJ();
+    renderMesaBJ(true);
+    actualizarBotonesBJ();
+}
+
+function resolverMano() {
+    const jugador = calcularMano(bjManoJugador);
+    const dealer = calcularMano(bjManoDealer);
+    if (dealer > 21 || jugador > dealer) terminarMano('ganaste');
+    else if (jugador === dealer) terminarMano('empate');
+    else terminarMano('perdiste');
 }
 
 async function terminarMano(resultado) {
@@ -940,6 +954,8 @@ async function terminarMano(resultado) {
 
 function nuevaMano() {
     bjApuesta = 10;
+    bjFaseDealer = false;
+    bjDealerTerminado = false;
     const wallet = cargarWallet();
     document.getElementById('bj-saldo').textContent = wallet.patitas;
     document.getElementById('bj-apuesta-display').textContent = bjApuesta;
@@ -1052,11 +1068,16 @@ async function sincronizarDesdNube() {
         }
         if (nivelesMichis) localStorage.setItem('michi-niveles', JSON.stringify(nivelesMichis));
         if (cartas && cartas.length > 0) localStorage.setItem('michi-cartas', JSON.stringify(cartas));
-        if (marcos) localStorage.setItem('michi-marcos', JSON.stringify(marcos));
+        if (marcos) {
+            const marcosData = marcos.data || marcos;
+            if (marcosData && Array.isArray(marcosData.coleccion)) {
+                localStorage.setItem('michi-marcos', JSON.stringify(marcosData));
+            }
+        }
         if (frases && frases.length > 0) localStorage.setItem('michi-frases-custom', JSON.stringify(frases));
         if (catalogoMichis && catalogoMichis.length > 0) MICHIS_TIENDA_REMOTO = catalogoMichis;
         if (catalogoMarcos && catalogoMarcos.length > 0) MARCOS_TIENDA_REMOTO = catalogoMarcos;
-    } catch (e) { console.log('Sin conexión, usando datos locales'); }
+    } catch (e) { console.log('Sin conexión, usando datos locales', e); }
 }
 
 // ── LOGIN HANDLERS ────────────────────────────────────
@@ -2137,5 +2158,7 @@ window.setApuestaMax = setApuestaMax;
 window.repartirCartas = repartirCartas;
 window.pedirCarta = pedirCarta;
 window.plantarse = plantarse;
+window.dealerSiguienteCarta = dealerSiguienteCarta;
+window.resolverMano = resolverMano;
 window.nuevaMano = nuevaMano;
 window.salirBlackjack = salirBlackjack;
