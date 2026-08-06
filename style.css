@@ -598,5 +598,7 @@ th { color: #9ca3af; font-size: 0.7rem; text-transform: uppercase; }
 .bj-resultado-desc { font-size: 0.9rem; color: #9ca3af; }
 .bj-resultado-acciones { display: flex; flex-direction: column; gap: 10px; width: 100%; }
 .btn-bj-salir { width: 100%; padding: 12px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); border-radius: 12px; color: #9ca3af; font-size: 0.9rem; font-weight: 600; cursor: pointer; }
-
+.btn-elegir { width: 100%; padding: 8px; background: linear-gradient(135deg, #2563eb, #7c3aed); border: none; border-radius: 10px; color: white; font-size: 0.8rem; font-weight: 600; cursor: pointer; }
+.btn-elegir:disabled { background: rgba(16,185,129,0.2); color: #34d399; cursor: default; }
 .oculto { display: none; }
+/* v11 */
