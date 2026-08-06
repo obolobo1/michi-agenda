@@ -1,9 +1,7 @@
-const CACHE_NAME = 'michi-agenda-v10';
+const CACHE_NAME = 'michi-agenda-v11';
 const ARCHIVOS_CACHE = [
     '/michi-agenda/',
     '/michi-agenda/index.html',
-    '/michi-agenda/style.css',
-    '/michi-agenda/app.js',
     '/michi-agenda/manifest.json',
     '/michi-agenda/michis/naranjoso.png',
     '/michi-agenda/michis/negro.png',
@@ -50,16 +48,18 @@ self.addEventListener('activate', event => {
 self.addEventListener('fetch', event => {
     const url = new URL(event.request.url);
 
-    // Firebase, APIs externas y firebase.js — siempre desde la red
+    // Estos archivos NUNCA se cachean — siempre desde la red
     if (url.hostname.includes('firebase') ||
         url.hostname.includes('googleapis') ||
         url.hostname.includes('gstatic') ||
-        url.pathname.includes('firebase.js')) {
+        url.pathname.endsWith('firebase.js') ||
+        url.pathname.endsWith('app.js') ||
+        url.pathname.endsWith('style.css')) {
         event.respondWith(fetch(event.request));
         return;
     }
 
-    // Archivos estáticos — caché primero, red como respaldo
+    // El resto — caché primero, red como respaldo
     event.respondWith(
         caches.match(event.request).then(cached => {
             return cached || fetch(event.request).then(response => {

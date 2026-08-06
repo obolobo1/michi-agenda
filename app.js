@@ -38,7 +38,6 @@ let bjManoJugador = [];
 let bjManoDealer = [];
 let bjApuesta = 10;
 let bjFaseDealer = false;
-let bjDealerTerminado = false;
 
 // ── SONIDOS ───────────────────────────────────────────
 function crearSonido(frecuencia, duracion, tipo = 'sine', volumen = 0.15) {
@@ -186,11 +185,25 @@ const NIVELES_MICHI = [
     { nivel: 4, costo: 450,  nivelUsuario: 15, desc: "Carta especial de cariño", emoji: "💌" },
 ];
 
-function cargarNivelesMichis() { return JSON.parse(localStorage.getItem('michi-niveles') || '{}'); }
+// ── FIX CLAVE: cargarNivelesMichis maneja ambos formatos ──
+function cargarNivelesMichis() {
+    const guardado = localStorage.getItem('michi-niveles');
+    if (!guardado) return {};
+    try {
+        const data = JSON.parse(guardado);
+        // Si Firebase guardó { data: { vikingo: 2, ... } }
+        if (data && data.data && typeof data.data === 'object') return data.data;
+        // Si es el formato correcto { vikingo: 2, ... }
+        if (data && typeof data === 'object' && !Array.isArray(data)) return data;
+        return {};
+    } catch(e) { return {}; }
+}
+
 function guardarNivelesMichis(niveles) {
     localStorage.setItem('michi-niveles', JSON.stringify(niveles));
     if (usuarioActual) guardarNivelesMichisNube(usuarioActual.uid, niveles).catch(() => {});
 }
+
 function getNivelMichi(michiId) { return cargarNivelesMichis()[michiId] || 0; }
 function cargarCartas() { return JSON.parse(localStorage.getItem('michi-cartas') || '[]'); }
 function guardarCartas(cartas) {
@@ -259,11 +272,13 @@ function cargarDatosMarcos() {
     if (!guardado) return { coleccion: [], activo: null };
     try {
         const datos = JSON.parse(guardado);
-        if (!datos || !Array.isArray(datos.coleccion)) return { coleccion: [], activo: null };
-        return datos;
-    } catch(e) {
+        if (!datos) return { coleccion: [], activo: null };
+        // Manejar formato { data: { coleccion: [], activo: null } }
+        if (datos.data && Array.isArray(datos.data.coleccion)) return datos.data;
+        // Formato correcto { coleccion: [], activo: null }
+        if (Array.isArray(datos.coleccion)) return datos;
         return { coleccion: [], activo: null };
-    }
+    } catch(e) { return { coleccion: [], activo: null }; }
 }
 
 function guardarDatosMarcos(datos) {
@@ -807,7 +822,6 @@ async function iniciarBlackjack() {
     }
     bjApuesta = 10;
     bjFaseDealer = false;
-    bjDealerTerminado = false;
     const wallet = cargarWallet();
     document.getElementById('bj-saldo').textContent = wallet.patitas;
     document.getElementById('bj-apuesta-display').textContent = bjApuesta;
@@ -853,13 +867,10 @@ async function repartirCartas() {
     bjManoJugador = [bjBaraja.pop(), bjBaraja.pop()];
     bjManoDealer = [bjBaraja.pop(), bjBaraja.pop()];
     bjFaseDealer = false;
-    bjDealerTerminado = false;
     document.getElementById('bj-fase-apuesta').classList.add('oculto');
     document.getElementById('bj-fase-juego').classList.remove('oculto');
     document.getElementById('bj-resultado').classList.add('oculto');
     document.getElementById('bj-apuesta-actual').textContent = bjApuesta;
-    document.getElementById('bj-acciones').classList.remove('oculto');
-    // Cambiar botones a modo jugador
     actualizarBotonesBJ();
     renderMesaBJ(false);
     sonidoCartaBJ();
@@ -868,8 +879,8 @@ async function repartirCartas() {
 
 function actualizarBotonesBJ() {
     const acciones = document.getElementById('bj-acciones');
+    acciones.classList.remove('oculto');
     if (bjFaseDealer) {
-        // Fase dealer — mostrar botón "Ver siguiente carta"
         const dealerTotal = calcularMano(bjManoDealer);
         if (dealerTotal < 17) {
             acciones.innerHTML = `<button class="btn-bj-accion pedir" onclick="dealerSiguienteCarta()">Ver carta del dealer 🃏</button>`;
@@ -877,7 +888,6 @@ function actualizarBotonesBJ() {
             acciones.innerHTML = `<button class="btn-bj-accion pedir" onclick="resolverMano()">Ver resultado 🎯</button>`;
         }
     } else {
-        // Fase jugador
         acciones.innerHTML = `
             <button class="btn-bj-accion pedir" onclick="pedirCarta()">Pedir carta</button>
             <button class="btn-bj-accion plantarse" onclick="plantarse()">Plantarse</button>`;
@@ -888,15 +898,11 @@ function pedirCarta() {
     bjManoJugador.push(bjBaraja.pop());
     sonidoCartaBJ();
     renderMesaBJ(false);
-    if (calcularMano(bjManoJugador) > 21) {
-        setTimeout(() => terminarMano('perdiste'), 400);
-    } else if (calcularMano(bjManoJugador) === 21) {
-        setTimeout(() => plantarse(), 400);
-    }
+    if (calcularMano(bjManoJugador) > 21) setTimeout(() => terminarMano('perdiste'), 400);
+    else if (calcularMano(bjManoJugador) === 21) setTimeout(() => plantarse(), 400);
 }
 
 function plantarse() {
-    // Revelar carta oculta del dealer y entrar en fase dealer
     bjFaseDealer = true;
     renderMesaBJ(true);
     sonidoCartaBJ();
@@ -955,7 +961,6 @@ async function terminarMano(resultado) {
 function nuevaMano() {
     bjApuesta = 10;
     bjFaseDealer = false;
-    bjDealerTerminado = false;
     const wallet = cargarWallet();
     document.getElementById('bj-saldo').textContent = wallet.patitas;
     document.getElementById('bj-apuesta-display').textContent = bjApuesta;
@@ -1066,8 +1071,15 @@ async function sincronizarDesdNube() {
             const yaEnColeccion = coleccionLocal.find(m => m.id === michi.id);
             if (!yaEnColeccion) { coleccionLocal.push({ ...michi }); guardarColeccionMichis(coleccionLocal); }
         }
-        if (nivelesMichis) localStorage.setItem('michi-niveles', JSON.stringify(nivelesMichis));
+        // FIX CLAVE: guardar niveles correctamente desde Firebase
+        if (nivelesMichis) {
+            const nivelesData = nivelesMichis.data || nivelesMichis;
+            if (nivelesData && typeof nivelesData === 'object' && !Array.isArray(nivelesData)) {
+                localStorage.setItem('michi-niveles', JSON.stringify(nivelesData));
+            }
+        }
         if (cartas && cartas.length > 0) localStorage.setItem('michi-cartas', JSON.stringify(cartas));
+        // FIX: guardar marcos correctamente
         if (marcos) {
             const marcosData = marcos.data || marcos;
             if (marcosData && Array.isArray(marcosData.coleccion)) {
@@ -1788,7 +1800,6 @@ function renderHorasVacias(hoy) {
     return `<div class="timeline-hoy">${items}</div><div style="text-align:center; margin-top: 16px;"><button class="btn-crear-hoy" onclick="mostrarEditor(null)">+ Crear agenda de hoy</button></div>`;
 }
 
-// ── SEMANA STRIP ──────────────────────────────────────
 function renderSemanaStrip() {
     const hoy = new Date();
     const agendas = cargarAgendas();
