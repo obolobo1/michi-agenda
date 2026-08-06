@@ -1,4 +1,4 @@
-const CACHE_NAME = 'michi-agenda-v11';
+const CACHE_NAME = 'michi-agenda-v12';
 const ARCHIVOS_CACHE = [
     '/michi-agenda/',
     '/michi-agenda/index.html',

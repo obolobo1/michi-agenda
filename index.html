@@ -18,7 +18,6 @@
             <button class="btn-onboarding-skip" onclick="terminarOnboarding()">Saltar</button>
         </div>
     </div>
-
     <!-- PANTALLA: LOGIN -->
     <div id="pantalla-login" class="pantalla">
         <div class="login-container">
@@ -69,7 +68,6 @@
             <p id="login-exito" class="login-exito"></p>
         </div>
     </div>
-
     <!-- PANTALLA PRINCIPAL: HOY -->
     <div id="pantalla-hoy" class="pantalla">
         <header>
@@ -87,7 +85,6 @@
             </div>
             <h2 id="titulo-hoy"></h2>
         </header>
-
         <div class="seccion-titulo">
             <span>Actividades</span>
         </div>
@@ -107,15 +104,12 @@
                 </button>
             </div>
         </div>
-
         <div id="contenido-progreso"></div>
-
         <div class="seccion-titulo" style="margin-top:20px">
             <span>Calendario</span>
         </div>
         <div class="semana-strip" id="semana-strip"></div>
         <button class="btn-ver-mes-grande" onclick="abrirCalendario()">📅 Ver mes completo</button>
-
         <div class="pendientes-box" style="margin-top:16px">
             <div class="pendientes-header">
                 <span class="pendientes-titulo">📋 Pendientes</span>
@@ -128,7 +122,6 @@
         </div>
         <button class="btn-flotante" onclick="mostrarEditor(null)">+</button>
     </div>
-
     <!-- PANTALLA: EDITOR -->
     <div id="pantalla-editor" class="pantalla">
         <header>
@@ -170,7 +163,6 @@
         <textarea id="input-actividades" placeholder="Escribe tus actividades aquí...&#10;Ej: GYM 07:00&#10;Ej: Cena con mamá 19:00 (formato 24hrs)&#10;Ej: GYM 07:00 [lunes, miércoles, viernes]"></textarea>
         <button class="btn-generar" onclick="procesarAgenda()">🚀 Guardar Agenda</button>
     </div>
-
     <!-- PANTALLA: DASHBOARD DÍA -->
     <div id="pantalla-dashboard" class="pantalla">
         <header>
@@ -189,7 +181,6 @@
         </div>
         <div id="contenido-dashboard"></div>
     </div>
-
     <!-- PANTALLA: MI WALLET -->
     <div id="pantalla-wallet" class="pantalla">
         <header>
@@ -240,7 +231,6 @@
         </div>
         <div id="lista-logros" class="lista-logros"></div>
     </div>
-
     <!-- PANTALLA: TIENDA -->
     <div id="pantalla-tienda" class="pantalla">
         <header>
@@ -272,7 +262,6 @@
         </div>
         <div class="tienda-grid" id="tienda-items"></div>
     </div>
-
     <!-- PANTALLA: INVENTARIO -->
     <div id="pantalla-inventario" class="pantalla">
         <header>
@@ -296,7 +285,6 @@
             <div class="inventario-grid" id="inventario-marcos"></div>
         </div>
     </div>
-
     <!-- PANTALLA: MINIJUEGOS -->
     <div id="pantalla-minijuegos" class="pantalla">
         <header>
@@ -306,8 +294,6 @@
         <div class="minijuegos-saldo-bar">
             <span>🐾 <span id="minijuegos-saldo-patitas">0</span> patitas</span>
         </div>
-
-        <!-- BLACKJACK -->
         <div class="minijuego-card" id="card-blackjack">
             <div class="minijuego-card-header">
                 <span class="minijuego-emoji">🃏</span>
@@ -319,8 +305,6 @@
             </div>
             <button class="btn-jugar-bj" onclick="iniciarBlackjack()">Jugar 🃏</button>
         </div>
-
-        <!-- MEMORAMA (próximamente) -->
         <div class="minijuego-card proximamente">
             <div class="minijuego-card-header">
                 <span class="minijuego-emoji">🐱</span>
@@ -332,15 +316,12 @@
             </div>
         </div>
     </div>
-
     <!-- PANTALLA: BLACKJACK -->
     <div id="pantalla-blackjack" class="pantalla">
         <header>
             <button class="btn-back" onclick="salirBlackjack()">← Salir</button>
             <h2>🃏 Blackjack</h2>
         </header>
-
-        <!-- FASE: APUESTA -->
         <div id="bj-fase-apuesta">
             <div class="bj-apuesta-box">
                 <div class="bj-saldo-display">
@@ -361,8 +342,6 @@
                 <button class="btn-bj-repartir" onclick="repartirCartas()">Repartir 🃏</button>
             </div>
         </div>
-
-        <!-- FASE: JUEGO -->
         <div id="bj-fase-juego" class="oculto">
             <div class="bj-mesa">
                 <div class="bj-lado dealer">
@@ -380,8 +359,6 @@
                 <button class="btn-bj-accion plantarse" onclick="plantarse()">Plantarse</button>
             </div>
         </div>
-
-        <!-- RESULTADO -->
         <div id="bj-resultado" class="oculto">
             <div class="bj-resultado-emoji" id="bj-resultado-emoji"></div>
             <div class="bj-resultado-titulo" id="bj-resultado-titulo"></div>
@@ -392,7 +369,6 @@
             </div>
         </div>
     </div>
-
     <!-- PANTALLA: CONFIGURACIÓN -->
     <div id="pantalla-config" class="pantalla">
         <header>
@@ -463,7 +439,6 @@
             </div>
         </div>
     </div>
-
     <!-- MODAL: NOMBRE DEL MICHI -->
     <div id="modal-nombre-michi" class="modal-overlay oculto" onclick="cerrarModalNombre(event)">
         <div class="modal-contenido modal-nombre">
@@ -478,7 +453,6 @@
             </button>
         </div>
     </div>
-
     <!-- MODAL: CARTA ESPECIAL -->
     <div id="modal-carta" class="modal-overlay oculto" onclick="cerrarModalCarta(event)">
         <div class="modal-contenido modal-carta">
@@ -489,7 +463,6 @@
             <button class="btn-cerrar-carta" onclick="cerrarModalCarta()">Guardar en logros 🏆</button>
         </div>
     </div>
-
     <!-- MODAL: CALENDARIO MENSUAL -->
     <div id="modal-calendario" class="modal-overlay oculto" onclick="cerrarCalendario(event)">
         <div class="modal-contenido">
@@ -505,7 +478,6 @@
             <div id="cal-grid" class="cal-grid"></div>
         </div>
     </div>
-
     <script type="module" src="firebase.js"></script>
     <script type="module" src="app.js"></script>
     <script>
@@ -513,6 +485,8 @@
             navigator.serviceWorker.register('/michi-agenda/sw.js')
                 .then(reg => {
                     console.log('Service Worker registrado');
+                    // Forzar verificación de actualización en cada carga
+                    reg.update();
                     reg.addEventListener('updatefound', () => {
                         const nuevoSW = reg.installing;
                         nuevoSW.addEventListener('statechange', () => {
@@ -523,6 +497,10 @@
                     });
                 })
                 .catch(err => console.log('Error SW:', err));
+            // Recargar cuando cambie el SW activo
+            navigator.serviceWorker.addEventListener('controllerchange', () => {
+                window.location.reload();
+            });
         }
     </script>
 </body>
