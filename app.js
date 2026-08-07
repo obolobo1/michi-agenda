@@ -91,6 +91,7 @@ const MICHIS_TIENDA = [
     { id: 'especial1', nombre: 'Michi Especial', img: 'michis/especial1.png', tipo: 'especial', precioPatitas: 0, nivelRequerido: 0, precioBolas: 2 },
     { id: 'vikingo',   nombre: 'Vikingo',   img: 'michis/vikingo.png',   tipo: 'especial', precioPatitas: 0, nivelRequerido: 0, precioBolas: 2 },
     { id: 'esfinge',   nombre: 'Esfinge',   img: 'michis/esfinge.png',   tipo: 'especial', precioPatitas: 0, nivelRequerido: 0, precioBolas: 3 },
+    { id: 'siames',    nombre: 'Siamés',    img: 'michis/siames.png',    tipo: 'especial', precioPatitas: 0, nivelRequerido: 0, precioBolas: 2 },
 ];
 
 const MARCOS_TIENDA = [
@@ -99,6 +100,7 @@ const MARCOS_TIENDA = [
     { id: 'marcocyber',   nombre: 'Marco Cyber',   img: 'michis/marcocyber.png',   precioBolas: 1 },
     { id: 'marcovikingo', nombre: 'Marco Vikingo', img: 'michis/marcovikingo.png', precioBolas: 1 },
     { id: 'marcorosas',   nombre: 'Marco Rosas',   img: 'michis/marcorosas.png',   precioBolas: 1 },
+    { id: 'marcovv',      nombre: 'Marco VV',      img: 'michis/marcovv.png',      precioBolas: 2 },
 ];
 
 // ── FRASES POR GATO ───────────────────────────────────
@@ -155,6 +157,27 @@ const FRASES_MICHIS = {
         nivel1: ["Hola... con mucho esfuerzo 😴","Eres increíble. Yo me quedo aquí. 🐾","Si yo puedo levantarme, tú puedes con todo 💛","Tan elegante... tan cansado... 😴","Te apoyo desde aquí, con mucho amor 💛"],
         nivel2: ["Hola... con mucho esfuerzo 😴","Eres increíble. Yo me quedo aquí. 🐾","Si yo puedo levantarme, tú puedes con todo 💛","Tan elegante... tan cansado... 😴","Te apoyo desde aquí, con mucho amor 💛","El éxito es como una siesta larga — hay que ganárselo 😴","Yo pongo la ternura, tú pones la energía 💛","Qué hermoso eres cuando cumples tus metas 😻","No me muevas que estoy muy cómodo... pero te quiero mucho 💛","Un paso a la vez, como yo cuando tengo hambre 😴"],
     },
+    siames: {
+        nivel1: [
+            "Completa tus actividades. No te lo estoy pidiendo. 😼",
+            "Soy el gato más hermoso del mundo. Tú... estás mejorando. 👁️",
+            "No falles hoy. Me avergüenzas cuando fallas. 😤",
+            "Hiciste bien. No lo esperaba. 😼",
+            "Podrías ser peor. Sigue así. 😏",
+        ],
+        nivel2: [
+            "Completa tus actividades. No te lo estoy pidiendo. 😼",
+            "Soy el gato más hermoso del mundo. Tú... estás mejorando. 👁️",
+            "No falles hoy. Me avergüenzas cuando fallas. 😤",
+            "Hiciste bien. No lo esperaba. 😼",
+            "Podrías ser peor. Sigue así. 😏",
+            "Tu constancia me resulta... aceptable. 😼",
+            "No necesitas mi aprobación. Pero de todas formas te la doy. 👁️",
+            "Otro día más. Compórtate. 😤",
+            "Cumpliste. Bien. No hagas un drama de ello. 😏",
+            "Supongo que me agradas. Un poco. No se lo digas a nadie. 😼",
+        ],
+    },
 };
 
 const FRASES_GENERICAS_N1 = ["¡Hola humano! 🐾","¿Ya hiciste tus actividades? 😸","Estoy aquí contigo 🐱","¡Miau! 💙","Me alegra verte hoy 🐾"];
@@ -175,6 +198,7 @@ const CARTAS_MICHIS = {
     vikingo:   { nombre: "Carta de Vikingo",   texto: "¡Humano guerrero! Conquistar el Nivel 4 conmigo no es tarea de cualquiera. Tu disciplina y constancia son dignas de los grandes. Sigue adelante con tu hacha en alto y recuerda: cada hábito que construyes es una victoria para ti y para los gatitos que esperan un hogar. ⚔️", firma: "Con honor vikingo, tu michi Vikingo 🪖" },
     esfinge:   { nombre: "Carta de Esfinge",   texto: "Humano elegante, llegar al Nivel 4 conmigo demuestra que tienes clase y disciplina en igual medida. La elegancia no es solo apariencia — es constancia, es movimiento, es no rendirse nunca. Gracias por ser tan extraordinario. Los gatitos del mundo real lo notan. ✨", firma: "Con elegancia y energía, tu michi Esfinge 😼" },
     persa:     { nombre: "Carta de Persa",     texto: "Humano querido... llegaste al Nivel 4. Con lo cansado que estoy, eso me emociona muchísimo. Eres de lo más bonito que he visto — constante, dedicado y con mucho corazón. Desde mi cojín favorito te mando todo mi amor. Los gatitos del mundo real también te lo agradecen. 💛", firma: "Con mucho amor y algo de sueño, tu michi Persa 😴" },
+    siames:    { nombre: "Carta del Siamés",   texto: "Humano... llevas mucho tiempo conmigo. Más del que esperaba. No suelo admitir estas cosas, pero... me has demostrado que eres constante. Que cuando te propones algo, lo cumples. Eso es raro. Y lo respeto. No te lo diré dos veces, así que escucha bien: estoy orgulloso de ti. Ahora vuelve a tus actividades. 😼", firma: "Con exigencia y algo de cariño, tu michi Siamés 😼" },
 };
 
 // ── NIVELES DEL MICHI ─────────────────────────────────
@@ -185,15 +209,12 @@ const NIVELES_MICHI = [
     { nivel: 4, costo: 450,  nivelUsuario: 15, desc: "Carta especial de cariño", emoji: "💌" },
 ];
 
-// ── FIX CLAVE: cargarNivelesMichis maneja ambos formatos ──
 function cargarNivelesMichis() {
     const guardado = localStorage.getItem('michi-niveles');
     if (!guardado) return {};
     try {
         const data = JSON.parse(guardado);
-        // Si Firebase guardó { data: { vikingo: 2, ... } }
         if (data && data.data && typeof data.data === 'object') return data.data;
-        // Si es el formato correcto { vikingo: 2, ... }
         if (data && typeof data === 'object' && !Array.isArray(data)) return data;
         return {};
     } catch(e) { return {}; }
@@ -273,9 +294,7 @@ function cargarDatosMarcos() {
     try {
         const datos = JSON.parse(guardado);
         if (!datos) return { coleccion: [], activo: null };
-        // Manejar formato { data: { coleccion: [], activo: null } }
         if (datos.data && Array.isArray(datos.data.coleccion)) return datos.data;
-        // Formato correcto { coleccion: [], activo: null }
         if (Array.isArray(datos.coleccion)) return datos;
         return { coleccion: [], activo: null };
     } catch(e) { return { coleccion: [], activo: null }; }
@@ -1071,7 +1090,6 @@ async function sincronizarDesdNube() {
             const yaEnColeccion = coleccionLocal.find(m => m.id === michi.id);
             if (!yaEnColeccion) { coleccionLocal.push({ ...michi }); guardarColeccionMichis(coleccionLocal); }
         }
-        // FIX CLAVE: guardar niveles correctamente desde Firebase
         if (nivelesMichis) {
             const nivelesData = nivelesMichis.data || nivelesMichis;
             if (nivelesData && typeof nivelesData === 'object' && !Array.isArray(nivelesData)) {
@@ -1079,7 +1097,6 @@ async function sincronizarDesdNube() {
             }
         }
         if (cartas && cartas.length > 0) localStorage.setItem('michi-cartas', JSON.stringify(cartas));
-        // FIX: guardar marcos correctamente
         if (marcos) {
             const marcosData = marcos.data || marcos;
             if (marcosData && Array.isArray(marcosData.coleccion)) {
@@ -1194,6 +1211,7 @@ const LOGROS_DEFINICION = [
     { id: 'carta_vikingo',      nombre: '💌 Carta de Vikingo',           emoji: '📩', condicion: (s) => s.cartas.includes('vikingo'),     patitas: 0,   xp: 100, bolas: 0, esCarta: true, michiId: 'vikingo'   },
     { id: 'carta_esfinge',      nombre: '💌 Carta de Esfinge',           emoji: '📩', condicion: (s) => s.cartas.includes('esfinge'),     patitas: 0,   xp: 100, bolas: 0, esCarta: true, michiId: 'esfinge'   },
     { id: 'carta_persa',        nombre: '💌 Carta de Persa',             emoji: '📩', condicion: (s) => s.cartas.includes('persa'),       patitas: 0,   xp: 100, bolas: 0, esCarta: true, michiId: 'persa'     },
+    { id: 'carta_siames',       nombre: '💌 Carta del Siamés',          emoji: '📩', condicion: (s) => s.cartas.includes('siames'),      patitas: 0,   xp: 100, bolas: 0, esCarta: true, michiId: 'siames'    },
     { id: 'racha_3',            nombre: 'Racha de 3 días',                emoji: '🔥', condicion: (s) => s.rachaMaxima >= 3,              patitas: 15,  xp: 30,  bolas: 0 },
     { id: 'racha_7',            nombre: 'Racha de 7 días',                emoji: '🔥', condicion: (s) => s.rachaMaxima >= 7,              patitas: 30,  xp: 60,  bolas: 0 },
     { id: 'racha_30',           nombre: 'Racha de 30 días',               emoji: '🔥', condicion: (s) => s.rachaMaxima >= 30,             patitas: 80,  xp: 150, bolas: 1 },

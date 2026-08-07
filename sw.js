@@ -1,4 +1,4 @@
-const CACHE_NAME = 'michi-agenda-v12';
+const CACHE_NAME = 'michi-agenda-v13';
 const ARCHIVOS_CACHE = [
     '/michi-agenda/',
     '/michi-agenda/index.html',
@@ -22,6 +22,8 @@ const ARCHIVOS_CACHE = [
     '/michi-agenda/michis/marcocyber.png',
     '/michi-agenda/michis/marcovikingo.png',
     '/michi-agenda/michis/marcorosas.png',
+    '/michi-agenda/michis/siames.png',
+    '/michi-agenda/michis/marcovv.png',
 ];
 
 self.addEventListener('install', event => {
